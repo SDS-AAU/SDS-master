@@ -2,10 +2,6 @@
 
 **Note:** All notebooks can also be found in the corresponding `notebooks` folder.
 
-## Introduction: The Data Science Pipeline
-
-[Introduction (html, view-only)](https://raw.githack.com/SDS-AAU/M1-2019/master/notebooks/M1_0_DS_pipeline.html)
-
 ## Part I: Data Manipulation & Exploration
 
 ### Data Manipulation & Exploration (python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/SDS_S1_2_EDA.ipynb#&offline=true&sandboxMode=true)
