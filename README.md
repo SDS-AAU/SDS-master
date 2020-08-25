@@ -1,15 +1,25 @@
-Master for all data science teaching activities
+Short description lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ...
 
+# [M1: Introduction to Data Science](https://github.com/SDS-AAU/SDS-master/tree/master/M1)
 
-# M1:
+Short description lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ...
 
-xxx
+* Item1
+* Item2
+* Item3
 
-# M2: 
+# [M2: Network Analysis & Natural-Language-Processing](https://github.com/SDS-AAU/SDS-master/tree/master/M2)
 
-xxx
+Short description lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ...
 
-# M3:
+* Item1
+* Item2
+* Item3
 
-xxx
+# [M2: Artificial Neural networks & Deep Learning](https://github.com/SDS-AAU/SDS-master/tree/master/M3)
 
+Short description lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ... lorem ipsum ...
+
+* Item1
+* Item2
+* Item3
