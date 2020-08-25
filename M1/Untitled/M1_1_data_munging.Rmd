@@ -1,0 +1,1161 @@
+---
+title: 'Data manipulation & Exploration (in R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "today"
+output:
+  html_document: 
+    df_print: paged
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+set.seed(1337) # To have a seed defined for reproducability
+
+rm(list=ls()); graphics.off() # get rid of everything in the workspace
+if (!require("pacman")) install.packages("pacman") # package for loading and checking packages
+if (!require("knitr")) install.packages("knitr"); library(knitr) # For display of the markdown
+
+### Knitr options
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     fig.align="center"
+                     )
+```
+
+
+```{r}
+### Install packages if necessary
+pacman::p_load(tidyverse, # Collection of all the good stuff like dplyr, ggplot2 ect.
+               magrittr, # For extra-piping operators (eg. %<>%)
+               countrycode, # Helpful functions when working with countrycodes
+               skimr # For skimming
+               )
+```
+
+Short upfront note:
+
+Google colab does not support `R` kernels. Alternatively, you can use the Microsoft Azure solution, which is quite similar but slower. However, there is a little trick how to make `R`vrun with colab.
+
+* You can simply run the `demo.ipynb` from [IRkernel Github](https://colab.research.google.com/github/IRkernel/IRkernel/blob/master/example-notebooks/Demo.ipynb)
+* Make changes and then save a copy to your Google Drive.
+* You can also see all 3 example notebooks [here](https://github.com/IRkernel/IRkernel/tree/master/example-notebooks).
+
+# Introduction
+In this session, you will learn the basic grammar of data manipulation, some best-practice advices. Since data manipulation always follows a purpose and requires some understanding of the data at hand, we will also have a first glance data exploration and visualization. However, we will her only cover the very basics and skip most of the details. Again, you will have a dedicated sessions lateron.
+
+In this session, you will learn:
+
+* How to do basic variable filtering, selection, and manipulation
+* How to create various types of data summarization
+* How to also apply these actions on grouped data
+* How to join data from different sources
+* How to reshape (pivot) your data
+
+From my experience, this covers ca. 95% of common data manipulation tasks. Sound like fun? Lets get started!
+
+# Reminder: Base-R
+
+## Basics 
+
+### Assignments 
+ 
+You can assign a value to an object using `assign()`,  `<-`, or `=`.
+```{r}
+x <- 3         # Assignment
+x              # Evaluate the expression and print result
+
+y <- 4         # Assignment
+y + 5          # Evaluation, y remains 4
+
+z <- x + 17*y  # Assignment
+z              # Evaluation
+
+rm(z)          # Remove z: deletes the object.
+# z             # Error!
+```
+
+
+### Value comparisons 
+
+Comparisons return boolean values: TRUE or FALSE (often abbreviated to `T` and `F`)
+```{r}
+2==2  # Equality
+2!=2  # Inequality
+x <= y # less than or equal: "<", ">", and ">=" also work
+```
+
+
+### Special constants: `NA`, `NULL`, `Inf`, `-Inf`, `NaN`
+
+`NA` indicates missing or undefined data
+```{r}
+5 + NA      # When used in an expression, the result is generally NA
+is.na(5+NA) # Check if missing
+
+mean(c(1, 2, NA, 4, 5)) # many functions requiring numeric vectors output  when one is included
+mean(c(1, 2, NA, 4, 5), na.rm = TRUE) # Not if we provide the right argument to ignore them
+```
+
+`NULL` indicates an empty object, e.g. a null/empty list
+```{r}
+10 + NULL     # use returns an empty object (length zero)
+is.null(NULL) # check if NULL
+```
+
+`Inf` and `-Inf` represent positive and negative infinity. They can be returned by  mathematical operations like division of a number by zero.
+```{r}
+5/0
+is.finite(5/0) # Check if a number is finite
+```
+
+`NaN` (Not a Number) - the result of an operation that cannot be reasonably defined 
+```{r}
+0/0
+is.nan(0/0)
+```
+
+## Object classes
+
+### Vectors
+
+```{r}
+v1 <- c(1, 5, 11, 33)       # Numeric vector, length 4
+v1
+
+v2 <- c("hello","world")    # Character vector, length 2 (a vector of strings)
+v2
+
+v3 <- c(TRUE, TRUE, FALSE)  # Logical vector, same as c(T, T, F)
+v3
+```
+
+Combining different types of elements in one vector will coerce the elements  to the least restrictive type:
+```{r}
+v4 <- c(v1,v2,v3,"boo") 	# All elements turn into strings
+v4
+```
+
+Element-wise operations:
+```{r}
+v1 + v3      # Element-wise addition (reminder: TRUE counts as 1, FALSE as 0)
+v1 + 1       # Add 1 to each element
+v1 * 2       # Multiply EACH element by 2 (not like real vector multiplication)
+v1 + c(1,7)  # (1,7) is a vector of different length... what happens here?
+```
+
+Mathematical operations:
+```{r}
+sum(v1)      # The sum of all elements
+mean(v1)     # The average of all elements
+sd(v1)       # The standard deviation
+cor(v1,v1*5) # Correlation between v1 and v1*5 
+```
+
+Logical operations:
+```{r}
+v1 > 2       # Each element is compared to 2, returns logical vector
+v1==v2       # Are corresponding elements equivalent, returns logical vector.
+v1!=v2       # Are corresponding elements *not* equivalent? Same as !(v1==v2)
+(v1>2) | (v2>0)   # | is the boolean OR, returns a vector.
+(v1>2) & (v2>0)   # & is the boolean AND, returns a vector.
+(v1>2) || (v2>0)  # || is the boolean OR, returns a single value (if it is true at least once)
+(v1>2) && (v2>0)  # && is the boolean AND, returns a single value (if it is true at least once)
+```
+
+Adressing vector elements:
+```{r}
+v1[3]             # third element of v1
+v1[2:4]           # elements 2, to 4 of v1
+v1[c(1,3)]        # elements 1 and 3 - note that your indexes are a vector
+v1[c(T,T,F,F,F)]  # elements 1 and 2 - only the ones that are TRUE
+v1[v1>3]          # v1>3 is a logical vector TRUE for elements >3
+```
+
+**NOTE:** If you are used to languages indexing from 0 (eg. Python), `R` will surprise you by indexing from 1.
+
+To add more elements to a vector, simply assign them values.
+```{r}
+v1[6:10] <- 6:10
+v1
+```
+
+We can also directly assign the vector a length:
+```{r}
+length(v1) <- 15 # the last 5 elements are added as missing data: NA
+v1
+```
+
+
+
+### Factors
+
+Factors are used to store categorical data.
+```{r}
+eye.col.v <- c("brown", "green", "brown", "blue", "blue", "blue")         #vector
+eye.col.f <- factor(c("brown", "green", "brown", "blue", "blue", "blue")) #factor
+eye.col.v
+eye.col.f
+```
+
+`R` will identify the different levels of the factor - e.g. all distinct values. The data is stored internally as integers - each number corresponding to a factor level.
+
+```{r}
+levels(eye.col.f)  # The levels (distinct values) of the factor (categorical variable)
+
+as.numeric(eye.col.f)  # The factor as numeric values: 1 is  blue, 2 is brown, 3 is green
+as.numeric(eye.col.v)  # The character vector, however, can not be coerced to numeric
+
+as.character(eye.col.f)  
+as.character(eye.col.v) 
+```
+
+
+### Matrces & Arrays 
+
+A matrix is a vector with dimensions:
+```{r}
+m <- rep(1, 20)   # A vector of 20 elements, all 1
+dim(m) <- c(5,4)  # Dimensions set to 5 & 4, so m is now a 5x4 matrix
+m
+```
+
+Create a matrix using `matrix()`:
+```{r}
+m <- matrix(data=1, nrow=5, ncol=4)  # same matrix as above, 5x4, full of 1s
+m <- matrix(1,5,4) 			             # same matrix as above (lazy style)
+dim(m)                                # What are the dimensions of m?
+m
+```
+
+Create a matrix by combining vectors:
+```{r}
+m <- cbind(1:5, 5:1, 5:9)  # Bind 3 vectors as columns, 5x3 matrix
+m <- rbind(1:5, 5:1, 5:9)  # Bind 3 vectors as rows, 3x5 matrix
+m <- matrix(1:10,10,10)
+m
+```
+
+Select matrix elements: 
+```{r}
+m[2,3]  # Matrix m, row 2, column 3 - a single cell
+m[2,]   # The whole second row of m as a vector
+m[,2]   # The whole second column of m as a vector
+m[1:2,4:6] # submatrix: rows 1 and 2, columns 4, 5 and 6
+m[-1,]     # all rows *except* the first one
+```
+
+Conditional operations
+```{r}
+m[1,] == m[,1]  # Are elements in row 1 equivalent to corresponding elements from column 1? 
+m > 3           # A logical matrix: TRUE for m elements >3, FALSE otherwise
+m[m > 3]        # Selects only TRUE elements - that is ones greater than 3
+```
+
+Other matrix manipulation
+```{r}
+t(m)          # Transpose m     
+m %*% t(m)    # %*% does matrix multiplication
+m * m         # * does element-wise multiplication
+```
+
+
+
+### Arrays: more than 2 dimensions
+
+Created with the `array()` function:
+```{r}
+a <- array(data=1:18,dim=c(3,3,2)) # 3d with dimensions 3x3x2
+a <- array(1:18,c(3,3,2))          # the same array
+a
+```
+
+Since arrays have 3 dimensions, also a 3rd element can be used for slicing&dicinhg.
+```{r}
+a[1,3,2]
+```
+
+
+### Lists  
+
+Lists are collections of objects (e.g. of strings, vectors, matrices, other lists, etc.)
+```{r}
+l1 <- list(boo=v1,foo=v2,moo=v3,zoo="Animals!")  # A list with four components
+l2 <- list(v1,v2,v3,"Animals!")
+
+l3 <- list()
+l4 <- NULL
+
+```
+
+```{r}
+l1["boo"]      # Access boo: this returns a list.
+l1[["boo"]]    # Access boo: this returns the numeric vector
+l1[[1]]        # Returns the first component of the list, equivalent to above.
+l1[[1]][2]     # Acess the second element in the first list
+l1$boo         # Named elements can be accessed using the $ operator - equivalent to [[]]
+```
+
+Add more elements to a list:
+```{r}
+l3[[1]] <- 11 # add an element to the empty list l3
+l4[[3]] <- c(22, 23) # add a vector as element 3 in the empty list l4. 
+                     # Since we added element 3, elements 1 & 2 will be generated and empty (NULL)
+l1[[5]] <- "More elements!" # The list l1 had 4 elements, we're adding a 5th here.
+l1[[8]] <- 1:11 # We added an 8th element, but not 6th or 7th. Those will be created empty (NULL)
+l1$Something <- "A thing"  # Adds a ninth element - "A thing", named "Something"
+```
+
+
+### Data Frames  
+The data frame is a special kind of list used for storing dataset tables. Think of rows as cases, columns as variables. Each column is a vector or factor.
+
+Note: While base `R` uses the `data.frame`, we later when working with `tidyverse` use the `tibble` instead, which is the same but modifies some annoying behaviors of the original data type (eg. no default interpretations of strings as factors, no `rownames`. More on that later).  
+
+Creating a dataframe:
+```{r}
+dfr1 <- data.frame( ID=1:4,
+                    FirstName=c("Jesper","Jonas","Pernille","Helle"),
+                    Female=c(F,F,T,T), 
+                    Age=c(22,33,44,55) )
+
+dfr1$FirstName   # Access the second column of dfr1. 
+```
+
+**Notice** that `R` thinks this is a categorical variable  and so it's treating it like a factor, not a character vector. You can tell `R` you don't like factors from the start using `stringsAsFactors=FALSE`. I find that annoying. The `tibble` (introduced later) does not do that.
+
+```{r}
+dfr2 <- data.frame(FirstName=c("John","Jim","Jane","Jill"), stringsAsFactors=FALSE)
+dfr2$FirstName   # Success: not a factor.
+```
+
+Access elements of the data frame. Notation is `dfr[row, column]` Rows can be acessed by number or condition, columns by number or name. Alternatively, columns can be acessed by `dfr$column`
+```{r}
+dfr1[1,]   # First row, all columns
+dfr1[,1]   # First column, all rows
+dfr1$Age   # Age column, all rows
+dfr1[1:2,3:4] # Rows 1 and 2, columns 3 and 4 - the gender and age of John & Jim
+dfr1[c(1,3),] # Rows 1 and 3, all columns
+```
+
+Find the names of everyone over the age of 30 in the data
+```{r}
+dfr1[dfr1$Age>30,2]
+```
+
+Find the average age of all females in the data:
+```{r}
+mean (dfr1[dfr1$Female==TRUE,4])
+```
+
+
+## Flow Control (loops & friends)
+Loops are powerful little helpers to do the same operation iterating over a number of items.
+
+If statements: `if (condition) expr1 else expr2`
+```{r}
+x <- 5; y <- 10
+if (x==0) y <- 0 else y <- y/x  
+y
+```
+
+for loops: `for (variable in sequence) expr`
+```{r}
+for (i in 1:x)  { print(paste("OMG, i just counted to", i)) }
+```
+
+While loop: `while (condintion) expr`
+```{r}
+while (x > 0) {print(x); x <- x-1;}
+```
+
+Repeat loop: `repeat expr, use break to exit the loop`
+```{r}
+repeat { print(x); x <- x+1; if (x>7) break}
+```
+
+## R troubleshooting 
+
+While I generate many (and often very creative) errors in R, there are three simple things that will most often go wrong for me. Those include: 
+
+* Capitalization. R is case sensitive - a graph vertex named "Jack" is not the same as one named "jack". The function `rowSums` won't work as "rowsums" or "RowSums".
+* Object class. While many functions are willing to take anything you throw at them, some will still surprisingly require character vector or a factor instead of a numeric vector, or a matrix instead of a data frame. Functions will also occasionally return results in an unexpected format.
+* Package namespaces. Occasionally problems will arise when different packages contain functions with the same name. R may warn you about this by saying something like "The following object(s) are masked from 'package:igraph'" as you load a package. One way to deal with this is to call functions from a package explicitly using '::'. For instance, if function 'blah' is present in packages A and B, you can call A::blah
+
+```{r}
+# library(dplyr)          # load a package
+# detach(package:dplyr)   # detach a package
+```
+
+For more advanced troubleshooting, check out `try()`, `tryCatch()`, and `debug()`. 
+```{r}
+?tryCatch
+```
+
+Generally, just using `?functionyouwonderabout` often solves problems. There you can review the functions arguments, inputs, outputs, syntax etc.
+
+# R 2.0: The Tidyverse
+
+## What is it all about?
+Base `R` comes with quite some functionality for slicing and dicing data, there also exists a myriad specialized packages for more tricky data manipulation. To read others' code and example as well as to perform some special operations, you all should be able to use standard `R` syntax. 
+
+However, the factors, the `[row, column]` syntax anhd so forth are not very comfortable and intuitive. Further, for more tricky operation such as certain aggregations etc., one has to rely on a variety of packages, which often come with an own syntax.
+
+The good news is: The efforts of a small set of key-developers (foremost [Hadley Wickham](http://hadley.nz/)) has let to the development of the  [`tidyverse`](https://www.tidyverse.org/), an ecosystem of `R` packages particularly designed for data science applications. All packages share an underlying design philosophy, common API, grammar, and data structures. 
+
+Among the most amazing contributions here is [`dplyr`](https://dplyr.tidyverse.org/), a grammar of data manipulation, providing a consistent set of verbs that help you solve the most common data manipulation challenges. I use `dplyr` for 90% of my data-manipulation tasks for the following reasons:
+
+* All the underlying code is runs optimized in `C++`, making it faster than most base `R`
+* It consistently unifies the grammar of data manipulation to a small set of operations, which can be flexibly combined to master almost every task
+* It is designed to work neathly with the `%>%` pipe-operator of [magrittr](hhttps://magrittr.tidyverse.org/) (more on that later)
+* its syntax is very similar to the logic of `SQL` and other data-management languages
+* It expanded far beoyond its original 5 verbs, and now replaces most base R commands with optimized, clever, and high-performance alternatives
+* It works neathly with many databases, such as `SQL` (with addon packages `DBI` and `dbplyr`)
+
+I will not touch on all packages there, but the complete `tidyverse` covers almost all issues of data manipulation. They all operate under the same logic, are fast, and usually your best choice for almost any given problem. Particularly `dplyr` is enourmeously powerfull, and has a lot more functions than the basics I cover here. So, for every given probloblem, your first question (to yourself or [stackoverflow](https://stackoverflow.com/)) should be:
+
+1: Is there a way to solve my problem in `dplyr`?
+2: If not, is there another `tidyverse` package dedicated to this problem?
+
+For the sake of illustration, I will load every package of the `tidyverse` one-by-one when we need it. However, normally I just load `library(tidyverse)` all at once, since I need a lot of these packages often anyhow
+
+```{r,warning=FALSE}
+library(tidyverse) # To load the whole compilation of packages
+```
+
+
+## Piping in `dplyr`
+
+![Cleaning](https://www.dropbox.com/s/13okk1po1gqae6b/pipe.jpg?dl=1)
+
+in traditional `R` syntax, data-manipulations are carried out one by one. For example, one would first assign a new variable `x$numbers <- 1:5`, then maybe manipulate it `x$numbers <- x$numbers * 2`, and subset it `x <- x[x$numbers > 4]`. `dplyr` makes use of `margrittr`'s pipes, written like `%>%`. 
+
+A pipe means take the output of it's left-hand side and insert it as first input in the function on the right-hand side. Accordingly, all `dplyr` functions follow the syntax that their first input is always the data to be manipulated. Therefore, they can all be "piped".
+
+For example, we could pipe as follows (don't worry about the other syntax yet):
+```{r}
+x <- tibble(numbers = 1:5) %>%
+  mutate(numbers = numbers * 2) %>%
+  filter(numbers > 4)
+
+x
+```
+
+It basically reads like: 
+
+* Create a dataframe (to be precise, a `tibble`) with the variable "numbers" and assign the values 1:5.
+* THEN multiply them with 2.
+: THEN subset the dataframe to only rows with a nuimber value higher than 4.
+
+It first looks not so intuitive, but it will become your second nature. Using pipes facilitates fast, reproducible and easily readable coding practices, and all of you are encouraged to go on with that.
+
+**Note:** `%>%` pipes do not autometically assign their output to the left-hand side object, meaning the original dataset will not per se be overwritten. To do that, there are two ways:
+
+1: Initially, assign the output to the original data with `<-`
+2: Initially, use `margrittr`'s `%<>%` command, meaning: Assign and pipe.
+
+```{r}
+# This will create an output, but not change x
+x %>%
+  filter(numbers > 5)
+
+# This will re-assign x
+x <- x %>%
+  filter(numbers > 5)
+# is equivalent to
+x %<>%
+  filter(numbers > 5) 
+```
+
+In conclusion: The pipe basically passes on dataframe between functions in the following way:
+```{r, eval = FALSE, warning = FALSE}
+# Only pseudo code here, does not run
+x %>% fun()
+# Is equivalent to
+fun(x)
+
+# While
+x %<>% fun()
+# Is equivalent to
+x <- fun(x)
+```
+
+## The 5 core verbs of data-manipulation
+So, let's zoom in the `dplyr` functionality and syntax for a moment, before we illustrate it at the following data-manipulation tasks.
+
+At ity's core are 5 central verbs of data/manipulation, which are
+
+1. `filter()` picks cases based on their values.
+2. `select()` picks variables based on their names.
+3. `arrange()` changes the ordering of the rows.
+4. `mutate()` adds new variables that are functions of existing variables
+5. `summarise()` reduces multiple values down to a single summary.
+
+These all combine naturally with `group_by()` which allows you to perform any operation "by group". You can learn more about them in `vignette("dplyr")`. As well as these single-table verbs, dplyr also provides a variety of two-table verbs (joins and mutations), which you can learn about in `vignette("two-table")`.
+
+We will explore now a bit with the starwars dataset, which comes together with `dplyr`. First, let's get an intuition what's in it. `head()` shows us the first 10 rows.
+
+```{r}
+starwars %>% head() # The "startwars" dataset is an integrated dplyr goddie :)
+```
+
+`glimpse()` gives us anh overview over all variable types.
+
+```{r}
+starwars %>% glimpse()
+```
+
+
+
+### 1: `filter()`
+The verb `filter()` lets you subset a dataframe by rows (observations), meaning the output will filter for only rows which fulfill a certain condition.
+
+![Filter](https://www.dropbox.com/s/bmonr9ulkd9v5tf/dplyr_filter.png?dl=1)
+
+```{r}
+starwars %>% 
+  filter(species == "Droid")
+```
+
+Conditions can be combined with boolean operators (`&, |`)
+
+```{r}
+starwars %>% 
+  filter(homeworld == "Tatooine" & species == "Droid")
+```
+
+### 2: `select()`
+The verb `select()` lets you subset a dataframe by column (variable), meaning the output will only contain certain columns in the stated order
+
+```{r}
+starwars %>% 
+  select(name, homeworld) %>%
+  head(10) 
+```
+
+It can also be used to deselect columns with a leading `-`
+
+```{r}
+starwars %>% 
+  select(-birth_year, -skin_color) %>%
+  head(10) 
+```
+
+Lastly, many of `dplyr`'s other conditions and helper functions can be applied to select or deselect columns. More on that later.
+```{r}
+starwars %>% 
+  select(name, ends_with("color")) %>%
+  head(10) 
+```
+
+### 3: `arrange()`
+The verb `arrange()` defines the way the rows of your dataframe are ordered
+
+![Arrange](https://www.dropbox.com/s/edoturkaj9oduyl/dplyr_arrange.png?dl=1)
+
+```{r}
+starwars %>% 
+  arrange(homeworld, desc(mass)) %>% # Note: desc() witll order it descending, so the heaviest one first.
+  head(10) 
+```
+
+### 4: `mutate()`
+The verb `mutate()` lets you manipulate existing variables or create new ones.
+
+![Mutate](https://www.dropbox.com/s/w19b5mhpv603tg0/dplyr_mutate.png?dl=1)
+
+```{r}
+starwars %>% 
+  mutate(bmi = mass / ((height / 100)  ^ 2), # If you didnt know how to calculate the BMI, now you do...
+         mass.rel = mass / max(mass, na.rm = TRUE)) %>%
+  select(name:mass, mass.rel, bmi) %>%
+  arrange(desc(bmi)) %>%
+  head(10) 
+```
+
+
+### 5: `summarize()`
+The verb `summarize()` reduces your dataset to one observation, which is summarized according to a defined function.
+
+![Summarize](https://www.dropbox.com/s/2pb07846mzg1huo/dplyr_summarize.png?dl=1)
+
+```{r}
+starwars %>% 
+  summarize(min.height = min(height, na.rm = TRUE),
+            mean.height = mean(height, na.rm = TRUE),
+            max.height = max(height, na.rm = TRUE),            
+            sd.height = sd(height, na.rm = TRUE) )
+```
+
+
+### Bonus: Doing manipulation by group: `group_by`
+Finally, `by_group()` is offers the perfect complement to the 5 basic verbs, since it allows to perform aqll the above mentioned tasks sepperate according to used-defined groupings in one or multiple categories. Lets look at some examples:
+
+![Group](https://www.dropbox.com/s/lpuoesmr9hqwfdg/dplyr_group.png?dl=1)
+
+First of all, it works amazingly well with the `summarize()` verb, producing within group summaries
+
+```{r}
+starwars %>% 
+  group_by(homeworld) %>%
+  summarize(mean.height = mean(height, na.rm = TRUE)) %>%
+  ungroup() %>%
+  arrange(desc(mean.height))
+```
+
+Note that it is adviced to finish always such operations with `ungroup()`. Otherwise, the still active grouping might at a later point lead to all kind of unforseen results.
+
+## Your turn
+
+Some little exercises in between: Please solve **Exercise 1** in the corresponding section on `github`
+
+## Two-table verbs
+It's rare that a data analysis involves only a single table of data. In practice, you'll normally have many tables that contribute to an analysis, and you need flexible tools to combine them. In `dplyr`, there are three families of verbs that work with two tables at a time:
+
+1. Mutating joins, which add new variables to one table from matching rows in another.
+2. Filtering joins, which filter observations from one table based on whether or not they match an observation in the other table.
+3. Set operations, which combine the observations in the data sets as if they were set elements.
+
+Among those, mutating joins are the by far most used ones, so we will briefly discuss them here, and cover other types later in the applied part. For questions right away, consult `vignette(two-"two-table")`. Mutating joins allow you to combine variables from multiple tables (merging data). We here assume our data is "tidy" (meaning: rows = observations, columns = variables). 
+
+Lets briefly create some example data:
+```{r}
+df1 <- data_frame(x = c(1, 2), y = 2:1)
+df2 <- data_frame(x = c(1, 3), a = 10, b = "a")
+df1
+df2
+```
+
+There are 4 types of mutating join to combine variables from dataframe `x` and `y, which differ in their behaviour when a match is not found. We'll illustrate each with a simple example:
+
+1. `left_join(x, y)` includes all observations in `x`, regardless of whether they match or not. This is the most commonly used join because it ensures that you don't lose observations from your primary table.
+```{r}
+df1 %>% left_join(df2)
+```
+
+
+2. `right_join(x, y)` includes all observations in `y`. It's equivalent to `left_join(y, x)`, but the columns will be ordered differently.
+```{r}
+df1 %>% right_join(df2)
+```
+
+```{r}
+df2 %>% left_join(df1)
+```
+
+3. `inner_join(x, y)` only includes observations that match in both `x` and `y`.
+```{r}
+df1 %>% inner_join(df2)
+```
+
+4. `full_join()` includes all observations from `x` and `y`.
+```{r}
+df1 %>% full_join(df2)
+```
+
+The left, right and full joins are collectively know as **outer joins**. When a row doesn't match in an outer join, the new variables are filled in with missing values. 
+
+While mutating joins are primarily used to add new variables, they can also generate new observations. If a match is not unique, a join will add all possible combinations (the Cartesian product) of the matching observations:
+
+```{r}
+df1 <- data_frame(x = c(1, 1, 2), y = 1:3)
+df2 <- data_frame(x = c(1, 1, 2), z = c("a", "b", "a"))
+
+df1 %>% left_join(df2)
+```
+
+Note: In case of multiple matches in `y`, adittional rows will be added. Therefore, if that is not the behavior you want, use the `distinct()` function afterwards.
+
+By default, joins are performed on the bases of **all** variables appearing in `x` and `y`. You can also specify one or multiple variables that should be matched by using the `by` argument. This can also be used to match on variables with different names in `x` and `y`.
+
+```{r}
+df1 <- data_frame(x = c(3, 2, 1), y = 1:3, z = c(1,3,4))
+df2 <- data_frame(x = c(1, 2, 3), y = 2:4, q = c("a", "b", "a"))
+
+df1 %>% left_join(df2, by = "x")
+df1 %>% left_join(df2, by = c("x", "y"))
+df1 %>% left_join(df2, by = c("x" = "y"))
+```
+
+##  Final remarks
+Even though that doesnt sound too much, when combining them right, these basic verbs will enable you to do ca 80% of common data manipulation tasks.
+
+![](https://www.dropbox.com/s/ia4lu84dr41qs7k/tidy_workflow.png?dl=1)
+
+
+## Your turn
+
+Some little exercises in between: Please solve **Exercise 2** in the corresponding section on `github`
+
+
+# Case Study: Cleaning up historical data on voting of the United Nations General Assembly
+
+So, after we refreshed the basic grammar of data-manipulation, we will put it to a test in the following example. We will step-by-step explore the power of the basic grammar of data-manipulation.
+
+We will use the "UN General Assembly Voting" dataset, and explore the pattern and some underlying mechanisms of country voting choices. Lets get started!
+
+![UNGA](https://www.dropbox.com/s/3vmtmr0rfq7fe5p/un.jpeg?dl=1)
+
+Source: Erik Voeten "Data and Analyses of Voting in the UN General Assembly" Routledge Handbook of International Organization, edited by Bob Reinalda (published May 27, 2013). Available at SSRN: http://ssrn.com/abstract=2111149
+
+
+## Step 1: Optaining the deta
+Usually, we would now have to download some data online, access it via an API or a local database, or something like that. The full dataset is available at [Harvard's DataVerse](https://dataverse.harvard.edu/dataset.xhtml?persistentId=hdl:1902.1/12379).  For a first warm up, we will skip this part, and use the following data I conveniently prepared for you.
+
+A little hint here in case you want to load a `.csv` and stuff the like: The `data.table` package was a really nice function called `fread()` ( stands for "friendly read"), which by now replases mostly `R`'s standard `read.table`, `read.csv()` ect. since it is just faster, automatically recognizes most data format, and codes the variables smarter. However, back to our data. For my own workflow in R, I prefer to save datasets as `.rds` file, which creates a serialized version of the dataset and then saves it with gzip compression. Thatreduces the disk-space of datasets, while they are still read faster than for example a `.csv`.
+
+```{r}
+rm(list=ls())
+votes <- readRDS(url("https://www.dropbox.com/s/dtqu1nl7e7uge87/UN_votes.rds?dl=1"))
+```
+
+
+## Step 2: First Inspection
+
+Lets first have a look what's in the dataset.
+
+```{r}
+votes  %>% head(10)
+```
+
+```{r}
+votes  %>% glimpse()
+```
+
+We see that the dataset is with 508,929 observations already somewhat large. We find a set of 4 variables. Doesn't sound so exiting on first glance. Anyhow, lets talk for a moment about the variables we have:
+
+* **`rcid:`** The roll-call ID, serving as an unique identifyer for the resolution vouted on.
+* **`session:`** The number of the session of the annual UNGA, starting with 1 for the historically first meeting
+* **`vote:`** A numerical code representing the country's choice of vote:
+     * 1 = Yes
+     * 2 = Abstain
+     * 3 = No
+     * 8 = Not present
+     * 9 = Not a member
+* **`ccode:`** A numerical code to identify the country
+
+So, to sum up: 
+
+* Every row contains a voting choice for a particular resolution on country level. 
+* Consequently, we will for every resulution have a single row for every country.
+* All variables are coded numerically
+
+## Step 3: Preprocessing
+
+Whatever data you obtian, it usually needs a bit of manual "massage" to be ready for further analysis. Common steps here are
+
+1. Check variable format (dates, strings, numeric etc.)
+2. Check variable scaling (range, outliers)
+3. Deal with missing values
+
+While there are some more issues you could run into, we in the following go through a couple of common problems and see some easy ways how to solve them.
+
+### Filtering
+One step of data cleaning is removing observations (rows) that you're not interested in. In this case, you want to remove "Not present" and "Not a member". Since we are for now not interested in them, lets get rid of them
+
+```{r}
+votes %>% filter(vote <= 3)  %>% head(10)
+```
+
+
+### Adding a year column
+The next step of data cleaning is manipulating your variables (columns) to make them more informative. In this case, you have a session column that is hard to interpret intuitively. But since the UN started voting in 1946, and holds one session per year, you can get the year of a UN resolution by adding 1945 to the session number.
+
+```{r}
+votes %>%
+  mutate(year = session + 1945) %>% 
+  head(10)
+```
+
+### Adding a country column
+The country codes in the ccode column are what's called [Correlates of War codes](http://cow.dss.ucdavis.edu/data-sets/cow-country-codes), a numerical coding convention for country names. This isn't ideal for an analysis, since you'd like to work with recognizable country names.
+
+For this and similar cases, the R package [`countrycode`](https://github.com/vincentarelbundock/countrycode) is really practical, since it allows for fast and easy ways to switch between many standard country-coding conventions.
+
+```{r}
+library(countrycode)
+
+votes  %>%
+  mutate(country = countrycode(ccode, "cown", "country.name")) %>% 
+  head(10)
+```
+
+Here,we tell `countrycode` to transfer the Correlates of War Code ("cown") to the easily readable country name ("country.name"). Other transformations such as to ISO2 and ISO3 alphanumerical codes are also possible. Neath, isn't it?
+
+Note that we up to now never changed the original `votes` data. All pipes upto now just created an output for illustration. To really change the data, we have to use the assign-and-pipe `%<>%`, or the manual assignment `<-`. So, lets finish this cleaning up and pipe the whole preprocessing all together. Since not all counrty codes matched a country name, we will also filter the unmatchedc out
+
+```{r}
+votes %<>% 
+  filter(vote <= 3) %>%
+  mutate(year = session + 1945,
+         country = countrycode(ccode, "cown", "country.name")) %>%
+  filter(!is.na(country)) %>%
+  arrange(year, rcid, ccode)
+
+votes %>% head(10)
+```
+
+## Generating first insights
+
+### Summarizing the full dataset
+In this analysis, we're going to focus on "% of votes that are yes" as a metric for the "agreeableness" of countries. we'll start by finding this summary for the entire dataset: the fraction of all votes in their history that were "yes". Note that within your call to `summarize()`, you can use `n()` to find the total number of votes and `mean(vote == 1)` (since the output of the logical operation is FALSE or TRUE, which is equivalent to 0 or 1) to find the fraction of "yes" votes.
+
+```{r}
+votes %>%
+  summarize(total = n(),
+            percent_yes = mean(vote == 1)) 
+```
+
+Ok, we see that in general, countries tend to be "aggreable". While nice to know, this is not terribly informative. As always, single numbers tell us little, trends, context, and comparison does usually provide more insights. So lets start with putting this number in perspective.
+
+### Summarizing by year
+The `summarize()` function is especially useful when used within groups. Here, it gives not a overal summary, but one for every group instance. For example, we might like to know how much the average "agreeableness" of countries changed from year to year. To examine this, you can use `group_by()` to perform your summary not for the entire dataset, but within each year.
+
+```{r}
+year <- votes %>%
+  arrange(year) %>%
+  group_by(year) %>%
+  summarize(total = n(),
+            percent_yes = mean(vote == 1)) 
+
+year %>% head(10)
+```
+
+On first galance, it looks like the overall "agreeableness" seems to increase over time. 
+
+### Summarizing by country
+In the last exercise, you performed a summary of the votes within each year. You could instead summarize() within each country, which would let you compare voting patterns between countries. For further analysis, we wil create a new dataframe on country level.
+
+```{r}
+country <- votes %>%
+  group_by(country) %>%
+  summarize(total = n(),
+            percent_yes = mean(vote == 1))  
+
+country %>% head(10)
+```
+
+Let's inspect this country level voting pattern by looking at the most and least agreable countries by arranging the dataframe.
+
+```{r}
+country %>%
+  arrange(desc(percent_yes)) %>% head(10)
+
+country %>%
+  arrange(percent_yes) %>% head(10)
+```
+
+Here we have the top-10 agreable and non-agreable countries (note the use of `slice()`, one of the many advanced `dplyr` verbs). We see that Zanzibar is an absolutely non-agreeing country. Yet, we also see that they only participated in 2 votes. So, is that number reliable and informative? That is a classical example of how we might get misleading results when working with aggregated data without thorroughly investigating it upfront. 
+
+So, in conclusion: We might want to get rid of countries with very litte total votes.
+
+```{r}
+country %<>%
+  filter(total >= 100)
+```
+
+## First (petite) graphical exploration
+Allright, lets go on with a little analysis of time trends. Here, we will do a bit more graphical exploration. Therefore, lets have a mini-introduction to graphical plotting. Since this will be done more in detail in later sessions, I will keep it short.
+
+### Digression: The Grammar of graphics, and [`ggplot2`](https://ggplot2.tidyverse.org/)
+`ggplot2` can be thought of as a mini-language (domain-specific language) within the `R` language. It is an R implementation of [Wilkinson's Grammar of Graphics book](https://www.springer.com/gp/book/9780387245447). [A Layered Grammar of Graphics](http://vita.had.co.nz/papers/layered-grammar.pdf) describes Hadley's implementation of these thoughts in the ggplot2's design. Conceptually, the main idea behind the Grammar of Graphics is that a statistical graphic is a mapping from variables to aesthetic attributes (x axis value, y axis value, color, shape, size) of geometric objects (points, line, bars). While the Grammar of Graphic contains more elements, we will focus in this brief intro in the two main ones, aestetics and geometries. 
+
+* **Aestetics:** Devine the "surface" of your plot, in terms of what has to be mapped (size, coplor) on the x and y (and potentially adittional) axes. Aesteticts are defined within the `aes()` function.
+* **Geometries:** Visual elements you can see in the plot itself, such as bars, lines, and points. They are defined within various `geom_XYZ()` functions.
+
+Basically, you define a surface grid and then plot something on top. We will talk about all of that in depth in later sessions, for now that's all you need to know to understand the following simple examples.
+
+
+### Plotting by year
+So, lets graphically explore the development of agreeability over time. The code below is very simple. We pass our data `year` to the `ggplot()` function, which here only contains the basic aestetics `aes()`. In this case, we would like to map the `year` on the `x`, and the value of the `percent_yes` variable on the `y` axis. That defines the plot's surface. Then, we use the `+` to add a geometric element (it is similar to the logic of the `%>%` pipe), in this case a line-plot with `geom_line()`.
+
+```{r}
+library(ggplot2)
+
+year %>%
+  ggplot(aes(x = year, y = percent_yes) ) +
+  geom_line() 
+```
+
+Looks like the trend of increasing agreeability sort of peaked in the 80s.
+
+### Summarizing by year and country
+Ok, that was nice so far, even though not terribly interesting, since it's hard to interpret aggregated numbers of almost all the world's countries combined. More tangible insights we might get when zooming in a single country, or comparing trends over a set of countries. Therefore we need a bit of a different data structure. We now need one observation not for year or country, but for every country and year. Fortunatelly, that's easily done via multiple groupings.
+
+```{r}
+year_country <- votes %>%
+  group_by(year, country) %>%
+  summarize(total = n(),
+            percent_yes = mean(vote == 1))
+
+year_country  %>% head(10)
+```
+
+Ok, with this datastructure, we can do some interesting analysis. For example, we can only look at the development of Danish votes by filtering.
+
+```{r}
+year_country %>%
+  filter(country == "Denmark") %>%
+  ggplot(aes(x = year, y = percent_yes) ) +
+  geom_line() 
+```
+
+**Note on the `%in%` operator:** In case we want to compare a set of countries now, it would be convenient if we could select many of them in an easy way. Here, the `%in%` operator is handy. It basically just takes two vectors `x` and `y`, and for every element in `x` returns a Logical indication of this element is also contained in `y`. Example:
+
+```{r}
+c("the", "cake", "is", "a", "lie") %in% c("I", "would", "love", "to", "eat", "a", "cake")
+```
+
+We can following the same idea create a vector of country anmes we want to compare, and then filter our dataset for these countries.
+```{r}
+countries <- c("United States", "China", "France", "Denmark")
+
+year_country %>%
+  filter(country %in% countries)  %>% head(10)
+```
+
+So,l lets plot these countries. To have them all displayed in one plot, we could either create a `geom_line()` for every subset (would be silly), or define in ggplot's `aes()` that the categorical variable `country` should be mapped with different colors. Therefore, for every country, a sepperate line in a different color will be created.
+
+```{r}
+year_country %>%
+  filter(country %in% countries) %>%
+ggplot(aes(year, percent_yes, color = country)) +
+  geom_line(key_glyph = "timeseries")
+
+# Note: key_glyph = "timeseries" is only an argument that does a pretty timeseries-style legend :)
+```
+
+We indeed see differences between countries. While Denmark seens to be somewhat stable around 50% agreement/disagreement (the Danish style...), the USA over time moved to a very low rate of agreement. China, which got its UN seat just in the 70s, appears to be the mosyt agreeable country in our small sample. 
+
+We could obviously go on with all kind of similar graphical analysis, but I do not want to spoiler too much of what is about to come in later sessions. So, lets leave it with that.
+
+## Joining our data with contextual information
+Up to now, we just looked at general voting pattern, and then a bit more nuanced at pattern over time and across countries. What the specific votes whewre about, we up to now did not really care. However, every vote corresponds to an important geo- and sociopolitic issue. So, it's time to bring in a bit of context. Therefore, we will now also draw from an adittional dataset with more detailed information on the content of the corresponding vote, which we up to now treated as pure numbers. Lets take a look:
+
+
+```{r}
+descriptions <- readRDS(url("https://www.dropbox.com/s/k5eym73lwndjbim/UN_votes_descriptions.rds?dl=1"))
+```
+
+```{r}
+descriptions %>% head(10) 
+```
+
+```{r}
+descriptions %>% glimpse()
+```
+
+We find the following variables:
+
+* `rcid`: The corresponding ID, which we already know from the previous dataset
+* `session`: Likewise, the corresponging session number
+* `date`: The day of the vote
+* `unres`: The code of the corresponding UN resolution (Check it out in private, is very interesting)
+
+Furthermore, there are 6 "dummy" (meaning 0 or 1 corresponding to FALSE or TRUE) regarding the broad topic of the resolution
+
+* `me`: Palestinian conflict
+* `nu`: Nuclear weapons and nuclear material
+* `di`: Arms control and disarmament
+* `hr`: Human rights
+* `co`: Colonialism
+* `ec`: Economic development
+
+Little sidenote: We see that the `date` column here is formatted differntly, in the "YYYY-MM-DD" formaat. To transform it to a "YYYY" (year only) format, we could manipulate the string via **regular expressions** the `tidyverse` package [`stringr`](https://stringr.tidyverse.org) (which we will explore a bit later), or in base-R. However, working with differtent time format is always messy, and the `tidyverse` has a dedicated package for it, [`lubridate`](https://lubridate.tidyverse.org/). So we will use this opportunity for a simple date-transformation exercise:
+
+```{r, warning = FALSE}
+library(lubridate)
+descriptions %<>%
+  mutate(year = year(date)) 
+
+descriptions %>% head(10)
+```
+
+Neath, isnt it? In similar way, you can easily switch between date formats.
+
+We only have one row per resolution, not as in `votes` one per country vote. Since both dataframes share the `rcid`and `year` variable, we can join on these to augment our votes data with contextual information.
+```{r}
+votes_joined <- votes %>% 
+  select(-ccode) %>%
+  inner_join(descriptions %>% select(-date, -session, -unres), by = c("rcid", "year"))
+
+votes_joined %>% head(10)
+```
+
+Here, we perform an `inner_join()`, meaning that it will contain only rows that appear in both dataframes. We do so since we from now on want to look only at votes with contextual information (which are missing in some cases). Note that we deselect unused variables in `description` directly in the join.
+
+Lets look what is voted in ceretain issues. Why not see how the USA over time voted on colonialism related issues.
+
+```{r}
+votes_joined %>%
+  filter(country == "United States", co == 1) %>%
+  group_by(year) %>%
+  summarize(percent_yes = mean(vote == 1)) %>%
+  ggplot(aes(year, percent_yes)) +
+  geom_line() +
+  labs(y = "Percentage Yes votes on colonialism")
+```
+
+We could also do the same exercise over all topics together in one plot. 
+
+## Working with tidy data (pivoting, reshaping, or changing between long and wide data formats)
+By now, we worked with the traditional data structure, where every column corresponds to one variable. We also call that a **wide*"** data format. This is in most cases the most efficient and prefered way to keep your data. However, there are some cases, where another dataformat would be more convenient.
+
+For example, for range of graphical as well as numerical summaries, it would be nice to have every observation and every variable to be mapped in a single row. This format is also calles **long** (or in R slang, **tidy**) data. Adittionally, some real life datasets (including a lot of WorldBank, Eurostats, OECD, ect.) data is usually available in a long format. Therefore, weare in need of easily switching between long and wide formats, to **reshape** your data (in Excel slang, people call that **pivoting**).
+
+Luckily, R's `tidyr` package offers you exactly these functionalities in 4 easy functions.
+
+![tidyr](https://www.dropbox.com/s/z6ulno9e00zfu77/tidyr.png?dl=1)
+
+In detail, they are:
+
+* `gather()`: collapse columns into rows (wide to long). **NOTE:** Since new `dplyr` release called `pivot_longer()`
+* `spread()`: spread two columns into multiple columns (long to wide). **NOTE:** Since new `dplyr` release called `pivot_wider()`
+* `unite()`: Unite multiple columns into one
+* `separate()`: separate one column into multiple
+
+### Tidying our data
+For our task, we will now reshape our dataframe from wide to long (tidy), therefore use the `gather()` function. In order to represent the joined vote-topic data in a tidy form so we can analyze and graph by topic, we need to transform the data so that each row has one combination of country-vote-topic. This will change the data from having six columns (`me`, `nu`, `di`, `hr`, `co`, `ec`) to having two columns (`topic` and `has_topic`).
+
+![Gathering](https://www.dropbox.com/s/zonkov4i48tbdqo/dplyr_gather.png?dl=1)
+
+```{r}
+library(tidyr)
+votes_tidy <- votes_joined %>%
+  gather(key = topic, value = has_topic, me:ec) %>%
+  filter(has_topic == 1)
+
+votes_tidy %>% head(10)
+```
+
+### Recoding the topics
+There's one more step of data cleaning to make this more interpretable. To interpret the data more easily, recode the data to replace these codes with their full name. You can do that with `dplyr`'s `recode()` function, which replaces values with ones you specify.
+
+```{r}
+votes_tidy %<>%
+  mutate(topic = recode(topic,
+                        me = "Palestinian conflict",
+                        nu = "Nuclear weapons and nuclear material",
+                        di = "Arms control and disarmament",
+                        hr = "Human rights",
+                        co = "Colonialism",
+                        ec = "Economic development"))
+```
+
+### Summarize by country, year, and topic
+In previous exercises, you summarized the votes dataset by country, by year, and by country-year combination. Now that you have `topic` as an additional variable, you can summarize the votes for each combination of country, year, and topic (e.g. for the United States in 2013 on the topic of nuclear weapons.). This shows one of the advantages of working with tidy data: The ease to summarize lexible on categort+variable level.
+
+```{r}
+votes_tidy %>%
+  group_by(country, year, topic) %>%
+  summarize(total = n(), percent_yes = mean(vote == 1)) %>%
+  ungroup() %>% 
+  head(10)
+```
+
+### Visualizing trends in topics for one country
+Now we have a unique mapping of country, year, and topic, therefore can sily create summaries and summary graphs on all kind of level. For example, lets compare how the USA and Denmark over time voted on different topics. To create the plots for all topic at once, we will introduce a new `ggplot2` geometry, a `facet_wrap` over `topic`. This just creates a sepperate plot for every category within `topic`. Just take it here for the sake of illustration, the details will be covered in later sessions.
+
+```{r}
+votes_tidy %>%
+  group_by(country, year, topic) %>%
+  summarize(total = n(), percent_yes = mean(vote == 1)) %>%
+  ungroup() %>%
+  filter(country %in% c("United States", "Denmark")) %>%
+  ggplot(aes(x = year, y = percent_yes, color = country)) +
+  geom_line(key_glyph = "timeseries") +
+  facet_wrap(~ topic) +
+  labs(title = "UN votes by topic",
+       subtitle = "Comparing USA and Denmark",
+       y = "Percentage Yes votes")
+```
+
+Up to now, we always created line plots (`geom_line()`), but we could also do a scatterplot (`geom_point()`). To make time-trends more visible, we could add a smoothed trend-line (`geom_smooth()`, don't bother with the details for now)
+
+
+```{r}
+votes_tidy %>%
+  group_by(country, year, topic) %>%
+  summarize(total = n(), percent_yes = mean(vote == 1)) %>%
+  ungroup() %>%
+  filter(country == "United States") %>%
+  ggplot(aes(x = year, y = percent_yes)) +
+  geom_point() +
+  geom_smooth(se = TRUE) +
+  facet_wrap(~ topic) +
+  labs(title = "UN votes by topic",
+       subtitle = "USA only",
+       y = "Percentage Yes votes",
+       caption = "Including trend-line")
+```
+
+Ok, byt that's enough about visualization for now, I do not want to spoiler too much. Only thing I wanted to illustrate here is how easily multiple geometric layers can be added in ine plot. 
+
+Another intersting thing we could do now is to find the most aggreable topic per country, emaning the one every country is most inclined to voe for "yes". As you will see, that is easily done in tidy data with combining the well known verbs. You're getting a hang on it, right? Here I introduce one of the adittional `dplyr` helper verbs, `slice()`, which "slices" the rows given as arguments out of the dataframe.
+
+```{r}
+votes_tidy %>%
+  group_by(country, topic) %>%
+  summarize(total = n(), percent_yes = mean(vote == 1)) %>%
+  ungroup() %>%
+  arrange(country, desc(total)) %>%
+  group_by(country) %>%
+  slice(1) %>%
+  ungroup() %>%
+  filter(total > 50) %>%
+  arrange(desc(percent_yes)) %>% head(10)
+```
+
+Similarly, we could look at the top-3 countries in favor of every topic.
+
+```{r}
+votes_tidy %>%
+  group_by(country, topic) %>%
+  summarize(total = n(), percent_yes = mean(vote == 1)) %>%
+  ungroup() %>%
+  filter(total > 50) %>%
+  arrange(topic, desc(percent_yes), desc(total)) %>%
+  group_by(topic) %>%
+  slice(1:3) %>%
+  select(topic, everything())
+```
+
+The combined use of `group_by()`, `arrange()`, and `slice()` is extremly neath to produce all kind of top-n summaries.
+
+**Note on regular expressions:** In cases when we need to manipulate or search character strings, knwoledge of regular [regular expressions](https://www.rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf) is extremely useful. We not have time to venture further into that. We will here use the `tidyverse` package [`stringr`](https://stringr.tidyverse.org/articles/regular-expressions.html). For now, let's just assume:
+
+1: We would like to identify rows where a certain string appears....
+```{r}
+library(stringr)
+votes_tidy %>%
+  filter(topic %>% str_detect("Economic")) %>% head(10)
+```
+
+2: or we want to replace a certain character string... eg. because it is just too long... 
+```{r}
+votes_tidy %>%
+  filter(topic %>% str_detect("Economic")) %>% 
+  mutate(topic = topic %>% str_replace_all(" development", " dev.")) %>% head(10)
+```
+
+Regular expressions are a bit of a mess to learn, but extremely powerful. In case you need it, give it a shot!
+
+## Your turn
+And to conclude this session, lets explore a bit on our own. Please solve **Exercise 3** in the corresponding section on `github`
+
+Have fun, and see you next time!
+
+# Endnotes
+
+```{r}
+sessionInfo()
+````
+
+
+
+
+

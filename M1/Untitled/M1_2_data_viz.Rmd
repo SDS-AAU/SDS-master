@@ -1,0 +1,238 @@
+---
+title: 'Data Exploration and Visualization (in R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+output:
+  html_document: 
+    df_print: paged
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+set.seed(1337) # To have a seed defined for reproducability
+
+rm(list=ls()); graphics.off() # get rid of everything in the workspace
+if (!require("pacman")) install.packages("pacman") # package for loading and checking packages :)
+if (!require("knitr")) install.packages("knitr"); library(knitr) # For display of the markdown
+
+### Knitr options
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     fig.align="center"
+                     )
+```
+
+
+```{r}
+### Install packages if necessary
+pacman::p_load(tidyverse, # Collection of all the good stuff like dplyr, ggplot2 ect.
+               magrittr, # For extra-piping operators (eg. %<>%)
+               ggmap # For geoplotting
+               )
+```
+
+# Introduction 
+[`ggplot2`](https://ggplot2.tidyverse.org/) can be thought of as a mini-language (domain-specific language) within the `R` language. It is an R implementation of [Wilkinson's Grammar of Graphics book](https://www.springer.com/gp/book/9780387245447). [A Layered Grammar of Graphics](http://vita.had.co.nz/papers/layered-grammar.pdf) describes Hadley's implementation of these thoughts in the ggplot2's design. Conceptually, the main idea behind the Grammar of Graphics is that a statistical graphic is a mapping from variables to aesthetic attributes (x axis value, y axis value, color, shape, size) of geometric objects (points, line, bars). 
+
+![](https://www.dropbox.com/s/o5pvv2j2ztj3qo2/ggplot_structure.png?dl=1)
+
+Lets take a step back and zoom a bit into different forms of visualization. We will now take a look at the `BIXI Bikeshare Data`, covering 500k bike-rides in the BIXI bike-sharing system in Montreal.
+
+```{r}
+bike <- readRDS(url("https://www.dropbox.com/s/ydbn67h8as7rxet/bikes_montreal.rds?dl=1"))
+```
+
+Lets take a look:
+
+```{r}
+bike %>% glimpse()
+```
+
+We see here a number of different variable types present, namely:
+
+* Continuous variables
+* Categorical variables
+* Temporal variables
+
+First of all: Lets remeber, the first thing we do is defining the aestetics, first of all the dimensions (x, y) of the visualization.
+
+```{r}
+bike %>% ggplot(aes(x = weekday, y = start_hod)) 
+```
+
+The result will be an empry plane with the dimensions we defined. Note that there are more aestetic dimensions which can be used to convey informations visualy, such as for instance:
+
+* Position (x, y)
+* Color
+* Shape
+* Alpha (Transparency)
+
+We will explore them later.
+
+# Basic visualization of variable types
+
+### Summaries of One Variable: Continuous
+
+When attempting to summarize a single variable, histograms and density distributions are often the visualization of choice. We can do that easily by using the `geom_histogram()` layer. Notice that we only define a `x` aestetic, since we only summarize one variable
+
+```{r}
+bike %>% ggplot(aes(x = duration_sec)) +
+  geom_histogram()
+```
+
+To plot a probability density function (PDF) instead, we can use the `geom_density()` layer.
+
+```{r}
+bike %>% ggplot(aes(x = duration_sec)) +
+  geom_density()
+```
+
+Note the distribution appears right-skewed, since we have some outliers of very long bike rides. Adding a log-scale on the x-axis might help to reduce their impact on the visualization.
+
+
+```{r}
+bike %>% ggplot(aes(x = duration_sec)) +
+  geom_histogram() +
+  scale_x_log10() 
+```
+
+In case we would already like to start looking at conditional distributions, we could add an adittional `fill` aestetic.
+
+```{r}
+bike %>% ggplot(aes(x = duration_sec, fill = weekday)) +
+  geom_histogram() +
+  scale_x_log10() 
+```
+
+### Summaries of One Variable: Discrete
+
+To do the same for a discrete variable, we would start with a simple barplot via `geom_bar()`. Notice again that we only define a x aestetic. `ggplot` per default will use the count on the y-axis.
+
+```{r}
+bike %>% ggplot(aes(x = start_dow)) +
+  geom_bar()
+```
+
+### Summaries of One Variable: Temporal
+
+A temporal variable can also be visualized as a line-plot with `geom_line()`.
+
+```{r}
+bike %>%
+  group_by(start_wk) %>%
+  summarise(n = n()) %>%
+  ggplot(aes(x = start_wk, y = n)) +
+  geom_line()
+```
+
+To instead (or in adittion) add a trendline, we can use `geom_smooth()`
+
+```{r}
+bike %>%
+  group_by(start_wk) %>%
+  summarise(n = n()) %>%
+  ggplot(aes(x = start_wk, y = n)) +
+  geom_smooth()
+```
+
+## Summarizing multiple variablea jointly
+
+Ok, that was pretty easy. However, the insights gained so far are pretty little. To tease out interesting pattern in our data, it might not be enough to only look at one variable at a time. To display relationships between multiple variables, we mainly can:
+
+* Use aestetics such as `color`, `fill`, `size`, `shape` (alter the aestetics within one plot)
+* Use `facet_wrap()`(produce  multiple plots)
+
+Lets look at some examples:
+
+First, we could take a look at the number of daily rides with  workweek / weekend days colored differently.
+
+```{r}
+# Compute daily counts
+daily <- bike %>%
+  group_by(start_day, weekday) %>%
+  summarise(n = n())
+
+# Plot the result
+ggplot(daily, aes(start_day, n, color = weekday)) +
+  geom_point()
+```
+
+Now let's look at how rides are distributed according to the time of day. Let's make a summary plot of weekly ride counts faceted by start hour of day and broken down by workweek/weekend. Here, we will use the `facet_grid`
+
+
+```{r,fig.height=5 , fig.width=15}
+# Compute week_hod
+week_hod <- bike %>%
+  group_by(start_wk, start_hod, weekday) %>%
+  summarise(n = n())
+
+# Plot the result
+ggplot(week_hod, aes(start_wk, n, color = weekday)) +
+  geom_point() +
+  facet_grid(~ start_hod) +
+  scale_y_sqrt()
+```
+
+
+Expanding on the previous plot, let's add one more variable into our summary, adding a facet dimension for whether or not the rider is a member of BIXI.
+
+```{r,fig.height=7.5, fig.width=15}
+# Compute wk_memb_hod
+wk_memb_hod <- bike %>%
+  group_by(start_wk, start_hod, weekday, membership) %>%
+  summarise(n = n())
+
+# Plot the result
+ggplot(wk_memb_hod, aes(start_wk, n, color = weekday)) +
+  geom_point() +
+  facet_grid(membership ~ start_hod) +
+  scale_y_sqrt()
+```
+
+Let's now look at the number of rides vs. hour for each day. To start, we'll create a summary dataset for the first full month in the dataset (May) and look at it.
+
+```{r,fig.height=7.5, fig.width=15}
+# Compute daily_may
+daily_may <- bike %>%
+  filter(start_mon == 5) %>%
+  group_by(start_day, start_hod, membership) %>%
+  summarise(n = n())
+
+# Plot the result
+ggplot(daily_may, aes(start_hod, n, color = membership)) +
+  geom_point() +
+  facet_wrap(~ start_day, ncol = 7)
+```
+
+
+
+## What's next
+
+There is so much more to explore. However, since time is limited, I will leave it up to you to explore more. Take a moment to review the diferent geoms offered by `ggplot` [here](https://ggplot2.tidyverse.org/reference/index.html). For inspiration what can be done, check [here](http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html).
+
+In the upcominglectures, we will start exploring further types of visualization. In `R`, most packages that provide datavis are by now consolidated as adittional geometries compatible with `ggplot2`. You find the up to now official list of addons on CRAN [here](https://www.ggplot2-exts.org/gallery/)
+Some of my favorite are:
+
+* `ggridges`
+* `ggalluvial`
+* `GGally`
+* `ggmap`
+* `ggraph`
+
+
+
+## Your turn
+
+Ok, its your turn again. We will take a look at the `gapminder` data, a dataset with a set of socio-economic macro indicators. Find the corresponding [fun colab notrebook here](https://colab.research.google.com/drive/1K31uwdzTPGnEizjRy5wAla5mMdjpbtJo#forceEdit=true&offline=true&sandboxMode=true).
+
+
+
+# Endnotes
+
+```{r}
+sessionInfo()
+````
