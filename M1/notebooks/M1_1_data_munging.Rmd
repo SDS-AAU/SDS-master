@@ -1,22 +1,26 @@
 ---
 title: 'Data manipulation & Exploration (in R)'
 author: "Daniel S. Hain (dsh@business.aau.dk)"
-date: "today"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
-  html_document: 
+  html_document:
+    code_folding: hide
     df_print: paged
-    number_sections: yes
-    toc: yes
-    toc_float: yes
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+    
+# knit: markdowntemplates::to_jupyter
 ---
 
 ```{r setup, include=FALSE}
 ### Generic preamble
 Sys.setenv(LANG = "en") # For english language
 options(scipen = 5) # To deactivate annoying scientific number notation
-set.seed(1337) # To have a seed defined for reproducability
 
-rm(list=ls()); graphics.off() # get rid of everything in the workspace
+# rm(list=ls()); graphics.off() # get rid of everything in the workspace
 if (!require("pacman")) install.packages("pacman") # package for loading and checking packages
 if (!require("knitr")) install.packages("knitr"); library(knitr) # For display of the markdown
 
@@ -39,7 +43,7 @@ pacman::p_load(tidyverse, # Collection of all the good stuff like dplyr, ggplot2
 
 Short upfront note:
 
-Google colab does not support `R` kernels. Alternatively, you can use the Microsoft Azure solution, which is quite similar but slower. However, there is a little trick how to make `R`vrun with colab.
+Google colab does not support `R` kernels. Alternatively, you can use the Microsoft Azure solution, which is quite similar but slower. However, there is a little trick how to make `R`vrun with colab. 
 
 * You can simply run the `demo.ipynb` from [IRkernel Github](https://colab.research.google.com/github/IRkernel/IRkernel/blob/master/example-notebooks/Demo.ipynb)
 * Make changes and then save a copy to your Google Drive.
