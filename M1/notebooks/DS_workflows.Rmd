@@ -80,7 +80,7 @@ They are often completed by:
 
 ## 1: FILTER: subsetting rows  {.build}
 
-`FILTER`:subset a dataframe by rows (observations), so that output only contains rows which fulfill a certain condition.
+`FILTER` oerations subset a dataframe by rows (observations), so that output only contains rows which fulfill a certain condition.
 
 ![](https://sds-aau.github.io/SDS-master/00_media/dplyr_filter.png){.img_big}
 
@@ -111,19 +111,63 @@ cars %>% filter(speed >= 5) %>%
 
 ## 2: SELECT: subsetting Columns  {.build}
 
-select()`
-The verb `select()` lets you subset a dataframe by column (variable), meaning the output will only contain certain columns in the stated order
+`SELECT` oerations subset a dataframe by column (variable) so that output only contains certain columns in the stated order
 
-```{r}
-starwars %>% 
-  select(name, homeworld) %>%
-  head(10) 
+![](https://sds-aau.github.io/SDS-master/00_media/dplyr_select.png){.img_big}
+
+<div class="columns-2">
+
+```{r, echo=TRUE, eval=FALSE}
+DF_IRIS
 ```
 
-It can also be used to deselect columns with a leading `-`
+```{r}
+iris %>%   
+  head(15) %>% 
+  kable("html") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed", "hover"), font_size = 10)
+```
+
+```{r, echo=TRUE, eval=FALSE}
+DF_IRIS SELECT SEPAL_LENGHT SPECIES
+```
 
 ```{r}
-starwars %>% 
-  select(-birth_year, -skin_color) %>%
-  head(10) 
+iris %>% select(Sepal.Length, Species) %>% 
+  head(15) %>% 
+  kable("html") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed", "hover"), font_size = 10)
 ```
+</div>
+
+## 3: ARRANGE: Reoder by column value {.build}
+
+`ARRANGE` oerations reorder  dataframe's rows by selected column values
+
+![](https://sds-aau.github.io/SDS-master/00_media/dplyr_arrange.png){.img_big}
+
+<div class="columns-2">
+
+```{r, echo=TRUE, eval=FALSE}
+DF_CARS
+```
+
+```{r}
+cars %>%   
+  head(15) %>% 
+  kable("html") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed", "hover"), font_size = 10)
+```
+
+```{r, echo=TRUE, eval=FALSE}
+DF_CARS ARRANGE DESC SPEED
+```
+
+```{r}
+cars %>% arrange(desc(speed)) %>% 
+  head(15) %>% 
+  kable("html") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed", "hover"), font_size = 10)
+```
+</div>
+
