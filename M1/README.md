@@ -2,6 +2,20 @@
 
 **Note:** All notebooks can also be found in the corresponding `notebooks` folder.
 
+## Non-Technical Introduction to Data Science and Machine Learning
+
+
+
+### Data Science in Business
+
+* [Video: Data Science in Business I - Current state]()
+
+### Introduction to the DataScience Ecosystem
+
+* [Video: The Data Science Ecosystem: R](https://www.loom.com/share/9546d7efda6e42dbac378f77cdda1017)
+* [Video: The Data Science Ecosystem: Python](https://www.loom.com/share/9d47d15c24044fb2bad247d34e8d5965)
+
+<!---
 ## Part I: Data Manipulation & Exploration
 
 ### Data Manipulation & Exploration (python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/SDS_S1_2_EDA.ipynb#&offline=true&sandboxMode=true)
@@ -92,3 +106,4 @@
 * [`ipynb`to `pdf` converter](https://htmtopdf.herokuapp.com/ipynbviewer/)
 
      
+--->
