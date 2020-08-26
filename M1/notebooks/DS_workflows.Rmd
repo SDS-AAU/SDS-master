@@ -53,8 +53,10 @@ From my experience, this covers ca. 95% of common data manipulation tasks. Sound
 
 1. **Import** Transfer data from an external source (xls sheet, html page, API etc.) to a format suitable for your current environment.
 2. **Tidy:** Manipulating data structure in a consistent form that matches the semantics of the dataset.
-3. **EDA / Visualize:** Exploration of the properties of and relationships within the data with visualizations and simple statistics.
-4. **Model:** Use of mathematical/computational tools/algorithms to identify properties of data, relationships, mechanisms & predictions
+3. **Transform:** Computing/summrizing variables, subsetting, filtering, merging etc. (data wrangling)
+4. **EDA / Visualize:** Exploration of the properties of and relationships within the data with visualizations and simple statistics.
+5. **Model:** Use of mathematical/computational tools/algorithms to identify properties of data, relationships, mechanisms & predictions
+6. **COMMUNICATE:** Present results in a format suitable for the targeted audience.
 
 ## What is data? 
 
@@ -145,20 +147,7 @@ iris %>% select(Sepal.Length, Species) %>%
 `ARRANGE` oerations reorder  dataframe's rows by selected column values
 
 ![](https://sds-aau.github.io/SDS-master/00_media/dplyr_arrange.png){.img_big}
-
-<div class="columns-2">
-
-```{r, echo=TRUE, eval=FALSE}
-DF_CARS
-```
-
-```{r}
-cars %>%   
-  head(15) %>% 
-  kable("html") %>%
-  kable_styling(bootstrap_options = c("striped", "condensed", "hover"), font_size = 10)
-```
-
+ 
 ```{r, echo=TRUE, eval=FALSE}
 DF_CARS ARRANGE DESC SPEED
 ```
@@ -169,5 +158,66 @@ cars %>% arrange(desc(speed)) %>%
   kable("html") %>%
   kable_styling(bootstrap_options = c("striped", "condensed", "hover"), font_size = 10)
 ```
-</div>
+
+## 4: MUTATE: Assign variable values {.build}
+
+`MUTATE` oerations manipulate existing variables or create new ones.
+
+![](https://sds-aau.github.io/SDS-master/00_media/dplyr_mutate.png){.img_big}
+
+
+```{r, echo=TRUE, eval=FALSE}
+DF_IRIS MUTATE SEPAL_RADIUS = SEPAL_LENGHT * 3.14
+```
+
+```{r}
+iris %>% 
+  select(Sepal.Length, Sepal.Width) %>%
+  mutate(Sepal.Radius = Sepal.Length * 3.14) %>% 
+  head(15) %>% 
+  kable("html") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed", "hover"), font_size = 10)
+```
+
+
+## 5: SUMMARIZE: Summarizes column values {.build}
+
+`SUMMARIZE` operations reduce the dataframe to one row, which is summarized according to a defined function.
+
+![](https://sds-aau.github.io/SDS-master/00_media/dplyr_summarize.png){.img_big}
+```{r, echo=TRUE, eval=FALSE}
+DF_IRIS SUMMARIZE MEAN_LENGHT = MEAN SEPAL_LENGHT
+```
+
+```{r}
+iris %>% 
+  summarise(Mean.Lenght = mean(Sepal.Length))
+```
+
+## 6: GROUP_BY: Operations on group lvel {.build}
+
+`GROUP_BY` executes further operations sepperately for every unique group. Often (but not exclusively) followed by `SUMMARIZE` 
+
+![](https://sds-aau.github.io/SDS-master/00_media/dplyr_group.png){.img_big}
+```{r, echo=TRUE, eval=FALSE}
+DF_IRIS GROUP_BY SPECIES SUMMARIZE MEAN_LENGHT = MEAN SEPAL_LENGHT
+```
+
+```{r}
+iris %>% 
+  group_by(Species) %>%
+  summarise(Mean.Lenght = mean(Sepal.Length)) %>% 
+  head(15) %>% 
+  kable("html") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed", "hover"), font_size = 10)
+```
+
+# MultiTable operations
+
+## Introduction
+
+TODO
+
+## `LEFT_JOIN`
+
 
