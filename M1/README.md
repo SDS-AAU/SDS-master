@@ -12,7 +12,7 @@
    * In class - assignment: Using the Dataset for New Orleans (http://sds-datacrunch.aau.dk/public/SDS2019/new_orleans_2019.rds) you are going to perform an EDA pipeline (loading, cleaning, first exploration, test some hypotheses) 
    * In-class assignment starter (under development: added date-time fix; new methods for missing data handling): [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/SDS_M1___S1_2___Exercise_u.ipynb#&offline=false&sandboxMode=true)
 
-### [Data Manipulation & Exploration (R)](https://sds-aau.github.io/SDS-master/M1/notebooks/M1_1_data_munging.html)                 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_1_data_munging.ipynb#offline=true&sandboxMode=true)
+### [Data Manipulation & Exploration (R)](https://sds-aau.github.io/SDS-master/tree/master/M1/notebooks/M1_1_data_munging.html)                 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_1_data_munging.ipynb#offline=true&sandboxMode=true)
 
  * Python Translation [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_S3_4_Python_translation.ipynb#&offline=false&sandboxMode=true)
 * Exercises
