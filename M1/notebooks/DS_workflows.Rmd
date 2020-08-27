@@ -216,7 +216,17 @@ iris %>%
 
 ## Introduction
 
-TODO
+![](https://sds-aau.github.io/SDS-master/00_media/relational-nucflights.png){.img}
+
+* Multi-table operations draw their input data from more than one dataframe.
+* This is important when data is assembled from different sources.
+* Also necessary when working with **relational data** and/or stored in an **relational database** (eg. SQL)
+* Most common operation carried out across dataframes are the family of **joins**
+
+
+## Introduction to joins
+
+x
 
 ## `LEFT_JOIN`
 
