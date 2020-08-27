@@ -2,7 +2,7 @@
 
 **Note:** All notebooks can also be found in the corresponding `notebooks` folder.
 
-## High-Level Introduction to Data Science and Machine Learning
+## Warm Up
 
 ### Data Science in Business
 <!--- TODO: Should be stored somwhere neutral ------>
