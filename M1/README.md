@@ -25,8 +25,8 @@
   * R Code application Video [Html](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation_application_R.nb.html) Colab
   * Python Code application Video Colab
 * Data manipulation example: join & group_by
- * R [Video](https://www.loom.com/share/0f3f166a4234429bb1bf2e8c443bad39) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_example_group_merge_R.ipynb#offline=true&sandboxMode=true)
- * Python [Video](https://www.loom.com/share/257a4e764bd74ee7b39f1027821e0838) Colab
+   * R [Video](https://www.loom.com/share/0f3f166a4234429bb1bf2e8c443bad39) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_example_group_merge_R.ipynb#offline=true&sandboxMode=true)
+   * Python [Video](https://www.loom.com/share/257a4e764bd74ee7b39f1027821e0838) Colab
 
 
 https://github.com/SDS-AAU/SDS-master/tree/master/M1/notebooks
