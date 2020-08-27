@@ -6,24 +6,22 @@
 
 ## Data Science in Business
 <!--- TODO: Should be stored somwhere neutral ------>
-* Data Science in Business I - Current state [Video](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=dc8a48b8-4431-4589-ab4d-ac2300c433f6&fbclid=IwAR0QUrP9x8dc02a_RdjVC3PRAzfmkv7VLdS0_g0n6q2hBrD21gEnEgH6-JM)
-* Data Science in Business II - Introduction to Machine Learning [Video](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=e854a9b2-b1f7-4ac0-ae4e-ac2300c4343a&fbclid=IwAR1byNywE0qnmW1aMdK6KevugCeUL71VDNjUqHiI5PmuEsMCnWYjX9HUTrE)
-* Data Science in Business III - Team & Roles [Video](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=5199c047-790f-4477-87b5-ac2300c433c6&fbclid=IwAR1A4uqBGRj1DurW1bVcAbBKnALhhNEyulrh_LD7L5wuxb5oV1CdjPw1Uik)
+* Data Science in business I - Current state [Video](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=dc8a48b8-4431-4589-ab4d-ac2300c433f6&fbclid=IwAR0QUrP9x8dc02a_RdjVC3PRAzfmkv7VLdS0_g0n6q2hBrD21gEnEgH6-JM)
+* Data Science in business II - Introduction to Machine Learning [Video](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=e854a9b2-b1f7-4ac0-ae4e-ac2300c4343a&fbclid=IwAR1byNywE0qnmW1aMdK6KevugCeUL71VDNjUqHiI5PmuEsMCnWYjX9HUTrE)
+* Data Science in business III - Team & Roles [Video](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=5199c047-790f-4477-87b5-ac2300c433c6&fbclid=IwAR1A4uqBGRj1DurW1bVcAbBKnALhhNEyulrh_LD7L5wuxb5oV1CdjPw1Uik)
 
-## Introduction to the DataScience Ecosystem
+## Introduction to the Data Science Ecosystem
 
 * The Data Science Ecosystem: R [Video](https://www.loom.com/share/9546d7efda6e42dbac378f77cdda1017)
 * The Data Science Ecosystem: Python [Video](https://www.loom.com/share/9d47d15c24044fb2bad247d34e8d5965)
-
-
 
 # Part I: Data Manipulation & Exploration
 
 ## Data Science Basics
 
-* Introduction to Data Science Workflows
+* Introduction to Data Science workflows
 * Introduction to data
-* Data Manipulation basics [Video](https://www.loom.com/share/394d083071fc42219f5921fb394b3e6c) [Slides]()
+* Data manipulation basics [Video](https://www.loom.com/share/394d083071fc42219f5921fb394b3e6c) [Slides](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation.html)
 
 
 <!--- COMMENTED OUT FROM HERE ----------- ONLY UNCOMMENT AFTER UPDATED & TESTED
