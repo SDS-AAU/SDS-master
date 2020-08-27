@@ -22,6 +22,7 @@
 * Introduction to Data Science workflows
 * Introduction to data
 * Data manipulation basics [Video](https://www.loom.com/share/394d083071fc42219f5921fb394b3e6c) [Slides](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation.html)
+  * HOWTO: R Python
 
 
 <!--- COMMENTED OUT FROM HERE ----------- ONLY UNCOMMENT AFTER UPDATED & TESTED
