@@ -20,6 +20,11 @@ library(kableExtra)
 
 <!-- CSS Definitions -->
 <style type="text/css">
+    .img_small{
+        width: 50%;
+        class="centered";
+        display: block;
+    }
     .img{
         width: 75%;
         class="centered";
@@ -27,7 +32,7 @@ library(kableExtra)
     }
     .img_big{
         width: 100%;
-        text-align: center;
+        class="centered";
         display: block;
     }
 </style>
@@ -47,26 +52,17 @@ From my experience, this covers ca. 95% of common data manipulation tasks. Sound
 
 # Introduction 
 
-## Data Science Workflows {.smaller}
+## What to do with data?
 
-![](https://sds-aau.github.io/SDS-master/00_media/ds_workflow.png){.img}
+<center> ![](https://sds-aau.github.io/SDS-master/00_media/random_data.png){.img} </center>
 
-1. **Import** Transfer data from an external source (xls sheet, html page, API etc.) to a format suitable for your current environment.
-2. **Tidy:** Manipulating data structure in a consistent form that matches the semantics of the dataset.
-3. **Transform:** Computing/summrizing variables, subsetting, filtering, merging etc. (data wrangling)
-4. **EDA / Visualize:** Exploration of the properties of and relationships within the data with visualizations and simple statistics.
-5. **Model:** Use of mathematical/computational tools/algorithms to identify properties of data, relationships, mechanisms & predictions
-6. **COMMUNICATE:** Present results in a format suitable for the targeted audience.
 
-## What is data? 
-
-TODO
 
 # Basic operations of Data Manipulation
 
 ## The 5+ core verbs
 
-At it's core are 5 central verbs (functions) of data manipulation:
+At it's core are 5 central operations  of data manipulation:
 
 1. `FILTER` picks cases based on their values.
 2. `SELECT` picks variables based on their names.
@@ -77,8 +73,9 @@ At it's core are 5 central verbs (functions) of data manipulation:
 They are often completed by:
 
 6. `GROUP_BY` operations on group level
-7. `JOIN` operation across dataframes
-8. `PIVOT` and other changes of the dataframe's shape
+7. `PIVOT` and other changes of the dataframe's shape
+8. `JOIN` operation across dataframes
+
 
 ## 1: FILTER: subsetting rows  {.build}
 
@@ -216,7 +213,7 @@ iris %>%
 
 ## Introduction
 
-![](https://sds-aau.github.io/SDS-master/00_media/relational-nucflights.png){.img}
+<center> ![](https://sds-aau.github.io/SDS-master/00_media/relational-nycflights.png){.img_small} </center>
 
 * Multi-table operations draw their input data from more than one dataframe.
 * This is important when data is assembled from different sources.
@@ -226,8 +223,33 @@ iris %>%
 
 ## Introduction to joins
 
-x
+<center> ![](https://sds-aau.github.io/SDS-master/00_media/join-setup2.png){.img} </center>
 
-## `LEFT_JOIN`
+* **Join** operations combine data from multiple dataframes
+   * Mutating joins, which add new variables to one data frame from matching observations in another.
+   * Filtering joins, which filter observations from one data frame based on whether or not they match an observation in the other table.
+* **Keys: ** Variable(-a) used to connect each pair of tables and uniquely identifies an observation
+   **Primary Key:** Identifies observation in its own table.
+   **Foreign Key:** Identifies observations in another table
 
+## Mutating Joins
 
+<center> ![](https://sds-aau.github.io/SDS-master/00_media/join-venn.png){.img} </center>
+
+* Combine information from different dataframes to combine or alter existing data
+   * **INNER_JOIN(A,B)** Combines variables from A and B for observations in A and B jointly
+   * **LEFT_JOIN(A,B):** Combines A with variables from B for observations present in A
+   * **RIGHT_JOIN(A,B):** Combines B with variables from A for observations present in B
+   * **FULL_JOIN(A,B)** Combines variables from A and B for observations in A or B 
+   
+## Inner Join
+
+<center> ![](https://sds-aau.github.io/SDS-master/00_media/join-inner.png){.img} </center>
+
+* Inner joins find observations present in both datarames
+* Thereby, they combine columns, while subletting rows for `(A AND B)`
+* Appropriate in cases only observations containing the joint information are valuable for the analysis.
+
+## Join Outer
+
+<center> ![](https://sds-aau.github.io/SDS-master/00_media/join-outer.png){.img_small} </center>

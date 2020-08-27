@@ -3132,13 +3132,18 @@ slide:not(.current) .plotly.html-widget{
       <h1 data-config-title><!-- populated from slide_config.json --></h1>
       
       <p data-config-presenter><!-- populated from slide_config.json --></p>
-            <p style="margin-top: 6px; margin-left: -2px;">Updated August 26, 2020</p>
+            <p style="margin-top: 6px; margin-left: -2px;">Updated August 27, 2020</p>
           </hgroup>
   </slide>
 
 <!-- CSS Definitions -->
 
 <style type="text/css">
+    .img_small{
+        width: 50%;
+        class="centered";
+        display: block;
+    }
     .img{
         width: 75%;
         class="centered";
@@ -3146,7 +3151,7 @@ slide:not(.current) .plotly.html-widget{
     }
     .img_big{
         width: 100%;
-        text-align: center;
+        class="centered";
         display: block;
     }
 </style>
@@ -5349,9 +5354,77 @@ virginica
 
 </article></slide><slide class=""><hgroup><h2>Introduction</h2></hgroup><article  id="introduction-1">
 
-<p>TODO</p>
+<center>
 
-</article></slide><slide class=""><hgroup><h2><code>LEFT_JOIN</code></h2></hgroup><article  id="left_join"></article></slide>
+<img class="img_small" src='https://sds-aau.github.io/SDS-master/00_media/relational-nycflights.png' title=''/>
+
+</center>
+
+<ul>
+<li>Multi-table operations draw their input data from more than one dataframe.</li>
+<li>This is important when data is assembled from different sources.</li>
+<li>Also necessary when working with <strong>relational data</strong> and/or stored in an <strong>relational database</strong> (eg. SQL)</li>
+<li>Most common operation carried out across dataframes are the family of <strong>joins</strong></li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Introduction to joins</h2></hgroup><article  id="introduction-to-joins">
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/join-setup2.png' title=''/>
+
+</center>
+
+<ul>
+<li><strong>Join</strong> operations combine data from multiple dataframes
+
+<ul>
+<li>Mutating joins, which add new variables to one data frame from matching observations in another.</li>
+<li>Filtering joins, which filter observations from one data frame based on whether or not they match an observation in the other table.</li>
+</ul></li>
+<li><strong>Keys: </strong> Variable(-a) used to connect each pair of tables and uniquely identifies an observation <strong>Primary Key:</strong> Identifies observation in its own table. <strong>Foreign Key:</strong> Identifies observations in another table</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Mutating Joins</h2></hgroup><article  id="mutating-joins">
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/join-venn.png' title=''/>
+
+</center>
+
+<ul>
+<li>Combine information from different dataframes to combine or alter existing data
+
+<ul>
+<li><strong>INNER_JOIN(A,B)</strong> Combines variables from A and B for observations in A and B jointly</li>
+<li><strong>LEFT_JOIN(A,B):</strong> Combines A with variables from B for observations present in A</li>
+<li><strong>RIGHT_JOIN(A,B):</strong> Combines B with variables from A for observations present in B</li>
+<li><strong>FULL_JOIN(A,B)</strong> Combines variables from A and B for observations in A or B</li>
+</ul></li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Inner Join</h2></hgroup><article  id="inner-join">
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/join-inner.png' title=''/>
+
+</center>
+
+<ul>
+<li>Inner joins find observations present in both datarames</li>
+<li>Thereby, they combine columns, while subletting rows for <code>(A AND B)</code></li>
+<li>Appropriate in cases only observations containing the joint information are valuable for the analysis.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Join Outer</h2></hgroup><article  id="join-outer">
+
+<center>
+
+<img class="img_small" src='https://sds-aau.github.io/SDS-master/00_media/join-outer.png' title=''/>
+
+</center></article></slide>
 
 
   <slide class="backdrop"></slide>
