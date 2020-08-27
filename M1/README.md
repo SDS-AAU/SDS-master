@@ -29,8 +29,6 @@
    * Python [Video](https://www.loom.com/share/257a4e764bd74ee7b39f1027821e0838) Colab
 
 
-https://github.com/SDS-AAU/SDS-master/tree/master/M1/notebooks
-
 <!--- COMMENTED OUT FROM HERE ----------- ONLY UNCOMMENT AFTER UPDATED & TESTED
 ## Data Manipulation & Exploration (python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/SDS_S1_2_EDA.ipynb#&offline=true&sandboxMode=true)
 
