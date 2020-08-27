@@ -4,14 +4,10 @@
 
 ## High-Level Introduction to Data Science and Machine Learning
 
-
-<!--- COMMENTED OUT FROM HERE ----------- (Since not relevant for all Students)
 ### Data Science in Business
 * [Video: Data Science in Business I - Current state](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=dc8a48b8-4431-4589-ab4d-ac2300c433f6&fbclid=IwAR0QUrP9x8dc02a_RdjVC3PRAzfmkv7VLdS0_g0n6q2hBrD21gEnEgH6-JM)
 * [Video: Data Science in Business II - Introduction to Machine LEarning](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=e854a9b2-b1f7-4ac0-ae4e-ac2300c4343a&fbclid=IwAR1byNywE0qnmW1aMdK6KevugCeUL71VDNjUqHiI5PmuEsMCnWYjX9HUTrE)
 * [Video: Data Science in Business III - Team & Roles](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=5199c047-790f-4477-87b5-ac2300c433c6&fbclid=IwAR1A4uqBGRj1DurW1bVcAbBKnALhhNEyulrh_LD7L5wuxb5oV1CdjPw1Uik)
----------------------------------------->
-
 
 ### Introduction to the DataScience Ecosystem
 
