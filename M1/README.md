@@ -2,24 +2,24 @@
 
 **Note:** All notebooks can also be found in the corresponding `notebooks` folder.
 
-## Warm Up
+# Warm Up
 
-### Data Science in Business
+## Data Science in Business
 <!--- TODO: Should be stored somwhere neutral ------>
 * Data Science in Business I - Current state [Video](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=dc8a48b8-4431-4589-ab4d-ac2300c433f6&fbclid=IwAR0QUrP9x8dc02a_RdjVC3PRAzfmkv7VLdS0_g0n6q2hBrD21gEnEgH6-JM)
 * Data Science in Business II - Introduction to Machine Learning [Video](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=e854a9b2-b1f7-4ac0-ae4e-ac2300c4343a&fbclid=IwAR1byNywE0qnmW1aMdK6KevugCeUL71VDNjUqHiI5PmuEsMCnWYjX9HUTrE)
 * Data Science in Business III - Team & Roles [Video](https://cbs.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=5199c047-790f-4477-87b5-ac2300c433c6&fbclid=IwAR1A4uqBGRj1DurW1bVcAbBKnALhhNEyulrh_LD7L5wuxb5oV1CdjPw1Uik)
 
-### Introduction to the DataScience Ecosystem
+## Introduction to the DataScience Ecosystem
 
 * The Data Science Ecosystem: R [Video](https://www.loom.com/share/9546d7efda6e42dbac378f77cdda1017)
 * The Data Science Ecosystem: Python [Video](https://www.loom.com/share/9d47d15c24044fb2bad247d34e8d5965)
 
 
 
-## Part I: Data Manipulation & Exploration
+# Part I: Data Manipulation & Exploration
 
-### Data Science Basics
+## Data Science Basics
 
 * Introduction to Data Science Workflows
 * Introduction to data
@@ -27,7 +27,7 @@
 
 
 <!--- COMMENTED OUT FROM HERE ----------- ONLY UNCOMMENT AFTER UPDATED & TESTED
-### Data Manipulation & Exploration (python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/SDS_S1_2_EDA.ipynb#&offline=true&sandboxMode=true)
+## Data Manipulation & Exploration (python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/SDS_S1_2_EDA.ipynb#&offline=true&sandboxMode=true)
 
 * R translation [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_1_datamunging_R_translation.ipynb#offline=true&sandboxMode=true)
 * Exercises
@@ -35,7 +35,7 @@
    * In class - assignment: Using the Dataset for New Orleans (http://sds-datacrunch.aau.dk/public/SDS2019/new_orleans_2019.rds) you are going to perform an EDA pipeline (loading, cleaning, first exploration, test some hypotheses) 
    * In-class assignment starter (under development: added date-time fix; new methods for missing data handling): [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/SDS_M1___S1_2___Exercise_u.ipynb#&offline=false&sandboxMode=true)
 
-### [Data Manipulation & Exploration (R)](https://sds-aau.github.io/SDS-master/tree/master/M1/notebooks/M1_1_data_munging.html)                 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_1_data_munging.ipynb#offline=true&sandboxMode=true)
+## [Data Manipulation & Exploration (R)](https://sds-aau.github.io/SDS-master/tree/master/M1/notebooks/M1_1_data_munging.html)                 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_1_data_munging.ipynb#offline=true&sandboxMode=true)
 
  * Python Translation [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_S3_4_Python_translation.ipynb#&offline=false&sandboxMode=true)
 * Exercises
@@ -44,28 +44,28 @@
     * Exercise 2: `join_xxx` basics [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/exercises/M1_1_datamunging_ex2.ipynb#offline=true&sandboxMode=true)
     * Exercise 3: Case study [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/exercises/M1_1_datamunging_ex3.ipynb#offline=true&sandboxMode=true)
     
-### [Data Visualization (R)](https://sds-aau.github.io/SDS-master/M1/notebooks/M1_2_data_viz.html)                                 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_2_data_viz.ipynb#offline=true&sandboxMode=true)
+## [Data Visualization (R)](https://sds-aau.github.io/SDS-master/M1/notebooks/M1_2_data_viz.html)                                 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_2_data_viz.ipynb#offline=true&sandboxMode=true)
 * Exercises
 
     * Exercise 1:  `ggplot2` basics [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/exercises/M1_2_dataviz_ex1.ipynb#offline=true&sandboxMode=true)                                                  
     
-## Part II: Unsupervised Machine Learning
+# Part II: Unsupervised Machine Learning
 
-### [Unsupervised ML: Introduction (R)](https://sds-aau.github.io/SDS-master/M1/notebooks/M1_5_unsupervised_ml.html)                            [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_5_unsupervised_ml.ipynb#offline=true&sandboxMode=true)
+## [Unsupervised ML: Introduction (R)](https://sds-aau.github.io/SDS-master/M1/notebooks/M1_5_unsupervised_ml.html)                            [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_5_unsupervised_ml.ipynb#offline=true&sandboxMode=true)
 * Exercises
 
     * Exercise 1: PCA [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/exercises/M1_5_unsupervised_ml_ex1.ipynb#offline=true&sandboxMode=true)
      * Exercise 2: Clustering [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/exercises/M1_5_unsupervised_ml_ex2.ipynb#offline=true&sandboxMode=true)
      
-### Unsupervised M: Intermediate Case Studies (python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/SDS_M1_S6.ipynb#offline=true&sandboxMode=true)
+## Unsupervised M: Intermediate Case Studies (python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/SDS_M1_S6.ipynb#offline=true&sandboxMode=true)
 
-## Part III: Supervised Machine Learning
+# Part III: Supervised Machine Learning
 
-### [Supervised ML: Introduction (R)](https://sds-aau.github.io/SDS-master/M1/notebooks/M1_7_supervised_ml.html)                            [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_7_supervised_ml.ipynb#offline=true&sandboxMode=true)
+## [Supervised ML: Introduction (R)](https://sds-aau.github.io/SDS-master/M1/notebooks/M1_7_supervised_ml.html)                            [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_7_supervised_ml.ipynb#offline=true&sandboxMode=true)
 * Exercises
 
     
-### Supervised ML: Live coding (python - annotated) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/M1/notebooks/M1_Supervised_Python.ipynb#offline=true&sandboxMode=true)
+## Supervised ML: Live coding (python - annotated) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/M1/notebooks/M1_Supervised_Python.ipynb#offline=true&sandboxMode=true)
     
     
 # Further Resources
