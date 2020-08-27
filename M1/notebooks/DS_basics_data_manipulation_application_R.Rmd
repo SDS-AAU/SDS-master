@@ -149,16 +149,39 @@ starwars %>%
             sd.height = sd(height, na.rm = TRUE) )
 ```
 
+
+
 ## (+1) Pivoting
 By now, we worked with the traditional data structure, where every column corresponds to one variable. We also call that a **wide*"** data format. This is in most cases the most efficient and prefered way to keep your data. However, there are some cases, where another dataformat would be more convenient.
 
 For example, for range of graphical as well as numerical summaries, it would be nice to have every observation and every variable to be mapped in a single row. This format is also calles **long** (or in R slang, **tidy**) data. Adittionally, some real life datasets (including a lot of WorldBank, Eurostats, OECD, ect.) data is usually available in a long format. Therefore, weare in need of easily switching between long and wide formats, to **reshape** your data (in Excel slang, people call that **pivoting**).
 
-Luckily, R's `tidyr` package offers you exactly these functionalities in 4 easy functions.
+```{r}
+fish_encounters %>% head(10)
+```
 
-XXX
-XXX
-XXX
+Lets take a look at a `pivot_wider` example
+```{r}
+# See vignette("pivot") for examples and explanation
+fish_encounters %>%
+  pivot_wider(names_from = station, values_from = seen) %>%
+  head(10)
+```
+And now `pivot_longer`
+```{r}
+# See vignette("pivot") for examples and explanation
+# Simplest case where column names are character data
+relig_income %>%
+  head(10)
+```
+
+```{r}
+relig_income %>%
+  pivot_longer(!religion, names_to = "income", values_to = "count") %>%
+  head(10)
+```
+
+
 
 
 
