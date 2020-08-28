@@ -13,24 +13,30 @@
 
 ## Introduction to the Data Science Ecosystem
 
-* The Data Science Ecosystem: R [Video](https://www.loom.com/share/9546d7efda6e42dbac378f77cdda1017)
-* The Data Science Ecosystem: Python [Video](https://www.loom.com/share/9d47d15c24044fb2bad247d34e8d5965)
+* Theory: The Data Science Ecosystem: R [Video](https://www.loom.com/share/9546d7efda6e42dbac378f77cdda1017)
+* Theory: The Data Science Ecosystem: Python [Video](https://www.loom.com/share/9d47d15c24044fb2bad247d34e8d5965)
 
 # Part I: Data Manipulation & Exploration
 
 ## Data Science Basics
 
-* Introduction to Data Science workflows
-* Introduction to data
-* Basics of statistical programming
+* Theory: Introduction to Data Science workflows
+* Theory: Introduction to data
+* Application: Basics of statistical programming
    * R [Video]() [Html](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_basics_R.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_basics_R.ipynb#offline=true&sandboxMode=true)
    * Python [Video](https://www.loom.com/share/ff2dcc175bc04ad8a9778ca79e012ccd?fbclid=IwAR1Tg2zz6F-wXzFAHJEJIUnRS1Bp4_RbwW2DuXUrFNIUDweYRsE0j6ypM-U)
-* Data manipulation basics [Video](https://www.loom.com/share/394d083071fc42219f5921fb394b3e6c) [Slides](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation.html)
-  * R Code application [Video](https://www.loom.com/share/06497181712a4fbf9bf4443d85926a35) [Html](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation_application_R.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_data_manipulation_application_R.ipynb#offline=true&sandboxMode=true)
-  * Python Code application [Video](https://www.loom.com/share/ff2dcc175bc04ad8a9778ca79e012ccd?fbclid=IwAR1Tg2zz6F-wXzFAHJEJIUnRS1Bp4_RbwW2DuXUrFNIUDweYRsE0j6ypM-U) Colab
-* Data manipulation example: join & group_by
+* Theory: Data manipulation basics [Video](https://www.loom.com/share/394d083071fc42219f5921fb394b3e6c) [Slides](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation.html)
+  * Application: R [Video](https://www.loom.com/share/06497181712a4fbf9bf4443d85926a35) [Html](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation_application_R.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_data_manipulation_application_R.ipynb#offline=true&sandboxMode=true)
+  * Application: Python  [Video](https://www.loom.com/share/ff2dcc175bc04ad8a9778ca79e012ccd?fbclid=IwAR1Tg2zz6F-wXzFAHJEJIUnRS1Bp4_RbwW2DuXUrFNIUDweYRsE0j6ypM-U) Colab
+* Application: Data manipulation example: join & group_by
    * R [Video](https://www.loom.com/share/0f3f166a4234429bb1bf2e8c443bad39) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_example_group_merge_R.ipynb#offline=true&sandboxMode=true)
-   * Python [Video](https://www.loom.com/share/257a4e764bd74ee7b39f1027821e0838) Colab
+   * Python [Video]() Colab
+
+
+
+
+
+
 
 
 <!--- COMMENTED OUT FROM HERE ----------- ONLY UNCOMMENT AFTER UPDATED & TESTED
