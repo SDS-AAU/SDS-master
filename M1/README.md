@@ -30,7 +30,7 @@
   * Application: Python  [Video]() Colab
 * Application: Data manipulation example: join & group_by
    * R [Video](https://www.loom.com/share/0f3f166a4234429bb1bf2e8c443bad39) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_example_group_merge_R.ipynb#offline=true&sandboxMode=true)
-   * Python [Video]() Colab
+   * Python Video Colab
 
 
 
