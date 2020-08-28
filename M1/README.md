@@ -13,9 +13,9 @@
 
 ## Introduction to the Data Science Ecosystem
 
-* Theory: The Data Science Ecosystem: R [Video](https://www.loom.com/share/9546d7efda6e42dbac378f77cdda1017)
-* Theory: The Data Science Ecosystem: Python [Video](https://www.loom.com/share/9d47d15c24044fb2bad247d34e8d5965)
-
+* Theory: The Data Science Ecosystem: R [Video](https://www.loom.com/share/9546d7efda6e42dbac378f77cdda1017) Slides
+* Theory: The Data Science Ecosystem: Python [Video](https://www.loom.com/share/9d47d15c24044fb2bad247d34e8d5965) Slides
+* Theory: The Data Science Ecosystem: General Infrastructure Video Slides 
 # Part I: Data Manipulation & Exploration
 
 ## Data Science Basics
