@@ -27,7 +27,7 @@
 * Theory: Introduction to data Video Slides
 * Theory: Data manipulation basics [Video](https://www.loom.com/share/394d083071fc42219f5921fb394b3e6c) [Slides](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation.html)
   * Application: R [Video](https://www.loom.com/share/06497181712a4fbf9bf4443d85926a35) [Html](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation_application_R.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_data_manipulation_application_R.ipynb#offline=true&sandboxMode=true)
-  * Application: Python  [Video]() Colab
+  * Application: Python  Video Colab
 * Application: Data manipulation example: join & group_by
    * R [Video](https://www.loom.com/share/0f3f166a4234429bb1bf2e8c443bad39) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_example_group_merge_R.ipynb#offline=true&sandboxMode=true)
    * Python Video Colab
