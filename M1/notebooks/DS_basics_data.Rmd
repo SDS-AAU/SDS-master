@@ -1,0 +1,69 @@
+---
+title: 'Data Science Basics: The Data Science Workflow'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+knitr::opts_chunk$set(
+  echo = FALSE
+  )
+
+# Load packages
+library(tidyverse)
+library(magrittr)
+library(knitr)
+library(kableExtra)
+```
+
+<!-- CSS Definitions -->
+<style type="text/css">
+    .img_small{
+        width: 50%;
+        class="centered";
+        display: block;
+    }
+    .img{
+        width: 75%;
+        class="centered";
+        display: block;
+    }
+    .img_big{
+        width: 100%;
+        class="centered";
+        display: block;
+    }
+</style>
+<!-- CSS Definitions -->
+
+## This session 
+
+In this session you will be introduced to: 
+
+1. xxx
+2. xxx
+
+# Introduction 
+
+## What to do with data?
+
+<center> 
+![](https://sds-aau.github.io/SDS-master/00_media/random_data.png){.img_big} 
+</center>
+
+## Types of Data
+
+<center> 
+![](https://sds-aau.github.io/SDS-master/00_media/data_dimensions.png){.img_big} 
+</center>
+
+## Tidy data
+
+<center> 
+![](https://sds-aau.github.io/SDS-master/00_media/tidy-data.png){.img_big} 
+
+
+
+# Summary
