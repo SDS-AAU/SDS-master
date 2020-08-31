@@ -1,5 +1,5 @@
 # Social Data Science Teaching Master
-The central repository for our ser. Here, you will find all teaching material and further informations
+The central repository for our ser. Here, you will find all teaching material colsolidated.
 
 ## General Information
 
