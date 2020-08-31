@@ -1,5 +1,5 @@
 ---
-title: 'Data Science BAsics: R basics'
+title: 'Data Science Basics: R basics'
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
@@ -423,7 +423,7 @@ Tibbles are the `tidyverse` version of the traditional dataframe. They work in e
 
 They can be created in 3 different ways.
 
-1. Creating them from scratch with `ibble()`
+1. Creating them from scratch with `tibble()`
 3. Using explicitly the `as_tibble()` function on a table
 3. When applying and `dplyr` function on a dataframe, it will automatically be converted to a tibble.
 
@@ -493,9 +493,11 @@ x %<>%
 In conclusion: The pipe basically passes on dataframe between functions in the following way:
 ```{r, eval = FALSE, warning = FALSE}
 # Only pseudo code here, does not run
-x %>% fun()
+x %>% fun(na.rm = TRUE) %>%
+  filter() %>%
+
 # Is equivalent to
-fun(x)
+fun(x, na.rm = TRUE)
 
 # While
 x %<>% fun()
@@ -533,7 +535,7 @@ It is not part of this introductory lecture, but you soon might encounter that y
 
 ## R, notebooks & markdown
 
-While many people prefer to work with `R` scripts, computtional notebooks are especially in the data science community more popular for `R` users. This is mainly don in the `Rmarkdown` format, which combines markdown markup an notation with executable code and result outputs. All the petty html notebooks i create fo you are also done in that way. For further information and to get started, check:
+While many people prefer to work with `R` scripts, computional notebooks are especially in the data science community more popular for `R` users. This is mainly don in the `Rmarkdown` format, which combines markdown markup an notation with executable code and result outputs. All the petty html notebooks i create fo you are also done in that way. For further information and to get started, check:
 
 * Basics: R for Data Science (Grolemund & Wickham) [Chapter 27](https://r4ds.had.co.nz/r-markdown.html)
 * Details: [R Markdown: The Definitive Guide (Xie, Allaire & Grolemund)](https://bookdown.org/yihui/rmarkdown/)
