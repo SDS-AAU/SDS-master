@@ -36,12 +36,14 @@
 
 
 
-
+## Data Manipulation & Exploration 
+- EDA-Case: Open Policing Project
+    Python Video [1](https://www.loom.com/share/4c5b046d6cf5465cbf6ca50f8d037461) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/data_exploration_case_py.ipynb)
 
 
 
 <!--- COMMENTED OUT FROM HERE ----------- ONLY UNCOMMENT AFTER UPDATED & TESTED
-## Data Manipulation & Exploration (python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/SDS_S1_2_EDA.ipynb#&offline=true&sandboxMode=true)
+
 
 * R translation [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M1-2019/blob/master/notebooks/M1_1_datamunging_R_translation.ipynb#offline=true&sandboxMode=true)
 * Exercises
