@@ -58,7 +58,38 @@ In this session you will be introduced to:
 5. **Model:** Use of mathematical/computational tools/algorithms to identify properties of data, relationships, mechanisms & predictions
 6. **Communicate:** Present results in a format suitable for the targeted audience.
 
-## What is data? 
+
+
+## Data Import
+Objective:
+* Navigating through the vastness of data available on every given topic, including online and offline sources
+* Identifying the datasource (or combination of many) that suits best to answer your (research) question at hand
+* Retrieve and consolidate data from various sources to a dataformat suitable for your further workflow
+
+Skills Required:
+* Database Management: MySQL, PostgresSQL,MongoDB
+* Querying relational and non-relational databases
+* Accessing data via Application Programming Interfaces (API)
+* Retrieving Unstructured Data: text, videos, audio files, documents
+* Distributed Storage (Advanced): Hadoops, Spark/Flink
+* Python Packages
+    * Pandas (geopandas if working with GIS data)
+    * Requests (working with APIs)
+    * Beautiful Soup (HTML parsing)
+    * Json/Simplejson (parsing JSON data)
+    * Pymongo (MongoDB interface)
+    * Sqlite (Sqlite in Python, Pandas can access SQL too)
+    * H5Py and Pytables (Working with HDF5 - big nummerical data)
+    * Pyspark (in case you venture into Spark and distributed computing)
+* R packages
+    * Dplyr
+    * API interfaces (eg. eurostat, rcrunchbase)
+    * rvest (web-scraping)
+    * sparklyr (Spark backend for R)
+    * mongolite (mongoDB backend for R)
+
+
+
 
 
 
