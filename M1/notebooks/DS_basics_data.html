@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Data Science Basics: The Data Science Workflow</title>
+  <title>Data Science Basics: Data Sources, Tupes &amp; Structure</title>
 
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="chrome=1">
@@ -19,7 +19,7 @@
     var SLIDE_CONFIG = {
       // Slide settings
       settings: {
-                title: 'Data Science Basics: The Data Science Workflow',
+                title: 'Data Science Basics: Data Sources, Tupes &amp; Structure',
                         useBuilds: true,
         usePrettify: true,
         enableSlideAreas: true,
@@ -3148,11 +3148,12 @@ slide:not(.current) .plotly.html-widget{
 
 <slide class=""><hgroup><h2>This session</h2></hgroup><article  id="this-session">
 
-<p>In this session you will be introduced to:</p>
+<p>In this short session you will be introduced to:</p>
 
 <ol>
-<li>xxx</li>
-<li>xxx</li>
+<li>Distinction between structured and unstructured data</li>
+<li>Crashcourse in data Dimensionality.</li>
+<li>The concept of tidy data.</li>
 </ol>
 
 </article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Introduction</h2></hgroup><article  id="introduction">
@@ -3165,19 +3166,41 @@ slide:not(.current) .plotly.html-widget{
 
 </center>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Sources of Data</h2></hgroup><article  id="sources-of-data">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Sources and Types of Data</h2></hgroup><article  id="sources-and-types-of-data">
 
 </article></slide><slide class=""><hgroup><h2>Structured vs Unstructured Data</h2></hgroup><article  id="structured-vs-unstructured-data">
 
 <center>
 
-<img class="img_big" src='https://sds-aau.github.io/SDS-master/00_media/data_structured_vs_unstructured.png' title=''/>
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/data_structured_vs_unstructured.png' title=''/>
 
 </center>
 
 </article></slide><slide class=""><hgroup><h2>Structured Data</h2></hgroup><article  id="structured-data">
 
-<p>xxx</p>
+<p>= Data that can be meaningful expressed in a <strong>tabular</strong> (row/column) format.</p>
+
+<ul>
+<li>… Excel spreadsheets and similar are by design structured.</li>
+<li>… Often a mix of quantitative (= numeric) qualitative (= categorical) data.</li>
+<li>… Relatively easy to integrate in the usual DS/ML workflows.</li>
+<li>… Relational Databases (RDBMS / SQL) connect information across structured datasets.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Structured Data Example</h2></hgroup><article  id="structured-data-example">
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/relational-nycflights.png' title=''/>
+
+</center>
+
+<ul>
+<li>A collection of tabular datasets.</li>
+<li>All are conceptually linked (related to flights from NYC airport)</li>
+<li>All are analtically linked by key ID variables, allowing to join them.</li>
+<li>Might com from a company’s ERP system, public statistical bureaus ect.</li>
+</ul>
 
 </article></slide><slide class=""><hgroup><h2>Unstructured Data</h2></hgroup><article  id="unstructured-data">
 
@@ -3191,7 +3214,17 @@ slide:not(.current) .plotly.html-widget{
 <li>… might also be stored within a non-relational database like NoSQL.</li>
 </ul>
 
+<p>One big part in the preprocessing of ML/DS projects is often to bring unstructured data in a structured format.</p>
+
 <p>You might need to handle some unstructured data, yet for the most part this is not content of this but later modules.</p>
+
+</article></slide><slide class=""><hgroup><h2>Data Share</h2></hgroup><article  id="data-share">
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/data_iceberg.png' title=''/>
+
+</center>
 
 </article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Structured Data</h2></hgroup><article  id="structured-data-1">
 
@@ -3209,7 +3242,36 @@ slide:not(.current) .plotly.html-widget{
 
 <img class="img_big" src='https://sds-aau.github.io/SDS-master/00_media/tidy-data.png' title=''/>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Summary</h2></hgroup><article  id="summary"></article></slide>
+</center>
+
+<ol>
+<li>Each variable must have its own column.</li>
+<li>Each observation (corresponding to unit of interest) must have its own row.</li>
+<li>Each value must have its own cell.</li>
+</ol>
+
+</article></slide><slide class=""><hgroup><h2>Tidy data contd.</h2></hgroup><article  id="tidy-data-contd.">
+
+<p>Why ensure that your data is tidy? There are two main advantages:</p>
+
+<p>1.Consistent way of storing data. If you have a consistent data structure, it’s easier to learn the tools that work with it because they have an underlying uniformity. 2. Likewise, consistency in format eases the reuse of existing workflows to new DS/ML projects. 3. When working with structured data, having a row for every unit of observation facilitates analytic .</p>
+
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Summary</h2></hgroup><article  id="summary">
+
+</article></slide><slide class=""><hgroup><h2>Main take-aways today:</h2></hgroup><article  id="main-take-aways-today">
+
+<ul>
+<li>We broadly distinguish between structured and unstructured data.
+
+<ul>
+<li>Structured data can be expressed in a tabular format.</li>
+<li>Unstructured data cannot per se be expressed tabular.</li>
+</ul></li>
+<li>Most DS/ML workflows are geared towards</li>
+<li>The conversion of unstructured to structured data (preprocessing) is often a substantial part of the DS/ML pipeline.</li>
+<li>The dimensionality of structured data may vary.</li>
+<li>In most cases, a tidy (row = observation, column = variable) data structure is beneficial.</li>
+</ul></article></slide>
 
 
   <slide class="backdrop"></slide>

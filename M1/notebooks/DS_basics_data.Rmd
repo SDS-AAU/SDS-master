@@ -1,5 +1,5 @@
 ---
-title: 'Data Science Basics: The Data Science Workflow'
+title: 'Data Science Basics: Data Sources, Tupes & Structure'
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output: ioslides_presentation
@@ -40,10 +40,11 @@ library(kableExtra)
 
 ## This session 
 
-In this session you will be introduced to: 
+In this short session you will be introduced to: 
 
-1. xxx
-2. xxx
+1. Distinction between structured and unstructured data
+2. Crashcourse in data Dimensionality.
+3. The concept of tidy data.
 
 # Introduction 
 
@@ -70,6 +71,17 @@ In this session you will be introduced to:
 * ... Relatively easy to integrate in the usual DS/ML workflows.
 * ... Relational Databases (RDBMS / SQL) connect information across structured datasets.
 
+## Structured Data Example
+
+<center> 
+![](https://sds-aau.github.io/SDS-master/00_media/relational-nycflights.png){.img} 
+</center>
+
+* A collection of tabular datasets.
+* All are conceptually linked (related to flights from NYC airport)
+* All are analtically linked by key ID variables, allowing to join them.
+* Might com from a company's ERP system, public statistical bureaus ect.
+
 ## Unstructured Data
 
 = everything else. 
@@ -84,7 +96,7 @@ One big part in the preprocessing of ML/DS projects is often to bring unstructur
 
 You might need to handle some unstructured data, yet for the most part this is not content of this but later modules.
 
-## What data is around?
+## Data Share
 
 <center> 
 ![](https://sds-aau.github.io/SDS-master/00_media/data_iceberg.png){.img} 
@@ -102,7 +114,27 @@ You might need to handle some unstructured data, yet for the most part this is n
 
 <center> 
 ![](https://sds-aau.github.io/SDS-master/00_media/tidy-data.png){.img_big} 
+</center>
+1. Each variable must have its own column.
+2. Each observation (corresponding to unit of interest) must have its own row.
+3. Each value must have its own cell.
 
+## Tidy data contd.
 
+Why ensure that your data is tidy? There are two main advantages:
+
+1.Consistent way of storing data. If you have a consistent data structure, it’s easier to learn the tools that work with it because they have an underlying uniformity.
+2. Likewise, consistency in format eases the reuse of existing workflows to new DS/ML projects.
+3. When working with structured data, having a row for every unit of observation facilitates analytic .
 
 # Summary
+
+## Main take-aways today: 
+
+* We broadly distinguish between structured and unstructured data.
+   * Structured data can be expressed in a tabular format.
+   * Unstructured data cannot per se be expressed tabular.
+* Most DS/ML workflows are geared towards 
+* The conversion of unstructured to structured data (preprocessing) is often a substantial part of the DS/ML pipeline.
+* The dimensionality of structured data may vary.
+* In most cases, a tidy (row = observation, column = variable) data structure is beneficial.
