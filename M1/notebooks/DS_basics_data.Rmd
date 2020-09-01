@@ -53,7 +53,46 @@ In this session you will be introduced to:
 ![](https://sds-aau.github.io/SDS-master/00_media/random_data.png){.img_big} 
 </center>
 
-## Types of Data
+# Sources and Types of Data
+
+## Structured vs Unstructured Data
+
+<center> 
+![](https://sds-aau.github.io/SDS-master/00_media/data_structured_vs_unstructured.png){.img} 
+</center>
+
+## Structured Data
+
+= Data that can be meaningful expressed in a **tabular** (row/column) format.
+
+* ... Excel spreadsheets and similar are by design structured.
+* ... Often a mix of quantitative (= numeric) qualitative (= categorical) data.
+* ... Relatively easy to integrate in the usual DS/ML workflows.
+* ... Relational Databases (RDBMS / SQL) connect information across structured datasets.
+
+## Unstructured Data
+
+= everything else. 
+
+* ... has an internal structure (i.e. bits and bytes)
+* ... but is not structured via pre-defined data models or schema, i.e. not organised and labelled to identify meaningful relationships between data
+* ... may be textual / non-textual (tweets, images, audio, ...)
+* ... may be human / machine-generated. 
+* ... might also be stored within a non-relational database like NoSQL.
+
+One big part in the preprocessing of ML/DS projects is often to bring unstructured data in a structured format.
+
+You might need to handle some unstructured data, yet for the most part this is not content of this but later modules.
+
+## What data is around?
+
+<center> 
+![](https://sds-aau.github.io/SDS-master/00_media/data_iceberg.png){.img} 
+</center>
+
+# Structured Data
+
+## Dimensionality of Data
 
 <center> 
 ![](https://sds-aau.github.io/SDS-master/00_media/data_dimensions.png){.img_big} 
