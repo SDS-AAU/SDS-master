@@ -25,7 +25,7 @@
    * R [Video](https://www.loom.com/share/8bb0ed1ce1f244b39243cbbdca8726ed) [Html](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_basics_R.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_basics_R.ipynb#offline=true&sandboxMode=true)
    * Python Video [1](https://www.loom.com/share/ff2dcc175bc04ad8a9778ca79e012ccd) [2](https://www.loom.com/share/29de25e65c644893a2642dc56f4b6f96) [3](https://www.loom.com/share/d9755dd32b144a1dad11525fd5c37d34) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_data_manipulation_application_py.ipynb)
 * Theory: Introduction to Data Science workflows Video Slides
-* Theory: Introduction to data Video Slides
+* Theory: Introduction to data Video [Slides](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data.html)
 * Theory: Data manipulation basics [Video](https://www.loom.com/share/394d083071fc42219f5921fb394b3e6c) [Slides](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation.html)
   * Application: R [Video](https://www.loom.com/share/06497181712a4fbf9bf4443d85926a35) [Html](https://sds-aau.github.io/SDS-master/M1/notebooks/DS_basics_data_manipulation_application_R.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_data_manipulation_application_R.ipynb#offline=true&sandboxMode=true)
   * Application: Python  [Video](https://www.loom.com/share/8a19abb9b4f343c5bf5fd9382d73e883) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_data_manipulation_application_py.ipynb)
@@ -39,6 +39,11 @@
 ## Data Manipulation & Exploration 
 - EDA-Case: Open Policing Project
     Python Video [1](https://www.loom.com/share/4c5b046d6cf5465cbf6ca50f8d037461) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/data_exploration_case_py.ipynb)
+
+
+
+
+
 
 
 
