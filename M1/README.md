@@ -34,8 +34,10 @@
    * Python [Video](https://www.loom.com/share/257a4e764bd74ee7b39f1027821e0838) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/DS_basics_example_group_merge_py.ipynb)
 
 ## Data Manipulation & Exploration 
-- EDA-Case: Open Policing Project
-    Python Video [1](https://www.loom.com/share/4c5b046d6cf5465cbf6ca50f8d037461) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/data_exploration_case_py.ipynb)
+
+* **Homework (W36)** EDA-Case: Open Policing Project
+   * Python Video [1](https://www.loom.com/share/4c5b046d6cf5465cbf6ca50f8d037461) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/data_exploration_case_py.ipynb)
+   * R Video [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/EDA_case_policing_R.ipynb)
 
 
 
