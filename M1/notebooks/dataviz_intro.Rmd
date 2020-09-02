@@ -1,0 +1,35 @@
+---
+title: 'Introduction to Data Visualization'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  ioslides_presentation:
+    css: '../../00_notebooks/css_style_ioslides.css'
+   
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+knitr::opts_chunk$set(
+  echo = FALSE
+  )
+
+# Load packages
+library(tidyverse)
+library(magrittr)
+library(knitr)
+library(kableExtra)
+```
+
+
+## This session 
+
+In this session you will be introduced to: 
+
+1. xxx
+2. xxx
+
+
+
+
+

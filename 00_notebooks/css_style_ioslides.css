@@ -1,0 +1,22 @@
+###################################
+# CSS Style for IOS presentations
+###################################
+
+# Images
+<style type="text/css">
+  .img_small{
+    width: 50%;
+    class="centered";
+    display: block;
+  }
+.img{
+  width: 75%;
+  class="centered";
+  display: block;
+}
+.img_big{
+  width: 100%;
+  class="centered";
+  display: block;
+}
+</style>

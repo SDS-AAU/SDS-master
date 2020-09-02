@@ -1,0 +1,74 @@
+---
+title: "Package ecosystem"
+output: html_notebook
+---
+
+## 1: Data Import
+
+Python Packages
+* `Pandas` (geopandas if working with GIS data)
+* `Requests` (working with APIs)
+* `Beautiful Soup` (HTML parsing)
+* Json/Simplejson (parsing JSON data)
+* Pymongo (MongoDB interface)
+* Sqlite (Sqlite in Python, Pandas can access SQL too)
+* H5Py and Pytables (Working with HDF5 - big nummerical data)
+* Pyspark (in case you venture into Spark and distributed computing)
+
+R packages
+* Data Import: `readr`, `haven`,
+* API interfaces: eg. `twitteR`, `eurostat`, `rcrunchbase`
+* `rvest` (web-scraping)
+* `rjson`: Working with Jsons
+* `sparklyr`` (Spark backend)
+* `mongolite` (mongoDB backend)
+* `dbplyr` (dplyr-integrated SQL backend for R)
+
+## 2: Data Cleaning
+
+* Python Packages
+    * Pandas
+    * sklearn (can be used for imputation)
+    * fancyimpute (as the name suggests - implements various matrix completion algos)
+    * missingno (visualize missing/messy data)
+
+* R packages
+    * Dplyr (as always, for general replacement, mutation, grouping, aggregation, joins)
+    * anomalize: Tidy anomaly detection
+    * VIM, amelia, mi, mice (missing value inputation)
+
+## 3: data wrangling
+
+XXX
+
+
+## 4: Visualzation
+
+* Python Packages
+    * Pandas
+    * Numpy (for more complex matrix algebra & co.)
+    * Networkx (if your data is relational M2)
+    * Seaborn (Statistical plotting built on top of the incomprehensible matplotlib)
+* R Packages
+    * GGplot2 (Grammar of Graphics implementation in R)
+    
+## 5: Modelling
+
+* ML libraries for Python
+    * Scikit Learn (all possible and impossible ML algorithms, preprocessing and more)
+    * Sklearn-pandas (bridge between Scikit and Pandas dataframes)
+* ML libraries for R
+    * tidymodels
+    
+## 6: Communicating results
+* Python DataViz Packages
+     * Seaborn (and Matplotlib)
+     * ipyleaflet (interactive maps)
+     * Bokeh (advanced interactive charts)
+* R DataViz Packages
+     * `Shiny` (for interactive and online viz)
+     * `Leaflet` (for interactive maps)
+* Other stuff
+     * Gephi, D3.JS, JavaScript general
+* Communication: Presenting/Speaking & Reporting/Writing
+
