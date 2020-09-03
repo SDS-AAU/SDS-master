@@ -40,23 +40,23 @@ In this session you will be introduced to:
 
 1. The purpose of data visualization
 2. A framework of elements of data visualization
-3. BAsic types of visualization
-4. How to choose the roght visualization depending on:
+3. Basic types of visualization
+4. How to choose the right visualization depending on:
    * Variable type
    * Amount of variables
    * Types of properties/relationships to be highlighted
 
 # Introduction to Visualization
 
-## DataViz{.bigger}
+## DataViz
 
 <center>
-*"The mapping of variable values/properties in the data to visually comprehensible graphical elements/positions"*
+*"The mapping of variable values/properties in the data to visually comprehensible graphical elements/positions"* 
 </center>
+Daniel
 
-- Daniel
 
-## Purpose of Visualization
+Purpose of Visualization
 
 * Explore properties of the data
 * Reveal insights to be found in the data
@@ -68,10 +68,10 @@ In this session you will be introduced to:
 Q: What is wrong with this data visualization?
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/dataviz_framework.png){.img_big}
+![](https://sds-aau.github.io/SDS-master/00_media/dataviz_bad.png){.img}
 </center>
 
-# AData Visualization Framework
+# A Data Visualization Framework
 
 ## The DataViz framework
 
@@ -133,7 +133,7 @@ Often, we do not only look at raw data, but aim at visualizing result of an anal
 
 ## 5. Graphic Symbols
 
-```{r}
+```{r, fig.height=3, message=FALSE, warning=FALSE, comment=FALSE}
 library(ggpubr)
 library(patchwork)
 
@@ -172,17 +172,28 @@ In combinations, shapes and variable mappings allow for multiple types of inform
 
 ## 7. Interactions
 
-Interactive visualizations allow for
+Interactive visualizations allow for:
 
 * communicating more dynamic and complex properties/relationships
 * Allow own insight-creation by exploration
 
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/dataviz_interactive.png){.img_small}
+</center>
 
 ## Summary
 
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/dataviz_reference_joint.png){.img_big}
 </center>
+
+The combination of...
+
+* ... graphical symbols ...
+* ... other graphical variables ...
+* ... on a reference system...
+
+... allow us to represent a multitude of information to be found in the data or as result of an analysis visually.
 
 
 # Examples: Visualizing Variables & Relationships
@@ -191,7 +202,7 @@ Interactive visualizations allow for
 
 Histogram for binned bars
 
-```{r,fig.height=2.5, message=FALSE}
+```{r,fig.height=2.5, message=FALSE, warning=FALSE, comment=FALSE}
 iris %>% ggplot(aes(x = Sepal.Length)) +
   geom_histogram()
 ```
@@ -381,29 +392,26 @@ iris  %>%
 
 * y = Variable
 * x = Variable
-* VAriable: Color (Correlation)
+* Variable: Color (Correlation)
 
 
 ## Statistical properties
 
 Correlation Matrix (bivariate distribution of multiple variables)
 
-```{r,fig.height=2.5, message=FALSE}
+```{r,fig.height=5, message=FALSE, warning=FALSE, comment=FALSE}
 library(GGally)
 iris  %>%
   ggpairs(aes(alpha = 0.3), ggtheme = theme_gray()) 
 ```
-**Reference system:**
 
-* y = Value Variable 
-* x = Value variable x
-* Symbol = Confidence Intervall Box
+
 
 ## Interactions
 
 Examples ar manifold. Just to give you one:
 
-```{r}
+```{r, fig.height=5, message=FALSE, warning=FALSE, comment=FALSE}
 library(plotly)
 highlight_key(iris) %>%
   ggpairs(aes(colour = Species), columns = 1:4) %>%
