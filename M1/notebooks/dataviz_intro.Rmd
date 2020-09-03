@@ -4,7 +4,7 @@ author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
   ioslides_presentation:
-    css: '../../00_notebooks/css_style_ioslides.css'
+#    css: '../../00_notebooks/css_style_ioslides.css'
    
 ---
 
@@ -22,14 +22,312 @@ library(kableExtra)
 ```
 
 
+<style type="text/css">
+  .img_small{
+    width: 50%;
+  }
+.img{
+  width: 75%;
+}
+.img_big{
+  width: 100%;
+}
+</style>
+
 ## This session 
 
 In this session you will be introduced to: 
 
-1. xxx
-2. xxx
+1. The purpose of data visualization
+2. A framework of elements of data visualization
+3. BAsic types of visualization
+4. How to choose the roght visualization depending on:
+   * Variable type
+   * Amount of variables
+   * Types of properties/relationships to be highlighted
+
+# Introduction to Visualization
+
+## Purpose of Visualization
+
+
+## DataViz matters
+
+Q: What is wrong with this data visualization?
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/dataviz_framework.png){.img_big}
+</center>
+
+
+
+# Data Visualization Framework
+
+## The DataViz framework
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/dataviz_framework.png){.img_big}
+</center>
+
+Borner, K. (2015). [Atlas of knowledge: Anyone can map](http://scimaps.org/atlas2) MIT Press.
+
+## 1. Insights needed
+
+xxxx
+
+## 2. Data Scales
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/dataviz_scales.png){.img_big}
+</center>
+
+## 3. Analysis type
+
+* When: Temporal Analysis / Timeseries, Statistics
+* Where: Geospation Analysis
+* What: Topical Data Analysis
+* With whom: Network Analysis
+
+
+## 4. Visualization: Types
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/dataviz_types.png){.img_big}
+</center>
+
+## 4. Visualization: Reference System
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/dataviz_reference.png){.img_big}
+</center>
+
+
+## 5. Graphic Symbols
+
+* Points
+* Lines
+* Linguistic symbols
+
+
+## 6. Graphic variables
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/dataviz_variables.png){.img_big}
+</center>
+
+## Symbols & variables combined
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/dataviz_variables2.png){.img}
+</center>
+
+## 7. Interactions
 
 
 
 
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/dataviz_reference_joint.png){.img_big}
+</center>
+
+
+
+# Visualizing Variables & Relationships
+
+## Summaries of One Variable: Continuous{.smaller}
+
+Histogram for binner bars
+
+```{r,fig.height=2.5, message=FALSE}
+iris %>% ggplot(aes(x = Sepal.Length)) +
+  geom_histogram()
+```
+
+**Reference system:**
+
+* x = Variable value
+* y = Observation count
+* Symbol = Bar
+
+## Summaries of One Variable: Continuous {.smaller}
+
+Alternative: Probability density function (PDF) 
+
+```{r,fig.height=2.5, message=FALSE}
+iris %>% ggplot(aes(x = Sepal.Length)) +
+  geom_density()
+```
+
+**Reference system:**
+
+* x = Variable value
+* y = Observation count
+* Symbol = Line
+
+## Summaries of One Variable: Discrete{.smaller}
+
+Barplot
+
+```{r,fig.height=2.5, message=FALSE}
+iris  %>%
+  ggplot(aes(x = Species)) +
+  geom_bar()
+```
+**Reference system:**
+
+* x = Variable category
+* y = Observation count
+* Symbol = Bar
+
+
+## Summaries of One Variable: Discrete{.smaller}
+
+Barplot (stacked)
+
+```{r,fig.height=2.5, message=FALSE}
+iris  %>%
+  count(Species) %>%
+  ggplot(aes(x="", y=n, fill=Species)) +
+  geom_bar(width = 1, stat = "identity") +
+  labs(x = NULL, y = NULL)
+
+```
+**Reference system:**
+
+* y = Observation count
+* Symbol = Bar
+* Variable = Color
+
+## Summaries of One Variable: Discrete{.smaller}
+
+Pie Chart
+
+```{r,fig.height=2.5, message=FALSE}
+iris  %>%
+  count(Species) %>%
+  ggplot(aes(x="", y=n, fill=Species)) +
+  geom_bar(width = 1, stat = "identity") + 
+  coord_polar("y", start=0) +
+  labs(x = NULL, y = NULL)
+
+```
+**Reference system:**
+
+* y = Observation count
+* Symbol = Bar (polar coordinates)
+* Variable = Color
+
+## Summarizing multiple variables jointly
+
+Scatterplot (2 variables)
+
+```{r,fig.height=2.5, message=FALSE}
+iris  %>%
+  ggplot(aes(x=Sepal.Width, y=Sepal.Length)) +
+  geom_point()
+```
+**Reference system:**
+
+* y = Value Variable y
+* x = Value variable x
+* Symbol = Point
+
+## Summarizing multiple variables jointly
+
+Scatterplot (3 variables, 2c1d)
+
+```{r,fig.height=2.5, message=FALSE}
+iris  %>%
+  ggplot(aes(x=Sepal.Width, y=Sepal.Length, col=Species)) +
+  geom_point()
+```
+**Reference system:**
+
+* y = Value Variable y
+* x = Value variable x
+* Symbol = Point
+* Variable: Color (Species)
+
+## Summarizing multiple variables jointly
+
+Scatterplot (3 variables, 3c)
+
+```{r,fig.height=2.5, message=FALSE}
+iris  %>%
+  ggplot(aes(x=Sepal.Width, y=Sepal.Length, col=Petal.Length)) +
+  geom_point()
+```
+**Reference system:**
+
+* y = Value Variable y
+* x = Value variable x
+* Symbol = Point
+* Variable: Color (Petal.Lenght)
+
+## Summarizing multiple variables jointly
+
+Scatterplot (4 variables, 3c,1d)
+
+```{r,fig.height=2.5, message=FALSE}
+iris  %>%
+  ggplot(aes(x=Sepal.Width, y=Sepal.Length, col=Petal.Length, shape=Species)) +
+  geom_point()
+```
+**Reference system:**
+
+* y = Value Variable y
+* x = Value variable x
+* Symbol = Point
+* Variable: Color (Petal.Lenght), Shape (Species)
+
+## Statistical properties
+
+Boxplot (Univariate distribution of multiple variables)
+
+```{r,fig.height=2.5, message=FALSE}
+iris  %>%
+  select(-Species) %>%
+  pivot_longer(everything(), names_to = 'variable') %>%
+  ggplot(aes(x=variable, y=value)) +
+    geom_boxplot()
+```
+**Reference system:**
+
+* y = Value Variable 
+* x = Value variable x
+* Symbol = Confidence Interval Box
+
+
+## Statistical properties
+
+Correlation Matrix (bivariate distribution of multiple variables)
+
+```{r,fig.height=2.5, message=FALSE}
+library(GGally)
+iris  %>%
+  select(-Species) %>%
+  ggcorr(label = TRUE, label_size = 3, label_round = 2, label_alpha = TRUE)
+```
+**Reference system:**
+
+* y = Variable
+* x = Variable
+* VAriable: Color (Correlation)
+
+
+## Statistical properties
+
+Correlation Matrix (bivariate distribution of multiple variables)
+
+```{r,fig.height=2.5, message=FALSE}
+library(GGally)
+iris  %>%
+  ggpairs(aes(alpha = 0.3), ggtheme = theme_gray()) 
+```
+**Reference system:**
+
+* y = Value Variable 
+* x = Value variable x
+* Symbol = Confidence Intervall Box
 
