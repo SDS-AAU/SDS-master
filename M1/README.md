@@ -40,5 +40,5 @@
    * R Video [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/EDA_case_policing_R.ipynb)
 
 * Theory: Data Visualization [Video](https://www.loom.com/share/73c049cd420d46f3b1129944b0e9e6ea) [Slides](https://sds-aau.github.io/SDS-master/M1/notebooks/EDA_dataviz_intro.html)
-   * Application: R Video [Html](https://sds-aau.github.io/SDS-master/M1/notebooks/EDA_dataviz_application_R.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/EDA_dataviz_application_R.ipynb)
+   * Application: R [Video](https://www.loom.com/share/c1b84f6e59ce4b02935b0088744cfc5b) [Html](https://sds-aau.github.io/SDS-master/M1/notebooks/EDA_dataviz_application_R.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/EDA_dataviz_application_R.ipynb)
 
