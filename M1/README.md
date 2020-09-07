@@ -47,5 +47,5 @@ This module will prove a condensed introduction to the â€œData Science Pipelineâ
 
 # Part II: Unsupervised Machine Learning (UML)
 
-- Theory: Introduction to unsupervised ML [Slides](https://SDS-AAU.github.io/SDS-master/M1/slides/SDS-M1-UML_Intro.pdf) Video
-   -  Application Py: Video [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/ML_intro_UML.ipynb)
+* Theory: Introduction to unsupervised ML [Slides](https://SDS-AAU.github.io/SDS-master/M1/slides/SDS-M1-UML_Intro.pdf) Video
+   *  Application Py: Video [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/ML_intro_UML.ipynb)
