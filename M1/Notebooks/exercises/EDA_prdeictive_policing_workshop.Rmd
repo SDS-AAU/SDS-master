@@ -40,7 +40,7 @@ data %>%
 ```{r}
 data %>%
   count(age_cat, violation, sort = TRUE) %>%
-  pivot_wider(names_from = age_cat, values_from = n)
+  pivot_wider(names_from = age_cat, values_from = pct)
 ```
 
 ## H2: Race -> N stops
