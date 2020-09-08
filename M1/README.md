@@ -36,7 +36,7 @@ This module will prove a condensed introduction to the â€œData Science Pipelineâ
 
 ### **Homework (W36)** EDA-Case: Open Policing Project
    * Python Video [1](https://www.loom.com/share/4c5b046d6cf5465cbf6ca50f8d037461) [2](https://www.loom.com/share/43b5be68c59b44b3b9f3a3e4bf1a3fc8) [3](https://www.loom.com/share/6a5b11c1ad004ae48875528767253590) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/data_exploration_case_py.ipynb)
-   * R Video (coming) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/EDA_case_policing_R.ipynb)
+   * R Video [1](https://www.loom.com/share/539478367a5c4a6ca94b2017266a0158) [2](https://www.loom.com/share/d61ac7a9868c407991dc0f25ab7c479b) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/EDA_case_policing_R.ipynb)
 
 ## Data Visualization
 * Theory: Data Visualization [Video](https://www.loom.com/share/73c049cd420d46f3b1129944b0e9e6ea) [Slides](https://sds-aau.github.io/SDS-master/M1/notebooks/EDA_dataviz_intro.html)
