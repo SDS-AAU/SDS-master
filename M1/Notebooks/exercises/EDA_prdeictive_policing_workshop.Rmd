@@ -1,0 +1,78 @@
+---
+title: "EDA Predictive Policing Workshop (R)"
+output: html_notebook
+---
+
+# Intro
+
+# Load the data
+
+```{r}
+## Importing packages
+library(tidyverse) # metapackage with lots of helpful functions
+library(magrittr)
+```
+
+```{r}
+data <- read_csv("https://sds-aau.github.io/SDS-master/M1/data/RI-clean.csv.gz")
+```
+
+```{r}
+data %>% glimpse()
+```
+
+
+
+# Hypothesis generation
+
+# H1: age -> search_type
+
+```{r}
+data %<>%
+  mutate(age_cat = driver_age < 30)
+```
+
+```{r}
+data %>%
+  count(age_cat)
+```
+
+```{r}
+data %>%
+  count(age_cat, violation, sort = TRUE) %>%
+  pivot_wider(names_from = age_cat, values_from = n)
+```
+
+## H2: Race -> N stops
+
+```{r}
+data %>%
+  count(driver_race, is_arrested, sort = TRUE) %>%
+  group_by(driver_race) %>%
+    mutate(pct = (n/sum(n, na.rm = TRUE)) %>% round(2)) %>%
+  ungroup() %>%
+  filter(is_arrested == TRUE) %>%
+  select(-is_arrested, -n) %>%
+  pivot_wider(names_from = driver_race, values_from = pct)
+```
+
+## H3: Gender -> Speeding
+
+```{r}
+data %>%
+  count(violation, sort = TRUE)
+```
+
+
+```{r}
+data %>%
+  count(driver_gender, violation) %>%
+  drop_na() %>%
+  group_by(driver_gender) %>%
+    mutate(pct = (n/sum(n, na.rm = TRUE)) %>% round(2)) %>%
+    arrange(desc(pct)) %>%
+    slice(1:5) %>%
+  ungroup() 
+```
+
+
