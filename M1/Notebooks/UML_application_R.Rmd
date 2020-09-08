@@ -34,3 +34,34 @@ knitr::opts_chunk$set(warning=FALSE,
 library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
 library(magrittr) # For extra-piping operators (eg. %<>%)
 ```
+
+# Unsupervised ML in R (with Penguins)
+
+
+The palmer penguin dataset is excellent for EDA and UML. It contains different measures for 3 species of closely related penguins from several islands in Antarctica.
+
+Let's have a look:
+
+Penguin datast: https://github.com/allisonhorst/palmerpenguins
+![](https://github.com/allisonhorst/palmerpenguins/raw/master/man/figures/lter_penguins.png)
+
+
+```{r}
+# load the dataset from GitHub - original source
+penguins <- read_csv("https://github.com/allisonhorst/palmerpenguins/raw/5b5891f01b52ae26ad8cb9755ec93672f49328a8/data/penguins_size.csv")
+```
+
+```{r}
+penguins %>% head()
+```
+
+```{r}
+penguins %>% glimpse()
+```
+
+```{r}
+# drop all missing observations 
+penguins %<>% drop_na()
+```
+
+
