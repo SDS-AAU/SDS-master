@@ -47,4 +47,4 @@ This module will prove a condensed introduction to the â€œData Science Pipelineâ
 # Part II: Unsupervised Machine Learning (UML)
 
 * Theory: Introduction to unsupervised ML [Slides](https://SDS-AAU.github.io/SDS-master/M1/slides/SDS-M1-UML_Intro.pdf) [Video](https://www.loom.com/share/c5c8daaf85b242cb935cae53613c23e3)
-   *  Application Python: [Video](https://www.loom.com/share/1c958854e0ab4b238fd536773796ad00) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/ML_intro_UML.ipynb)
+   *  Application Python: Video [1-dimensionality reduction](https://www.loom.com/share/cf84d4225a064aa2857d26ae82f94588) [2-clustering](https://www.loom.com/share/76920b0d281a422cada427226ed7e54c) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M1/notebooks/ML_intro_UML.ipynb)
