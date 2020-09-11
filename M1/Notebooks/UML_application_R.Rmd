@@ -35,9 +35,7 @@ library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
 library(magrittr) # For extra-piping operators (eg. %<>%)
 ```
 
-# Unsupervised ML in R (with Penguins)
-
-
+# Introduction to the dataset
 The palmer penguin dataset is excellent for EDA and UML. It contains different measures for 3 species of closely related penguins from several islands in Antarctica.
 
 Let's have a look:
@@ -45,6 +43,7 @@ Let's have a look:
 Penguin datast: https://github.com/allisonhorst/palmerpenguins
 ![](https://github.com/allisonhorst/palmerpenguins/raw/master/man/figures/lter_penguins.png)
 
+## Obtaining the Data
 
 ```{r}
 # load the dataset from GitHub - original source
@@ -64,4 +63,326 @@ penguins %>% glimpse()
 penguins %<>% drop_na()
 ```
 
+## Brief EDA
 
+```{r}
+penguins %>% count(species_short)
+```
+```{r}
+penguins %>% count(species_short, island) %>%
+  pivot_wider(names_from = island, values_from = n, values_fill = 0)
+```
+![](https://github.com/allisonhorst/palmerpenguins/raw/master/man/figures/culmen_depth.png)
+
+```{r, fig.height=12, fig.width=12}
+library(GGally)
+penguins %>% ggpairs(legend = 1,
+                     columns = c(3:6),
+                     mapping = ggplot2::aes(colour=species_short, alpha = 0.5), 
+                     lower = list(continuous = wrap("smooth", alpha = 0.3, size=0.1))) +
+  theme(legend.position = "bottom")  
+```
+
+Overall we can see some general tendencies in the data:
+
+*   Being "bio" data, it is rather normally distributed
+*   Gentoos are on average heavier
+*   Glipper length is correlated with body mass for all species
+*   Culmen length and depth is correlated with body mass for gentoos but not so much for the other species (visual analysis...no proper calculation)
+*   Overall there is obviousely some correlation between the variables that can be 'exploited' for dimensionality reduction.
+
+Before we can do any machine learning, it is a good idea to scale the data. Most algorithms are not agnostic to magnitudes and bringing all variables on the same scale is therefore crucial.
+
+# Unsupervised Machine Learning (With Penguins)
+
+## Dimensionality reduction
+
+### PRincipal Component Analysis
+
+* We start with the most popular classical dimensionality reduction technique, Principal_component-Analysis (PCA). 
+* To execute the PCA, we'll here use the [`FactoMineR`](http://factominer.free.fr/) package to compute PCA, and  [`factoextra`](https://github.com/kassambara/factoextra) for extracting and visualizing the results. 
+* `FactoMineR` is a great and my favorite package for computing principal component methods in R. It's very easy to use and very well documented. 
+* There are other alternatives around, but I since quite some time find it to be the most powerful and convenient one. `factoextra` is just a convenient `ggplot` wrapper that easily produces nice and informative diagnistic plots for a variety of DR and clustering techniques.
+
+```{r,warning=FALSE,echo=FALSE}
+# # Install packages if necessary 
+# install.packages('FactoMineR')
+# install.packages('factoextra')
+
+# Load packages
+library(FactoMineR)
+library(factoextra)
+```
+
+Lets do that. Notice the `scale.unit = TRUE` argument, which you should ALWAYS use. Afterwards, we take a look at the resulting list object.
+
+```{r}
+res_pca <- penguins %>% 
+  select_if(is_numeric) %>%
+  PCA(scale.unit = TRUE, graph = FALSE)
+```
+
+
+Ok, lets see look at the "screeplot", a diagnostic visualization that displays the variance explained by every component. We here use the `factoextra` package, like for all following visualizations with the `fviz_` prefix. Notice that the output in every case is an `ggplot2` object, which could be complemented with further layers.
+
+```{r,fig.align='center'}
+res_pca %>% 
+  fviz_screeplot(addlabels = TRUE, 
+                 ncp = 10, 
+                 ggtheme = theme_gray())
+```
+
+As expected, we see that the first component already captures a main share of the variance. Let's look at the corresponding eigenvalues.
+
+```{r}
+res_pca$eig %>% as_tibble()
+```
+
+For feature selection, our rule-of-thumb is to only include components with an eigenvalue > 1, meaning that we in this case would have reduced our data to 4 dimensions. Lets project them onto 2-dimensional space and take a look at the vector of our features. In this case, you could easily condens all information in one dimension. We will include the second as well for 2-d plotting, but otherwise we have to have no hard feelings to discard the rest.
+
+
+```{r,fig.width=10,fig.height=10,fig.align='center'}
+res_pca %>%
+  fviz_pca_var(alpha.var = "cos2",
+               col.var = "contrib",
+               gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+               repel = TRUE,
+               ggtheme = theme_gray()) 
+```
+
+Lets look at the numeric values.
+
+```{r}
+res_pca %>% get_pca_var()
+```
+
+```{r}
+res_pca$var$coord %>% 
+  as_tibble() %>% 
+  head()
+```
+
+The results-object also contains the observations loading on the components.
+
+```{r}
+res_pca %>% get_pca_var()
+```
+
+```{r}
+res_pca$ind$coord %>% 
+  as_tibble() %>% 
+  head()
+```
+
+Let's visualize our observations and the variable-loading together in the space of the first 2 components.
+
+```{r,,fig.width=15,fig.height=10,fig.align='center'}
+res_pca %>%
+  fviz_pca_biplot(alpha.ind = "cos2",
+                  col.ind = "contrib",
+                  gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                  geom = "point", 
+                  ggtheme = theme_gray()) 
+```
+
+
+We cal also briefly check if our dimensionality reductions is helpful to differentiate between `species`.
+
+```{r,,fig.width=10,fig.height=10,fig.align='center'}
+res_pca %>% 
+  fviz_pca_biplot(alpha.ind = "cos2",
+                  geom = "point",                   
+                  habillage = penguins %>% pull(species_short) %>% factor(), 
+                  addEllipses = TRUE,
+                  ggtheme = theme_gray()) 
+```
+
+### Umap
+
+Now let's try out UMAP, a new dimensionality reduction algorightm that comes with many interesting features: https://umap-learn.readthedocs.io/en/latest/
+
+You want to learn more from the guy behind the algorithm?
+https://youtu.be/nq6iPZVUxZU check out that excellent talk by Leland McInnes or https://arxiv.org/abs/1802.03426.
+
+```{r}
+# install.packages('uwot') # If necessary install
+library(uwot)
+```
+
+```{r}
+res_umap <- penguins %>%
+  select_if(is_numeric) %>%
+  umap(n_neighbors = 15, 
+       metric = "cosine", 
+       min_dist = 0.01, 
+       scale = TRUE) 
+```
+
+```{r}
+res_umap %>% as_tibble() %>%
+  glimpse()
+```
+```{r}
+res_umap %>%
+  as_tibble() %>%
+  bind_cols(penguins %>% select(island, species_short)) %>%
+  ggplot(aes(x = V1, y = V2, col = species_short)) + 
+  geom_point(shape = 21, alpha = 0.5) 
+```
+Umap seems to do a better job at reducing the dimensionality in a way that the resulting embedding fits well with the species destinction.
+
+## Clustering
+
+* Now that we had a look at dimensionality reduction, let's see what clustering can do at the present case.
+* We will try out **K-means** and **hierarchical clustering**
+
+### K-Means Clustering
+
+* We now perform a K-means clustering, a classical robust and well performing fast clustering algorithm.
+* We have to upfront choose our `k`. 
+* there exists some guidance, for example the highest gain in "total within sum of sqares" (fast to calculate), the "siluette", as well as the "gap statistics" (hard to calculate, takes time). 
+* **Note:** Data with different scales needs to be scaled before clustering, since most cluster algorithms do not have an inbuild `scale` argument.
+
+```{r,fig.align='center'}
+# We use the viz_nbclust() function of the factorextra package
+penguins %>%
+  select_if(is_numeric) %>% 
+  scale() %>%
+  fviz_nbclust(kmeans, method = "wss")  
+```
+
+* Ok,we here settle for 3 (executive decision, since we want to identify 3 distinct species). 
+
+```{r}
+#Before we start, something weird upfront. The function takes the observation names from the rownames (which nobody uses anymore, and are depreciated by `dplyr`). So, remeber to define them just straight before you cluster, otherwise the next `dplyr` function will delete them again.
+penguins_clust <- penguins %>% column_to_rownames('species_short') %>%
+  select_if(is_numeric) %>%
+  scale()
+
+rownames(data) <- data %>% pull(place)
+```
+
+
+```{r}
+res_km <- penguins %>% 
+  select_if(is_numeric) %>%
+  scale() %>% 
+  kmeans(centers = 3, nstart = 20)  
+```
+
+```{r}
+res_km 
+```
+
+
+Again, lets visualize it. To have a meaningful way for 2d visualization, we again project the observations on the space of the first 2 components.
+
+```{r,,fig.width=15,fig.height=10,fig.align='center'}
+res_km %>% 
+  fviz_cluster(data = penguins %>% select_if(is_numeric) ,
+               ggtheme = theme_gray())  
+```
+
+Ok, we got 3 clusters. Let's look what's in them.
+
+```{r}
+penguins %>%
+  bind_cols(cluster = res_km$cluster) %>%
+  select_if(is_numeric) %>%
+  group_by(cluster) %>%
+  mutate(n = n()) %>%
+  summarise_all(funs(mean))
+```
+
+Lets see if they found the species correctly
+
+```{r}
+table(penguins$species_short, res_km$cluster)
+```
+
+### Hirarchical Clustering
+
+* Let's get it started and perform a cluster. We here use the `hcut` function, 
+* Notice that `hcut` has a `stand = TRUE` argument, meaning we do not need to scale the data beforehand.
+
+```{r}
+res_hc <- penguins %>%
+  select_if(is_numeric) %>%
+  hcut(hc_func = "hclust", 
+       k = 3, 
+       stand = TRUE)
+```
+
+* In hierarchical clustering, you categorize the objects into a hierarchy similar to a tree-like diagram which is called a dendrogram. 
+* The distance of split or merge (called height) is shown on the y-axis of the dendrogram below.
+
+```{r,,fig.width=15,fig.height=10,fig.align='center'}
+res_hc %>%
+  fviz_dend(rect = TRUE, cex = 0.5)
+```
+
+**Notice** how the dendrogram is built and every data point finally merges into a single cluster with the height(distance) shown on the y-axis.
+
+Let's inspect what's in the clusters.
+
+```{r}
+penguins %>%
+  bind_cols(cluster = res_hc$cluster) %>%
+  select_if(is_numeric) %>%
+  group_by(cluster) %>%
+  mutate(n = n()) %>%
+  summarise_all(mean)
+```
+
+And again visualize them:
+
+```{r,,fig.width=15,fig.height=10,fig.align='center'}
+res_hc %>%
+  fviz_cluster(data = penguins %>% select_if(is_numeric),
+               ggtheme = theme_gray())  
+```
+
+Lets see again how well we did with seperating species:
+
+```{r}
+table(penguins$species_short, res_hc$cluster)
+```
+
+
+### Bonus: Hirarchical Clustering based in PCA
+
+* You might already have wondered: "Could one combine a PCA with clustering techniques"? The answer is: "Yes!". 
+* In practice, that actually works very fine, and often delivers more robust clusters. 
+* We could do it by hand, but the `HCPC` function already does that for us, and offers also a nice diagnostic viz.
+
+
+```{r}
+res_hcpc <- res_pca %>% 
+  HCPC(nb.clust = -1, #  self determined: higher relative loss of inertia
+       graph = FALSE) 
+```
+
+```{r,,fig.width=15,fig.height=10,fig.align='center'}
+res_hcpc %>%
+  plot(choice = "3D.map")
+```
+
+# Endnotes
+
+
+### Packages & Ecosystem
+
+* [factominer](http://factominer.free.fr/): Very well documented package & ecosystem webpage with many examples, tutorials, and further reseources
+
+### Suggestions for further study
+
+* DataCamp
+  * [Unsupervised Machine Learning with R](https://learn.datacamp.com/skill-tracks/unsupervised-machine-learning-with-r)
+* Other online sources
+   * [Exploratory Multivariate Data Analysis (MOOC)](http://factominer.free.fr/course/MOOC.html)
+   * Furthermore, graphical inspection often helps comparing the results of different algorithms and parameters. [Here](https://cran.r-project.org/web/packages/dendextend/vignettes/Cluster_Analysis.html) you find some advanced diagnostic visualizations for hirarchical clustering.
+  
+### Session Info
+```{r}
+sessionInfo()
+````
