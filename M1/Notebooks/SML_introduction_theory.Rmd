@@ -29,6 +29,9 @@ library(tidymodels)
 
 
 <style type="text/css">
+  .img_smallest{
+    width: 30%;
+  }
   .img_small{
     width: 50%;
   }
@@ -353,19 +356,21 @@ data %>% ggplot(aes(x = x, y = y)) +
 ```
 * Based on this model we can now also carry out predictions
 
-## Model assesments and metrics for classification problems {.smaller}
+## Model metrics for classification problems {.smaller}
 
-![](https://sds-aau.github.io/SDS-master/00_media/cf1.jpg){.img}
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/ml_metrics1.png){.img_small}
+</center>
 
-* We remeber that the most commonly used performance measure for regression problems is the **RMSE**. 
-* However, how to we assess models aimed to solve classification problems? Here, it is not that straightforward, and we could (depending on the task) use different ones.
-* Most measures of predictive performance in classification tasks are derived from the confusion matrix.
-* The **Confusion Matrix** (in inferential statistics you would call it **Classification Table**, so don't get confused) is the main source 
+## The Confusion matrix
 
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/ml_metrics2.png){.img_big}
+</center>
 
 ## Confussion Matrix Unpacked {.smaller}
 
-It is the 2x2 matrix with the foillowing cells:
+It is the 2x2 matrix with the following cells:
 
 * **True Positive:** (TP): You predicted positive and it's true.
 * **True Negative:** (TN)
@@ -431,8 +436,9 @@ cm_log %>% summary() %>% mutate(.estimate = .estimate %>% round(3)) %>% select(-
 
 ## ROC and AUC
 * An ROC curve (receiver operating characteristic curve, weird name, i know. Comes originally from signal processing) is a derivative of the confusion matrix and predicted class-probabilities.
+* The curve plots true positive rate (sensitivity) agains the false positives rate (1-specificity)
 * It tells us how sensitive our classification is to 
-* The area-under-the-curve (AUC) goes us another good indicator of a models predictive power
+* The area-under-the-curve (AUC) also good and balanced indicator of a models predictive power.
 
 ```{r}
 roc_log <- res_log %>% 
