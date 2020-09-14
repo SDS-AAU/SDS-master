@@ -1,0 +1,47 @@
+---
+title: "Homework Assignment EDA"
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r}
+### Load packages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+```
+
+# Homework Assignment 1: EDA
+
+```{r}
+trips <- read_csv('https://sds-aau.github.io/SDS-master/M1/data/trips.csv')
+people <- read_csv('https://sds-aau.github.io/SDS-master/M1/data/people.csv')
+countries <- read_csv( 'https://sds-aau.github.io/SDS-master/M1/data/countrylist.csv')
+```
+
+```{r}
+trips %>% skimr::skim()
+```
+
+```{r}
+trips %>%
+  ggplot(aes(x = date_end)) +
+  geom_histogram()
+```
+
+```{r}
+trips %>%
+  mutate(date_end_pct = date_end %>% as.numeric() %>% percent_rank()) %>%
+  filter(date_end_pct >= 0.01 & date_end_pct <= 0.99) %>%
+    ggplot(aes(x = date_end)) +
+  geom_histogram()
+```
+
