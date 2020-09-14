@@ -51,3 +51,5 @@ This module will prove a condensed introduction to the â€œData Science Pipelineâ
    * Application R: Video [1: EDA & Dimensionality Reduction](https://www.loom.com/share/d3934db4292840afadc8626e7fb613b5) [2: Clustyering:](https://www.loom.com/share/60a9d3ca4d5f4ce790f51562af7da6fc) [Html](https://sds-aau.github.io/SDS-master/M1/Notebooks/UML_application_R.nb.html) [Colab](https://github.com/SDS-AAU/SDS-master/blob/master/M1/Notebooks/UML_application_R.ipynb)
    
  # Part III: Supervised Machine Learning
+ 
+ * Theory: Introduction to supervised ML [Slides](https://SDS-AAU.github.io/SDS-master/M1/SML_introduction_theory.html) Video [1: XXXX]()
