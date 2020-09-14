@@ -52,4 +52,4 @@ This module will prove a condensed introduction to the â€œData Science Pipelineâ
    
  # Part III: Supervised Machine Learning
  
- * Theory: Introduction to supervised ML [Slides](https://SDS-AAU.github.io/SDS-master/M1/Notebooks/SML_introduction_theory.html) Video [1: XXXX]()
+ * Theory: Introduction to supervised ML [Slides](https://SDS-AAU.github.io/SDS-master/M1/Notebooks/SML_introduction_theory.html) Video [1: Introduction & Statistics Refresher](https://www.loom.com/share/1092fff1eb8843a0b084618a8118c3db) Video [2:]()
