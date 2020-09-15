@@ -53,6 +53,7 @@ This module will prove a condensed introduction to the â€œData Science Pipelineâ
  # Part III: Supervised Machine Learning
  
  * Theory: Introduction to supervised ML [Slides](https://SDS-AAU.github.io/SDS-master/M1/Notebooks/SML_introduction_theory.html) Video [1: Introduction & Statistics Refresher](https://www.loom.com/share/1092fff1eb8843a0b084618a8118c3db) Video [2: Generalization, Hyperparameter Tuning & Model Clases](https://www.loom.com/share/b985e4e058b6459f955bf6280d3ad560)
+    * Application R: Video [comming soon]()  [Html](https://sds-aau.github.io/SDS-master/M1/Notebooks/SML_application_R.nb.html) [Colab comming soon](https://github.com/SDS-AAU/SDS-master/blob/master/M1/Notebooks/)
 
 ### **Homework (W38)** Combining UML and SML in the Nomad Dataset
 Use this dataset https://sds-aau.github.io/SDS-master/M1/data/cities.csv to apply your UML and SML skills.
