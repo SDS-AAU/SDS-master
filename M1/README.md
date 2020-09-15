@@ -53,3 +53,8 @@ This module will prove a condensed introduction to the â€œData Science Pipelineâ
  # Part III: Supervised Machine Learning
  
  * Theory: Introduction to supervised ML [Slides](https://SDS-AAU.github.io/SDS-master/M1/Notebooks/SML_introduction_theory.html) Video [1: Introduction & Statistics Refresher](https://www.loom.com/share/1092fff1eb8843a0b084618a8118c3db) Video [2: Generalization, Hyperparameter Tuning & Model Clases](https://www.loom.com/share/b985e4e058b6459f955bf6280d3ad560)
+
+### **Homework (W38)** Combining UML and SML in the Nomad Dataset
+Use this dataset https://sds-aau.github.io/SDS-master/M1/data/cities.csv to apply your UML and SML skills.
+- You are preparing a report that studies the destinations of Digital Nomads. It seems as if there are different groups of people in this community that tend to stick to specific types of places. Using dimensionality reduction and clustering techniques, identify and visualize 3 groups of cities in the world. How would you describe the groups? Consider first which variables are useful and which should be left out.
+- Using supervised ML train a model that - given some variables describing a city - predicts on which continent / in which region the city can be found.
