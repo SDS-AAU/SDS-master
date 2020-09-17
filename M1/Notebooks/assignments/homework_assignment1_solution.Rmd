@@ -203,7 +203,45 @@ trips %>% filter(is.na(region) | is.na(sub_region))
 
 ```{r}
 trips %>% filter(is.na(region) | is.na(sub_region)) %>%
-  count(country_code)
+  count(country_code, sort = TRUE)
 ```
 
 Ok, we see some country codes did not match. We dont bother for most small numbers, but one thing we might take a look at: UK did not match, since it is coded GB in the countries dataframe (Just inspect it). Lets delete the newly matched variables and start over again.
+
+```{r}
+trips %<>% 
+  select(-region, -sub_region)
+```
+
+Lets replace UK with GB
+
+```{r}
+trips %<>% 
+  mutate(country_code = country_code %>% str_replace(pattern = 'UK', replacement = 'GB'))
+```
+
+```{r}
+trips %>%
+  filter(country_code == 'UK' |country_code == 'GB') %>%
+  count(country_code)
+```
+
+Ok, no more UK present... lets join again.
+
+```{r}
+trips %<>%
+  left_join(countries, by = c("country_code" = "alpha_2"))
+```
+
+```{r}
+trips %>% filter(is.na(region) | is.na(sub_region)) %>%
+  count(country_code, sort = TRUE)
+```
+
+Ok, the rest seems negligible... we just delete these observations...
+
+```{r}
+trips %<>%
+  drop_na(region)
+```
+
