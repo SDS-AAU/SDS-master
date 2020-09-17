@@ -1,5 +1,5 @@
 ---
-title: "Homework Assignment EDA"
+title: "Assignment: Data Manipulation, EDA and Viz - Nomad Dataset (Example Solution)"
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
@@ -13,22 +13,131 @@ output:
     theme: flatly
 ---
 
+```{r setup, include=FALSE}
+# Knitr options
+### Generic preamble
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+# rm(list=ls()); graphics.off() # get rid of everything in the workspace
+if (!require("knitr")) install.packages("knitr"); library(knitr) # For display of the markdown
+
+### Knitr options
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     fig.align="center"
+                     )
+```
+
+# Preamble
+
+## Standard packages
+
 ```{r}
 ### Load packages
 library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
 library(magrittr) # For extra-piping operators (eg. %<>%)
 ```
 
-# Homework Assignment 1: EDA
+## Load data
+
+Trips
 
 ```{r}
 trips <- read_csv('https://sds-aau.github.io/SDS-master/M1/data/trips.csv')
+```
+
+```{r}
+trips %>% glimpse()
+```
+
+People
+
+```{r}
 people <- read_csv('https://sds-aau.github.io/SDS-master/M1/data/people.csv')
+```
+
+```{r}
+people %>% glimpse()
+```
+
+Countries
+
+```{r}
 countries <- read_csv( 'https://sds-aau.github.io/SDS-master/M1/data/countrylist.csv')
 ```
 
 ```{r}
-trips %>% skimr::skim()
+countries %>% glimpse()
+```
+
+# 1: Preprocessing
+
+## a. Trips: transform dates into timestamps
+
+```{r}
+trips %>% select(date_start, date_end) %>%
+  glimpse()
+```
+
+`readr` is smart, so if you loaded the data with `read_csv`, then this is already taken care of. Otherwise:
+
+```{r}
+# To demonstrate, I transform it back to a string.
+trips %<>% mutate(date_start = date_start %>% as.character(),
+                  date_end = date_end %>% as.character())
+```
+
+```{r}
+trips %>% select(date_start, date_end) %>%
+  glimpse()
+```
+
+In case it is a string but well formated, we can use the `lubridate` packages.
+
+```{r}
+library(lubridate) # This is tidyverse's datetime package
+
+trips %<>% mutate(date_start = date_start %>% as_date(),
+                  date_end = date_end %>% as_date())
+```
+
+```{r}
+trips %>% select(date_start, date_end) %>%
+  glimpse()
+```
+
+## b. Calculate trip duration in days
+
+```{r}
+trips %<>% mutate(trip_duration = date_end - date_start)
+```
+
+```{r}
+# Test if it works
+trips %>% 
+  select(trip_duration, date_start, date_end) %>%
+  head()
+```
+
+Seems to work fine :)
+
+## c. Filter extreme (fake?) observations for durations as well as dates - start and end
+
+Lets inspect:
+
+```{r}
+trips %>% 
+  select(trip_duration, date_start, date_end) %>%
+  summary()
+```
+
+We clearly see that some observations areunrealistic (trip in Jesus's times or in the future etc.). Lets look at the distribution
+
+```{r}
+trips %>%
+  ggplot(aes(x = date_start)) +
+  geom_histogram()
 ```
 
 ```{r}
@@ -37,11 +146,64 @@ trips %>%
   geom_histogram()
 ```
 
+There are many ways to deal with outliers. To make it simple:
+
+1: We could filter by some minimum / maximum date set manually
+2: We could just delete extreme values using `percentage_rank` (deleting the 1 percent of obs with highest/lowest values). We will demonstrate this here:
+
+```{r}
+trips %<>%
+  mutate(date_start_pct = date_start %>% as.numeric() %>% percent_rank(),
+         date_end_pct = date_end %>% as.numeric() %>% percent_rank()) %>%
+  filter(date_start_pct >= 0.01 & date_start_pct <= 0.99) %>%
+  filter(date_end_pct >= 0.01 & date_end_pct <= 0.99) 
+```
+
+Lets check how it looks now:
+
+```{r}
+trips %>% 
+  select(trip_duration, date_start, date_end) %>%
+  summary()
+```
+
+We clearly see that some observations areunrealistic (trip in Jesus's times or in the future etc.). Lets look at the distribution
+
 ```{r}
 trips %>%
-  mutate(date_end_pct = date_end %>% as.numeric() %>% percent_rank()) %>%
-  filter(date_end_pct >= 0.01 & date_end_pct <= 0.99) %>%
-    ggplot(aes(x = date_end)) +
+  ggplot(aes(x = date_start)) +
+  geom_histogram()
+```
+```{r}
+trips %>%
+  ggplot(aes(x = date_end)) +
   geom_histogram()
 ```
 
+Way more realistic, right?
+
+## d. Join the countrylist data to the trips data-frame using the countrycode as a key
+
+A simple left join.Be only aware of the different variable names
+
+```{r}
+trips %<>%
+  left_join(countries, by = c("country_code" = "alpha_2"))
+```
+
+```{r}
+trips %>% head()
+```
+
+New variables are in, seems to work. Lets check if there are some trips that could not match:
+
+```{r}
+trips %>% filter(is.na(region) | is.na(sub_region))
+```
+
+```{r}
+trips %>% filter(is.na(region) | is.na(sub_region)) %>%
+  count(country_code)
+```
+
+Ok, we see some country codes did not match. We dont bother for most small numbers, but one thing we might take a look at: UK did not match, since it is coded GB in the countries dataframe (Just inspect it). Lets delete the newly matched variables and start over again.
