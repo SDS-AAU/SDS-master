@@ -241,7 +241,22 @@ trips %>% filter(is.na(region) | is.na(sub_region)) %>%
 Ok, the rest seems negligible... we just delete these observations...
 
 ```{r}
-trips %<>%
-  drop_na(region)
+trips %<>% drop_na(region)
+```
+
+# 2: People
+
+## a: How many people have a least a “High School” diploma?
+
+Lets see what educations we have in the data
+
+```{r}
+people %>% count(education_raw)
+```
+
+Ok, that seems easy. Since all educations include Highschool (or higher), we can just assume that everybody that has all people with a non-missing education field have at least a highschool degree.
+
+```{r}
+people %>% pull(education_raw) %>% sum(!is.na())
 ```
 
