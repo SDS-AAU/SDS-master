@@ -1,0 +1,59 @@
+---
+title: "In-Class Exercise: UML & Digital Nomads)"
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+### Generic preamble
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+# rm(list=ls()); graphics.off() # get rid of everything in the workspace
+if (!require("knitr")) install.packages("knitr"); library(knitr) # For display of the markdown
+
+### Knitr options
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     fig.align="center"
+                     )
+```
+
+# Preamble
+
+## Standard packages
+
+```{r}
+### Load packages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+```
+
+## Load data
+
+```{r}
+trips <- read_csv('https://sds-aau.github.io/SDS-master/M1/data/trips.csv')
+trips %>% glimpse()
+```
+
+```{r}
+people <- read_csv('https://sds-aau.github.io/SDS-master/M1/data/people.csv')
+people %>% glimpse()
+```
+
+```{r}
+countries <- read_csv( 'https://sds-aau.github.io/SDS-master/M1/data/countrylist.csv')
+countries %>% glimpse()
+```
+
+
