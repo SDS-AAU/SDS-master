@@ -99,3 +99,81 @@ library(FactoMineR)
 library(factoextra)
 ```
 
+```{r}
+cities <- cities %>%
+  select(-X1) %>%
+  drop_na()
+```
+
+
+```{r}
+res_pca <- cities %>%
+  select_if(is_numeric) %>%
+  PCA(scale.unit = TRUE, graph = TRUE)
+```
+
+
+```{r,fig.align='center'}
+res_pca %>% 
+  fviz_screeplot(addlabels = TRUE, 
+                 ncp = 10, 
+                 ggtheme = theme_gray())
+```
+
+
+```{r,fig.width=10,fig.height=10,fig.align='center'}
+res_pca %>%
+  fviz_pca_var(alpha.var = "cos2",
+               col.var = "contrib",
+               gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+               repel = TRUE,
+               ggtheme = theme_gray()) 
+```
+
+```{r,,fig.width=15,fig.height=10,fig.align='center'}
+res_pca %>%
+  fviz_pca_biplot(alpha.ind = "cos2",
+                  col.ind = "contrib",
+                  gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                  geom = "point", 
+                  ggtheme = theme_gray()) 
+```
+
+# Clustering
+
+```{r,fig.align='center'}
+cities %>% 
+  drop_na() %>%
+  select_if(is_numeric) %>%
+  scale() %>%
+  fviz_nbclust(kmeans, method = "wss")  
+```
+
+
+```{r}
+hc <- cities %>%
+  select_if(is_numeric) %>%
+  hcut(hc_func = "hclust", 
+       k = 3, 
+       stand = TRUE)
+```
+
+```{r}
+hc %>%
+  glimpse()
+```
+```{r,,fig.width=15,fig.height=10,fig.align='center'}
+hc %>% 
+  fviz_cluster(data = cities %>% select_if(is_numeric))  
+```
+```{r}
+hc$cluster
+```
+```{r}
+cities[,"cluster"] <- hc$cluster
+```
+```{r}
+table(cities$c)
+```
+
+
