@@ -170,10 +170,86 @@ hc %>%
 hc$cluster
 ```
 ```{r}
-cities[,"cluster"] <- hc$cluster
-```
-```{r}
-table(cities$c)
+res_pca %>% 
+  glimpse()
 ```
 
+```{r}
+cities[,"cluster"] <- hc$cluster
+```
+
+```{r}
+cities[,"pca1"] <- res_pca$ind$coord[,1]
+cities[,"pca2"] <- res_pca$ind$coord[,2]
+```
+
+
+```{r}
+x <-trips %>%
+  count(place, country_code)
+```
+
+```{r}
+x <- x %>%
+  left_join(countries, by = c('country_code' = 'alpha_2'))
+```
+
+```{r}
+cities <- cities %>%
+  left_join(x, by = 'place')
+```
+
+```{r}
+cities %>%
+  glimpse()
+```
+
+
+
+```{r}
+table(cities$cluster, cities$region)
+```
+```{r}
+table(cities$cluster, cities$sub_region)
+```
+
+```{r}
+cities %>%
+  group_by(cluster) %>%
+  summarise(pca1 = pca1 %>% mean(),
+            pca2 = pca2 %>% mean())
+```
+
+```{r}
+trips %>%
+  count(place, sort = TRUE, name = 'n_city')
+```
+
+```{r}
+cities <- cities %>%
+  left_join(trips %>% count(place, sort = TRUE, name = 'n_city'), by = 'place')
+```
+
+```{r}
+cities %>%
+  distinct(place, .keep_all = TRUE) %>%
+  select(place, cluster, n_city) %>%
+  group_by(cluster) %>%
+  arrange(desc(n_city)) %>%
+  slice(1:5) %>%
+  ungroup()
+```
+
+To finish up, lets plot it in a map, simplest way possible.
+
+```{r, fig.height=10, fig.width=15}
+library(ggmap)
+mapWorld <- borders("world", colour = "gray50", fill = "gray50")
+
+mp <- ggplot() +   
+  mapWorld 
+
+mp + 
+  geom_point(aes(x = cities$longitude, y = cities$latitude) , color = cities$cluster) 
+```
 
