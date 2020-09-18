@@ -55,5 +55,47 @@ people %>% glimpse()
 countries <- read_csv( 'https://sds-aau.github.io/SDS-master/M1/data/countrylist.csv')
 countries %>% glimpse()
 ```
+```{r}
+countries <- read_csv( 'https://sds-aau.github.io/SDS-master/M1/data/countrylist.csv')
+countries %>% glimpse()
+```
 
+```{r}
+cities <- read_delim('https://sds-aau.github.io/SDS-master/M1/data/nomad_cities.csv', delim = '\t')
+cities %>% glimpse()
+```
+```{r}
+cities <- cities %>%
+  mutate(fragile_states_index = fragile_states_index %>% as.numeric(),
+         peace_score = peace_score %>% as.numeric(),
+         fredom_score = freedom_score %>% as.numeric(),
+         press_freedom_index = press_freedom_index %>% as.numeric())
+```
+
+```{r}
+cities %>% glimpse()
+```
+# EDA
+
+```{r}
+# Variables for descriptives
+vars.desc <- c("nomad_score", "cost_nomad", "places_to_work", "freedom_score", "friendly_to_foreigners", "life_score")
+```
+
+```{r,warning=FALSE,echo=FALSE}
+library(GGally)
+```
+
+First, lets look at a classical correlation matrix.
+
+```{r}
+ggcorr(cities[,vars.desc], label = TRUE, label_size = 3, label_round = 2, label_alpha = TRUE)
+```
+
+# Dimionality Reduction
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+```
 

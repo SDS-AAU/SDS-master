@@ -2,7 +2,7 @@
 title: 'Unsupervised Machine Learning (in R)'
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 output:
-  html_document:
+  html_notebook:
     df_print: paged
     toc: yes
     toc_float: true
