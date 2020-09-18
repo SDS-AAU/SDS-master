@@ -246,6 +246,11 @@ trips %<>% drop_na(region)
 
 # 2: People
 
+```{r}
+people %>% glimpse()
+```
+
+
 ## a: How many people have a least a “High School” diploma?
 
 Lets see what educations we have in the data
@@ -257,6 +262,102 @@ people %>% count(education_raw)
 Ok, that seems easy. Since all educations include Highschool (or higher), we can just assume that everybody that has all people with a non-missing education field have at least a highschool degree.
 
 ```{r}
-people %>% pull(education_raw) %>% sum(!is.na())
+sum(!is.na(people$education_raw))
 ```
+
+However, for the rest we just dont know...
+
+## b. How many “Startup Founders” have attained a “Master’s Degree”?
+
+```{r}
+people %>% count(work_raw, sort = TRUE)
+```
+
+
+We cannot just filter for the string, since it is contained in multiple categories. We have to instead detect all strings where "Spartup Founder" appears. HEre we need the `stringr` package.
+
+```{r}
+people %>% 
+  filter(work_raw %>% str_detect('Startup Founder')) %>% 
+  head()
+```
+
+```{r}
+people %>% 
+  filter(education_raw %>% str_detect('Master\'s Degree')) %>% head()
+
+# Notice the needed escape sign \ before the '
+```
+
+Putting it together and counting
+
+```{r}
+people %>% 
+  filter(work_raw %>% str_detect('Startup Founder') & education_raw %>% str_detect('Master\'s Degree') ) %>%
+  summarise(n = n())
+
+```
+
+Its 53...
+
+# 3. Trips
+
+```{r}
+trips %>% glimpse()
+```
+
+
+## a. Which country received the highest number of trips? – And which the lowest?
+
+Thats easy...
+
+```{r}
+trips %>%
+  count(country_code) %>%
+  arrange(desc(n)) %>%
+  head()
+```
+
+The US recieves the most trips.
+
+```{r}
+trips %>%
+  count(country_code) %>%
+  arrange(n) %>%
+  head()
+```
+
+Hmm, all some weird country codes... we could no filter them for only official ones... but lets leave it like that for now...
+
+## b. Which region received the highest number of trips in 2017? Use the start of trips as a time reference.
+
+Since the dates are already datetimes, we can just extract the year with the year() function of lubridate.
+
+```{r}
+trips %>%
+  filter(year(date_start) == 2017) %>%
+  count(country_code, sort = TRUE)
+```
+Its again the US.
+
+## c. Which country in “Western Europe” did travelers spent least time? – Provide visualization
+
+```{r}
+trips %>%
+  filter(sub_region == 'Western Europe') %>%
+#  count(country_code, sort = TRUE) %>%
+  ggplot(aes(x = country_code)) +
+  geom_bar()
+```
+
+Could be done pettier, though
+
+
+## d. Do nomad Startup Founders tend to have shorter or longer trips on average?
+
+Here, we first need to do a join...
+
+## e. visualize over-time median trip duration overall (bonus: and split by world-region) The plot will
+look weird ^^.
+
 
