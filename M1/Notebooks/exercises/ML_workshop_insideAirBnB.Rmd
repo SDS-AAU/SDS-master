@@ -1,0 +1,187 @@
+---
+title: "Workshop: Exploring the InsideAirBnB dataset"
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+### Generic preamble
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+# rm(list=ls()); graphics.off() # get rid of everything in the workspace
+if (!require("knitr")) install.packages("knitr"); library(knitr) # For display of the markdown
+
+### Knitr options
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     fig.align="center"
+                     )
+```
+
+## Preamble
+
+```{r}
+# Clear workspace
+rm(list=ls()); graphics.off() 
+```
+
+```{r}
+### Load packages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+library(skimr) # For nice data summaries
+```
+
+
+# The InsideAirBnB data
+
+## Instroduction
+
+
+* The data is sourced from the [**Inside Airbnb**](http://insideairbnb.com/get-the-data.html) which hosts publicly available data from the Airbnb site.
+* Interactive visualizations are provided [here](http://insideairbnb.com/copenhagen/?neighbourhood=&filterEntireHomes=false&filterHighlyAvailable=false&filterRecentReviews=false&filterMultiListings=false)
+
+The dataset comprises of three main tables:
+
+* `listings` - Detailed listings data showing 96 atttributes for each of the listings. Some of the attributes which are intuitivly interesting are: `price` (continuous), `longitude` (continuous), `latitude` (continuous), `listing_type` (categorical), `is_superhost` (categorical), `neighbourhood` (categorical), `ratings` (continuous) among others.
+* `reviews` - Detailed reviews given by the guests with 6 attributes. Key attributes include `date` (datetime), `listing_id` (discrete), `reviewer_id` (discrete) and `comment` (textual).
+* `calendar` - Provides details about booking for the next year by listing. Four attributes in total including `listing_id` (discrete), `date` (datetime), `available` (categorical) and `price` (continuous).
+
+## Load data
+
+```{r}
+listings <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz')
+listings %>% glimpse()
+```
+
+```{r}
+calendar <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/calendar.csv.gz')
+calendar %>% glimpse()
+```
+
+```{r}
+reviews <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/reviews.csv.gz')
+reviews %>% glimpse()
+```
+
+```{r}
+# # And the summary plus geodata
+# summaries_listings <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/visualisations/listings.csv')
+# summaries_reviews <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/visualisations/reviews.csv')
+# summaries_neighbourhoods <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/visualisations/neighbourhoods.csv')
+```
+```{r}
+# The geodat of the hoods comes as a geojson, so we need the right package to load it
+library(geojsonio)
+neighbourhoods_geojson <- geojson_read( 'http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/visualisations/neighbourhoods.geojson',  what = "sp")
+```
+
+
+
+# Inspecting & Tidying data
+
+## Basic formating
+
+```{r}
+listings %>% skim()
+```
+
+```{r}
+listings %<>%
+    mutate(across(is_character, ~ifelse(.x == "", NA, .x)))
+```
+
+
+## Misssing data
+
+```{r}
+library(VIM)
+```
+
+```{r}
+listings %>% 
+  select(host_is_superhost, review_scores_rating, host_response_time, name, host_since,zipcode) %>%
+  aggr(numbers = TRUE, prop = c(TRUE, FALSE))
+```
+
+# EDA
+
+# DataViz
+
+## Geoplotting
+
+```{r}
+library(leaflet)
+```
+
+
+```{r}
+listings %>% leaflet() %>%
+  addTiles() %>%
+  addMarkers(~longitude, ~latitude,
+             labelOptions = labelOptions(noHide = F),
+             clusterOptions = markerClusterOptions(),
+             popup = paste0("<b> Name: </b>", listings$name, 
+                            "<br/><b> Host Name: </b>", listings$host_name, 
+                            "<br> <b> Price: </b>", listings$price, 
+                            "<br/><b> Room Type: </b>", listings$room_type, 
+                            "<br/><b> Property Type: </b>", listings$property_type
+                 )) %>% 
+#  setView(-74.00, 40.71, zoom = 12) %>%
+  addProviderTiles("CartoDB.Positron")
+```
+
+```{r}
+# I need to fortify the data AND keep trace of the commune code! (Takes ~2 minutes)
+library(broom)
+neighbourhoods_tidy <-  neighbourhoods_geojson %>%
+  tidy(region = "neighbourhood")
+```
+
+```{r}
+neighbourhoods_tidy %>% glimpse()
+```
+
+```{r}
+neighbourhoods_tidy %>%
+  ggplot(aes(x = long, y = lat, group = group)) +
+  geom_polygon() +
+  theme_void() +
+  coord_map()
+```
+```{r}
+neighborhood_agg <- listings %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarise(n = n(),
+            price_mean = price %>% mean(na.rm = TRUE),
+            review_mean = review_scores_rating %>% mean(na.rm = TRUE))
+  
+```
+
+
+```{r}
+neighbourhoods_tidy %<>%
+  left_join(neighborhood_agg, by = c('id' = 'neighbourhood_cleansed'))
+```
+
+```{r}
+neighbourhoods_tidy %>%
+  ggplot(aes(x = long, y = lat, group = group, fill = n)) +
+  geom_polygon() +
+  theme_void() +
+  coord_map()
+```
+
+
+
