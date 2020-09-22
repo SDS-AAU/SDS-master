@@ -189,10 +189,6 @@ table(cities$cluster, cities$region)
 ```
 
 ```{r}
-table(cities$cluster, cities$sub_region)
-```
-
-```{r}
 cities %>%
   group_by(cluster) %>%
   summarise(pca1 = pca1 %>% mean(),
@@ -249,10 +245,22 @@ mp
 ```
 
 ```{r}
-mp + 
+nomad_map <- mp + 
   geom_point(data = cities, aes(x = longitude, y = latitude)) +
   scale_colour_discrete()
 ```
+
+```{r}
+nomad_map
+```
+
+```{r}
+library(plotly)
+nomad_map +
+  ggplotly()
+```
+
+
 
 ```{r}
 mp + 

@@ -66,13 +66,13 @@ listings %>% glimpse()
 ```
 
 ```{r}
-calendar <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/calendar.csv.gz')
-calendar %>% glimpse()
+#calendar <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/calendar.csv.gz')
+#calendar %>% glimpse()
 ```
 
 ```{r}
-reviews <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/reviews.csv.gz')
-reviews %>% glimpse()
+#reviews <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/reviews.csv.gz')
+#reviews %>% glimpse()
 ```
 
 ```{r}
@@ -86,6 +86,67 @@ reviews %>% glimpse()
 library(geojsonio)
 neighbourhoods_geojson <- geojson_read( 'http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/visualisations/neighbourhoods.geojson',  what = "sp")
 ```
+
+# Problem 1: Professional host
+
+```{r}
+listings %>%
+  count(host_id, sort = TRUE)
+```
+
+```{r}
+listings %>%
+  filter(host_id == 187610263) %>%
+  count(neighbourhood_cleansed, sort = TRUE)
+```
+
+```{r}
+listings %<>%
+  mutate(price = price %>% parse_number(),
+         price_sqf = price / square_feet) 
+```
+
+```{r}
+listings %<>%
+  group_by(host_id) %>%
+  mutate(host_professional = n() >= 5) %>%
+  ungroup()
+```
+
+```{r}
+listings %>%
+  group_by(host_professional) %>%
+  summarise(review = review_scores_rating %>% mean(na.rm = TRUE),
+            price = price %>% mean(na.rm = TRUE))
+```
+
+```{r}
+listings %>%
+  group_by(neighbourhood_cleansed, host_professional) %>%
+  summarise(review = review_scores_rating %>% mean(na.rm = TRUE)) %>%
+  pivot_wider(names_from = host_professional, values_from = review)
+```
+
+
+# Description & Satisfaction
+
+```{r}
+listings %<>%
+  mutate(desc_lenght = description %>% str_count('\\w+')) %>%
+  mutate(desc_long =  percent_rank(desc_lenght) > 0.9 )
+```
+
+```{r}
+listings %>%
+  group_by(desc_long) %>%
+  summarise(review = review_scores_rating %>% mean(na.rm =TRUE))
+```
+
+
+
+
+
+
 
 
 
@@ -115,7 +176,47 @@ listings %>%
   aggr(numbers = TRUE, prop = c(TRUE, FALSE))
 ```
 
+# Best party place
+
+```{r}
+listings %<>% 
+  mutate(party_place = accommodates >= 10) 
+```
+
+```{r}
+listings %>% 
+  filter(party_place == TRUE) %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(n = n(),
+         review = review_scores_rating %>% mean(na.rm = TRUE),
+         price = price %>% mean(na.rm = TRUE) ) %>%
+  arrange(desc(n))
+```
+
+
 # EDA
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # DataViz
 
