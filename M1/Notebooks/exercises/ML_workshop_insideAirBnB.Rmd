@@ -71,8 +71,8 @@ listings %>% glimpse()
 ```
 
 ```{r}
-#reviews <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/reviews.csv.gz')
-#reviews %>% glimpse()
+reviews <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/reviews.csv.gz')
+reviews %>% glimpse()
 ```
 
 ```{r}
@@ -220,12 +220,11 @@ listings %>%
 
 # DataViz
 
-## Geoplotting
+# Geoplotting
 
 ```{r}
 library(leaflet)
 ```
-
 
 ```{r}
 listings %>% leaflet() %>%
@@ -270,7 +269,6 @@ neighborhood_agg <- listings %>%
   
 ```
 
-
 ```{r}
 neighbourhoods_tidy %<>%
   left_join(neighborhood_agg, by = c('id' = 'neighbourhood_cleansed'))
@@ -283,6 +281,63 @@ neighbourhoods_tidy %>%
   theme_void() +
   coord_map()
 ```
+
+```{r}
+neighbourhoods_tidy %>%
+  ggplot(aes(x = long, y = lat, group = group, fill = price_mean)) +
+  geom_polygon() +
+  theme_void() +
+  coord_map()
+```
+
+```{r}
+neighbourhoods_tidy %>%
+  ggplot(aes(x = long, y = lat, group = group, fill = review_mean)) +
+  geom_polygon() +
+  theme_void() +
+  coord_map()
+```
+
+# Subervised ML
+
+Inspect again...
+
+```{r}
+listings %>% skim(neighbourhood_cleansed, accommodates, price, room_type, host_is_superhost)
+```
+
+
+```{r}
+data <- listings %>% 
+  select(review_scores_rating, neighbourhood_cleansed, accommodates, price, room_type, host_is_superhost) %>%
+  rename(y = price) %>%
+  relocate(y, everything()) %>%
+  drop_na()
+```
+
+```{r}
+data %>% count(neighbourhood_cleansed, sort = TRUE)
+```
+
+```{r}
+data %>% count(room_type, sort = TRUE)
+```
+
+```{r}
+data %<>%
+  filter(!(room_type %in% c('hared room', 'Hotel room')))
+```
+
+```{r}
+data %<>%
+  filter(percent_rank(y) <0.99)
+```
+
+```{r}
+data %>%
+  skim()
+```
+
 
 
 
