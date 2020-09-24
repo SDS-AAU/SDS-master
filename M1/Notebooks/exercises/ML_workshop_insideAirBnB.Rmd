@@ -1,5 +1,5 @@
 ---
-title: "Workshop: Exploring the InsideAirBnB dataset"
+title: "Workshop: Exploring the InsideAirBnB dataset - EDA"
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
@@ -62,50 +62,48 @@ The dataset comprises of three main tables:
 
 ```{r}
 listings <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz')
-listings %>% glimpse()
+listings %>% head()
 ```
 
 ```{r}
-#calendar <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/calendar.csv.gz')
-#calendar %>% glimpse()
+calendar <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/calendar.csv.gz')
+calendar %>% head()
 ```
 
 ```{r}
 reviews <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/reviews.csv.gz')
-reviews %>% glimpse()
+reviews %>% head()
 ```
 
-```{r}
-# # And the summary plus geodata
-# summaries_listings <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/visualisations/listings.csv')
-# summaries_reviews <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/visualisations/reviews.csv')
-# summaries_neighbourhoods <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/visualisations/neighbourhoods.csv')
-```
 ```{r}
 # The geodat of the hoods comes as a geojson, so we need the right package to load it
 library(geojsonio)
 neighbourhoods_geojson <- geojson_read( 'http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/visualisations/neighbourhoods.geojson',  what = "sp")
 ```
 
-# Problem 1: Professional host
+## Some preprocessing
+
+```{r}
+listings %<>% mutate(price = price %>% parse_number()) 
+```
+
+# Ad-hoc investigation
+
+## Problem 1: Professional hosts & their characteristics
 
 ```{r}
 listings %>%
   count(host_id, sort = TRUE)
 ```
 
+Where are they?
+
 ```{r}
 listings %>%
   filter(host_id == 187610263) %>%
   count(neighbourhood_cleansed, sort = TRUE)
 ```
-
-```{r}
-listings %<>%
-  mutate(price = price %>% parse_number(),
-         price_sqf = price / square_feet) 
-```
-
+Dummy for professional host
 ```{r}
 listings %<>%
   group_by(host_id) %>%
@@ -119,6 +117,7 @@ listings %>%
   summarise(review = review_scores_rating %>% mean(na.rm = TRUE),
             price = price %>% mean(na.rm = TRUE))
 ```
+-> Profressional hosts charge more...
 
 ```{r}
 listings %>%
@@ -127,8 +126,9 @@ listings %>%
   pivot_wider(names_from = host_professional, values_from = review)
 ```
 
+-> This is true everywhere, yet in some hoods mnore tghan in others
 
-# Description & Satisfaction
+## Problem 2: Length of description -> Satisfaction
 
 ```{r}
 listings %<>%
@@ -141,42 +141,9 @@ listings %>%
   group_by(desc_long) %>%
   summarise(review = review_scores_rating %>% mean(na.rm =TRUE))
 ```
+-> No overall effect
 
-
-
-
-
-
-
-
-
-# Inspecting & Tidying data
-
-## Basic formating
-
-```{r}
-listings %>% skim()
-```
-
-```{r}
-listings %<>%
-    mutate(across(is_character, ~ifelse(.x == "", NA, .x)))
-```
-
-
-## Misssing data
-
-```{r}
-library(VIM)
-```
-
-```{r}
-listings %>% 
-  select(host_is_superhost, review_scores_rating, host_response_time, name, host_since,zipcode) %>%
-  aggr(numbers = TRUE, prop = c(TRUE, FALSE))
-```
-
-# Best party place
+## P3: Best party place
 
 ```{r}
 listings %<>% 
@@ -189,38 +156,16 @@ listings %>%
   group_by(neighbourhood_cleansed) %>%
   summarize(n = n(),
          review = review_scores_rating %>% mean(na.rm = TRUE),
-         price = price %>% mean(na.rm = TRUE) ) %>%
+         price = price %>% mean(na.rm = TRUE),
+         price_pp = (price / accommodates) %>% mean(na.rm = TRUE)) %>%
   arrange(desc(n))
 ```
 
-
-# EDA
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# DataViz
+If you are on a tight budget, best go to Amager-Vest.
 
 # Geoplotting
+
+## Interactive map
 
 ```{r}
 library(leaflet)
@@ -242,8 +187,10 @@ listings %>% leaflet() %>%
   addProviderTiles("CartoDB.Positron")
 ```
 
+## Choropleth Plots
+
 ```{r}
-# I need to fortify the data AND keep trace of the commune code! (Takes ~2 minutes)
+# Using broom to tidy the geojson
 library(broom)
 neighbourhoods_tidy <-  neighbourhoods_geojson %>%
   tidy(region = "neighbourhood")
@@ -274,6 +221,8 @@ neighbourhoods_tidy %<>%
   left_join(neighborhood_agg, by = c('id' = 'neighbourhood_cleansed'))
 ```
 
+Number of places
+
 ```{r}
 neighbourhoods_tidy %>%
   ggplot(aes(x = long, y = lat, group = group, fill = n)) +
@@ -281,6 +230,7 @@ neighbourhoods_tidy %>%
   theme_void() +
   coord_map()
 ```
+Prices
 
 ```{r}
 neighbourhoods_tidy %>%
@@ -289,6 +239,7 @@ neighbourhoods_tidy %>%
   theme_void() +
   coord_map()
 ```
+Review scores
 
 ```{r}
 neighbourhoods_tidy %>%
@@ -298,217 +249,3 @@ neighbourhoods_tidy %>%
   coord_map()
 ```
 
-# Subervised ML
-
-## Data cleaning
-
-Inspect again...
-
-```{r}
-listings %>% glimpse()
-```
-
-```{r}
-data <- listings %>%
-  mutate(price = price + parse_number(cleaning_fee)) %>%
-  filter(number_of_reviews >= 2)
-```
-
-
-```{r}
-data  %<>% 
-  select(price, review_scores_rating, neighbourhood_cleansed, accommodates, room_type, bathrooms,is_business_travel_ready, 
-         number_of_reviews, cancellation_policy, 
-         host_is_superhost, host_identity_verified, bedrooms) %>%
-  rename(y = price) %>%
-  relocate(y, everything()) %>%
-  drop_na()
-```
-
-```{r}
-data %>% count(neighbourhood_cleansed, sort = TRUE)
-```
-
-```{r}
-data %>% count(room_type, sort = TRUE)
-```
-
-```{r}
-data %<>%
-  filter(!(room_type %in% c('Shared room', 'Hotel room')))
-```
-
-```{r}
-data %<>%
-  filter(percent_rank(y) <0.95)
-```
-
-```{r}
-data %>%
-  skim()
-```
-
-```{r}
-#library(GGally)
-#€data %>% ggpairs(aes(alpha = 0.3))  
-```
-
-## Preprocessing
-
-```{r}
-library(tidymodels)
-```
-
-### Train and test split
-
-```{r}
-data_split <- initial_split(data, prop = 0.75, strata = y)
-
-data_train <- data_split  %>%  training()
-data_test <- data_split %>% testing()
-```
-
-```{r}
-data_recipe <- data_train %>%
-  recipe(y ~.) %>%
-  step_center(all_numeric(), -all_outcomes()) %>%
-  step_scale(all_numeric(), -all_outcomes()) %>%
-  step_dummy(all_nominal(), one_hot = FALSE) 
-```
-
-
-### Models
-
-```{r}
-model_lm <- linear_reg(mode = 'regression') %>%
-  set_engine('lm') 
-```
-
-```{r}
-model_xg <- boost_tree(mode = 'regression', 
-                       trees = 100,
-                       mtry = tune(), 
-                       min_n = tune(), 
-                       tree_depth = tune(), 
-                       learn_rate = tune()
-                       ) %>%
-  set_engine("xgboost") 
-```
-
-### Workflows
-```{r}
-workflow_general <- workflow() %>%
-  add_recipe(data_recipe) 
-
-workflow_lm <- workflow_general %>%
-  add_model(model_lm)
-
-workflow_xg <- workflow_general %>%
-  add_model(model_xg)
-```
-
-### Resampling
-
-```{r}
-data_resample <- data_train %>% 
-  vfold_cv(strata = y,
-           v = 3,
-           repeats = 2)
-```
-
-### Hyperparameter Tuning
-
-```{r}
-tune_xg <-
-  tune_grid(
-    workflow_xg,
-    resamples = data_resample,
-    grid = 10
-  )
-```
-
-```{r}
-tune_xg %>% autoplot()
-```
-
-```{r}
-best_param_xg <- tune_xg %>% select_best(metric = 'rmse')
-best_param_xg
-```
-
-```{r}
-tune_xg %>% show_best(metric = 'rmse', n = 1)
-```
-
-### Fit models with tuned hyperparameters
-
-```{r}
-workflow_final_xg <- workflow_xg %>%
-  finalize_workflow(parameters = best_param_xg)
-```
-
-```{r}
-fit_lm <- workflow_lm %>%
-  fit(data_train)
-
-fit_xg <- workflow_final_xg %>%
-  fit(data_train)
-```
-
-### Predict
-
-```{r}
-pred_collected <- tibble(
-  truth = data_test %>% pull(y),
-  base = mean(truth),
-  lm = fit_lm %>% predict(new_data = data_test) %>% pull(.pred),
-  xg = fit_xg %>% predict(new_data = data_test) %>% pull(.pred),
-  ) %>% 
-  pivot_longer(cols = -truth,
-               names_to = 'model',
-               values_to = '.pred')
-```
-
-### Evaluate
-
-```{r}
-pred_collected %>%
-  group_by(model) %>%
-  rmse(truth = truth, estimate = .pred) %>%
-  select(model, .estimate) %>%
-  arrange(.estimate)
-```
-
-```{r}
-pred_collected %>%
-  group_by(model) %>%
-  rsq(truth = truth, estimate = .pred) %>%
-  select(model, .estimate) %>%
-  arrange(.estimate)
-```
-
-```{r}
-pred_collected %>%
-  ggplot(aes(x = truth, y = .pred, color = model)) +
-  geom_abline(lty = 2, color = "gray80", size = 1.5) +
-  geom_point(alpha = 0.5) +
-  labs(
-    x = "Truth",
-    y = "Predicted price",
-    color = "Type of model"
-  )
-```
-
-```{r}
-fit_lm %>% 
-#  pluck(".workflow", 1) %>%   
-  pull_workflow_fit() %>% 
-  vip::vip(num_features = 10)
-```
-
-```{r}
-fit_xg %>% 
-#  pluck(".workflow", 1) %>%   
-  pull_workflow_fit() %>% 
-  vip::vip(num_features = 10)
-```
