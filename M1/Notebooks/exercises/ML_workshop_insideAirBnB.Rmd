@@ -300,16 +300,26 @@ neighbourhoods_tidy %>%
 
 # Subervised ML
 
+## Data cleaning
+
 Inspect again...
 
 ```{r}
-listings %>% skim(neighbourhood_cleansed, accommodates, price, room_type, host_is_superhost)
+listings %>% glimpse()
+```
+
+```{r}
+data <- listings %>%
+  mutate(price = price + parse_number(cleaning_fee)) %>%
+  filter(number_of_reviews >= 2)
 ```
 
 
 ```{r}
-data <- listings %>% 
-  select(review_scores_rating, neighbourhood_cleansed, accommodates, price, room_type, host_is_superhost) %>%
+data  %<>% 
+  select(price, review_scores_rating, neighbourhood_cleansed, accommodates, room_type, bathrooms,is_business_travel_ready, 
+         number_of_reviews, cancellation_policy, 
+         host_is_superhost, host_identity_verified, bedrooms) %>%
   rename(y = price) %>%
   relocate(y, everything()) %>%
   drop_na()
@@ -325,12 +335,12 @@ data %>% count(room_type, sort = TRUE)
 
 ```{r}
 data %<>%
-  filter(!(room_type %in% c('hared room', 'Hotel room')))
+  filter(!(room_type %in% c('Shared room', 'Hotel room')))
 ```
 
 ```{r}
 data %<>%
-  filter(percent_rank(y) <0.99)
+  filter(percent_rank(y) <0.95)
 ```
 
 ```{r}
@@ -338,6 +348,167 @@ data %>%
   skim()
 ```
 
+```{r}
+#library(GGally)
+#€data %>% ggpairs(aes(alpha = 0.3))  
+```
+
+## Preprocessing
+
+```{r}
+library(tidymodels)
+```
+
+### Train and test split
+
+```{r}
+data_split <- initial_split(data, prop = 0.75, strata = y)
+
+data_train <- data_split  %>%  training()
+data_test <- data_split %>% testing()
+```
+
+```{r}
+data_recipe <- data_train %>%
+  recipe(y ~.) %>%
+  step_center(all_numeric(), -all_outcomes()) %>%
+  step_scale(all_numeric(), -all_outcomes()) %>%
+  step_dummy(all_nominal(), one_hot = FALSE) 
+```
 
 
+### Models
 
+```{r}
+model_lm <- linear_reg(mode = 'regression') %>%
+  set_engine('lm') 
+```
+
+```{r}
+model_xg <- boost_tree(mode = 'regression', 
+                       trees = 100,
+                       mtry = tune(), 
+                       min_n = tune(), 
+                       tree_depth = tune(), 
+                       learn_rate = tune()
+                       ) %>%
+  set_engine("xgboost") 
+```
+
+### Workflows
+```{r}
+workflow_general <- workflow() %>%
+  add_recipe(data_recipe) 
+
+workflow_lm <- workflow_general %>%
+  add_model(model_lm)
+
+workflow_xg <- workflow_general %>%
+  add_model(model_xg)
+```
+
+### Resampling
+
+```{r}
+data_resample <- data_train %>% 
+  vfold_cv(strata = y,
+           v = 3,
+           repeats = 2)
+```
+
+### Hyperparameter Tuning
+
+```{r}
+tune_xg <-
+  tune_grid(
+    workflow_xg,
+    resamples = data_resample,
+    grid = 10
+  )
+```
+
+```{r}
+tune_xg %>% autoplot()
+```
+
+```{r}
+best_param_xg <- tune_xg %>% select_best(metric = 'rmse')
+best_param_xg
+```
+
+```{r}
+tune_xg %>% show_best(metric = 'rmse', n = 1)
+```
+
+### Fit models with tuned hyperparameters
+
+```{r}
+workflow_final_xg <- workflow_xg %>%
+  finalize_workflow(parameters = best_param_xg)
+```
+
+```{r}
+fit_lm <- workflow_lm %>%
+  fit(data_train)
+
+fit_xg <- workflow_final_xg %>%
+  fit(data_train)
+```
+
+### Predict
+
+```{r}
+pred_collected <- tibble(
+  truth = data_test %>% pull(y),
+  base = mean(truth),
+  lm = fit_lm %>% predict(new_data = data_test) %>% pull(.pred),
+  xg = fit_xg %>% predict(new_data = data_test) %>% pull(.pred),
+  ) %>% 
+  pivot_longer(cols = -truth,
+               names_to = 'model',
+               values_to = '.pred')
+```
+
+### Evaluate
+
+```{r}
+pred_collected %>%
+  group_by(model) %>%
+  rmse(truth = truth, estimate = .pred) %>%
+  select(model, .estimate) %>%
+  arrange(.estimate)
+```
+
+```{r}
+pred_collected %>%
+  group_by(model) %>%
+  rsq(truth = truth, estimate = .pred) %>%
+  select(model, .estimate) %>%
+  arrange(.estimate)
+```
+
+```{r}
+pred_collected %>%
+  ggplot(aes(x = truth, y = .pred, color = model)) +
+  geom_abline(lty = 2, color = "gray80", size = 1.5) +
+  geom_point(alpha = 0.5) +
+  labs(
+    x = "Truth",
+    y = "Predicted price",
+    color = "Type of model"
+  )
+```
+
+```{r}
+fit_lm %>% 
+#  pluck(".workflow", 1) %>%   
+  pull_workflow_fit() %>% 
+  vip::vip(num_features = 10)
+```
+
+```{r}
+fit_xg %>% 
+#  pluck(".workflow", 1) %>%   
+  pull_workflow_fit() %>% 
+  vip::vip(num_features = 10)
+```
