@@ -255,9 +255,9 @@ nomad_map
 ```
 
 ```{r}
-library(plotly)
-nomad_map +
-  ggplotly()
+#library(plotly)
+#nomad_map +
+#  ggplotly()
 ```
 
 
