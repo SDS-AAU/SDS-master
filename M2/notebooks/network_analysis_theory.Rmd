@@ -1,0 +1,223 @@
+---
+title: 'Introduction to Network Analysis (Part I)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  ioslides_presentation:
+#    css: '../../00_notebooks/css_style_ioslides.css'
+   
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+knitr::opts_chunk$set(
+  echo = FALSE,
+  comment = FALSE,
+  warning = FALSE
+  )
+
+# Load packages
+library(tidyverse)
+library(magrittr)
+library(knitr)
+library(kableExtra)
+
+# Extra
+library(tidygraph)
+library(ggraph)
+library(igraph)
+library(ggforce)
+```
+
+
+
+<style type="text/css">
+  .img_small{
+    width: 50%;
+  }
+.img{
+  width: 75%;
+}
+.img_big{
+  width: 100%;
+}
+</style>
+
+## This session 
+
+Welcome to your first part of the introduction to network analysis. In this session you will learn:
+
+1. Why applying network analysis is helpful to answer certain questions.
+2. Why framing certain contexts as networks gives new insights.
+3. The basic structure of relational data.
+4. How to construct graph objects from different datasources.
+5. How to analyse basic features of nodes, edges, and graphs.
+6. How to identify groups and communities in graphs.
+7. How to do simple network visualizations.
+
+# Introduction
+
+## Networks... so what?
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/networks_google_apple.png){.img_big}
+</center>
+
+## Some inspiration
+
+* So, before we talk about networks, one thing upfront... why should we? I mean, they undeniably look pretty, don't they? 
+* Somehow, the visualization of networks fascinates the human mind (find a short TED talk on networks and how they depict our world [here](https://www.ted.com/talks/manuel_lima_a_visual_history_of_human_knowledge)).
+* They have even inspired an own art movement, networkism (see some examples [here](https://www.behance.net/gallery/184045/Links)). 
+
+
+## The basic jargon
+
+```{r, echo=FALSE}
+# If you see this code, dont worry about it. Its just to create the visual
+tibble(from = c(1,2,3,1), to = c(3,1,5,5), text = rep("Edge", 4)) %>% 
+  as_tbl_graph() %N>%
+  mutate(text = "Node") %>%
+  ggraph(layout = "nicely") +
+  geom_node_point(size = 10, col = "skyblue") + 
+  geom_node_text(aes(label = name)) +
+  geom_edge_link(aes(label = text, alpha = 0.5, show.legend = FALSE)) +
+  theme_graph() +
+  theme(legend.position = "none") +
+  labs(title = "What is a network?", subtitle = "A system of elements (nodes/vertices) and connections (edges) between them") +
+  geom_mark_ellipse(aes(x, y, label = "Node / Vertex", 
+                        description = "Elements in the system",
+                        filter = name == 1)) 
+```
+
+* The whole system is called a **network** or **graph**. 
+* The elements are commonly referred to as **nodes** (system theory jargon) or **vertices** (graph theory jargon) of a graph.
+* The connections are **edges** or **links**. 
+
+## Types of networks {.smaller}
+
+* Networks are a form of representing **relational data**. 
+* This is a very general tool that can be applied to many different types of relationships between all kind of elements. 
+* The content, meaning, and interpretation for sure depends on what elements we display, and which types of relationships. For example:
+* In Social Network Analysis:
+     * Nodes represent actors (which can be persons, firms and other socially constructed entities)
+     * Edges represent relationships between this actors (friendship, interaction, co-affiliation, similarity ect.)
+* Other types of network
+     * Chemistry: Interaction between molecules
+     * Computer Science: The world-wide-web, inter- and intranet topologies
+     * Biology: Food-web, ant-hives
+     
+----
+
+The possibilities to depict relational data are manifold. For example:
+
+* Relations among persons
+     * Kinship: mother of, wife of...
+     * Other role based: boss of, supervisor of...
+     * Affective: likes, trusts...
+     * Interaction: give advice, talks to, retweets...
+     * Affiliation: belong to same clubs, shares same interests...
+* Relations among organizations
+     * As corporate entities, joint ventures, strategic alliances
+     * Buy from / sell to, leases to, outsources to
+     * Owns shares of, subsidiary of
+     * Via their members (Personnel flows, friendship...)
+  
+
+
+# Relational data-structures
+
+## Edgelist{.smaller}
+
+* Common form of storing real-life relational data (eg. in relational databases)
+* An **edgelist** is a dataframe that contains a minimum of two columns, one of *nodes* that are the source of a connection and another  that are the target of the connection. 
+* The nodes in the data are typically identified by unique IDs.
+* If the distinction is not meaningful, the network is **undirected** (more on that later).
+* If the distinction between source and target is meaningful, the network is **directed**. 
+* Can also contain additional columns that describe **attributes** of the edges such as a magnitude aspect for an edge, meaning the graph is **weighted** (e.g., number of interactions, strenght of friendship). 
+
+----
+
+Example data structure
+
+```{r edgelists}
+edge_list <- tibble(from = c(1, 2, 2, 1, 4), 
+                    to = c(2, 3, 4, 5, 1))
+
+edge_list
+```
+
+## Adjacency Matrix{.smaller}
+
+* Represented as a $n*n$ matrix, where $n$ stands for the number of elements of which their relationships should be represented. T
+* The value in the cell that intercepts row $n$ and column $m$ indicates if an edge is present (=1) or absent (=0).
+* Tip: Given an edgelist, an adjacency matrix can easily be produced by crosstabulating.
+* *Note:* Existing as well as not existing connections are stored. Since most networks in reality are **sparse** (= more potential connections are inactive than active), this is inneficient for storrage and computation.
+
+----
+
+```{r matrix}
+adj_matrix <- edge_list %>%
+  table() %>% 
+  as.matrix()
+
+adj_matrix
+```
+
+## Nodelists{.smaller}
+
+* Edgelists as well as adjacency matrices only stores connectivity pattern between nodes, but due to their structure cannot store informations on the nodes in which we might be interested. 
+* Therefore, we in many cases also provide a a **node list** with these informations (such as the names of the nodes or any kind of groupings).
+
+---- 
+
+```{r nodelists}
+node_list <- tibble(id = 1:5, 
+                    name = c("Jesper", "Pernille", "Jacob", "Dorte", "Donald"),
+                    gender = c("M", "F", "M", "F", "M"),
+                    group = c("A", "B", "B", "A", "C"))
+node_list
+```
+
+## Graph Objects
+
+* Up to now we see that relatonal data can be easily stored in traditional dataframe formats.
+* 
+
+* Tabular data
+     * In tabular data, summary statistics of variables are **between observations** (column-wise) interdependent, meaning changing a value of some observation will change the corresponding variables summary statistics.
+     * Likewise, variable values might be **within observation** interdependent (row-wise), meaning changing a variable value might change summary statistics of the observation
+     * Otherwise, values are (at least mathematically) independent.
+* Graph data
+     * Same holds true, but adittional interdependencies due to the relational structure of the data.
+     * Sepperation between **node** and **edge** data, which is interdependent. Removing a node might alos impy the removal of edges, removal of edges changes the characteristics of nodes
+     * In adittion, the relational structure makes that not only true for adjacent nodes and edges, but potentially multiple. Adding/Removing one node/edge could change the characteristics of every single other node/edge.
+     * That is less of a problem for local network characteristics (eg., a node's degree on level 1). However, many node and edge characteristics such
+     * That's mainly why graph computing is slightly more messy, and need own mathematical tools, and applications from graphical computing (graphical like graph, not like figure)
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/networks_data_structure.png){.img}
+</center>
+
+# Network analysis and measures
+While being able to use the `dplyr` verbs on relational data is nice and all, one of the reasons we are dealing with graph data in the first place is because we need some *graph-based algorithms* for solving our problem at hand. If we need to break out of the tidy workflow every time this was needed we wouldn’t have gained much. Because of this `tidygraph` has wrapped more or less all of `igraphs` algorithms in different ways, ensuring a consistent syntax as well as output that fits into the tidy workflow. In the following we’re going to take a look at these.
+
+Central to all of these functions is that they know about which graph is being computed on (in the same way that `n()` knows about which tibble is currently in scope). Furthermore they always return results matching the node or edge position so they can be used directly in `mutate()` calls.
+
+## Node-Level measures
+
+Often, we are interested in ways to summarize the pattern of node connectivity to infer something on their characteristics. 
+
+Lets create some example graph on which we will illustrate some of teh most popular ones.
+
+```{r}
+# generate a sample network: play_smallworld() Create graphs based on the Watts-Strogatz small- world model.
+set.seed(1234)
+g <- play_barabasi_albert(n = 200, # Number of nodes
+                          power = 0.75, # Power of preferential attachment effect
+                          directed = FALSE # Undirected network
+                          )
+```
+     
+     
+
+
