@@ -1,9 +1,11 @@
 ---
-title: 'Introduction to Network Analysis (Part I)'
+title: 'Introduction to Network Analysis'
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
   ioslides_presentation:
+     widescreen: true
+     smaller: true
 #    css: '../../00_notebooks/css_style_ioslides.css'
    
 ---
@@ -57,22 +59,20 @@ Welcome to your first part of the introduction to network analysis. In this sess
 
 # Introduction
 
-## Networks... so what?
+## Networks... so what? 
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/networks_google_apple.png){.img_big}
+![](https://sds-aau.github.io/SDS-master/00_media/networks_google_apple.png){.img}
 </center>
-
-## Some inspiration
 
 * So, before we talk about networks, one thing upfront... why should we? I mean, they undeniably look pretty, don't they? 
 * Somehow, the visualization of networks fascinates the human mind (find a short TED talk on networks and how they depict our world [here](https://www.ted.com/talks/manuel_lima_a_visual_history_of_human_knowledge)).
 * They have even inspired an own art movement, networkism (see some examples [here](https://www.behance.net/gallery/184045/Links)). 
 
 
-## The basic jargon
+## The basic jargon 
 
-```{r, echo=FALSE}
+```{r, fig.height=4.5, fig.align='center'}
 # If you see this code, dont worry about it. Its just to create the visual
 tibble(from = c(1,2,3,1), to = c(3,1,5,5), text = rep("Edge", 4)) %>% 
   as_tbl_graph() %N>%
@@ -89,8 +89,7 @@ tibble(from = c(1,2,3,1), to = c(3,1,5,5), text = rep("Edge", 4)) %>%
                         filter = name == 1)) 
 ```
 
-* The whole system is called a **network** or **graph**. 
-* The elements are commonly referred to as **nodes** (system theory jargon) or **vertices** (graph theory jargon) of a graph.
+* The elements of a a **network** or **graph** are commonly referred to as **nodes** (system theory jargon) or **vertices** (graph theory jargon) of a graph.
 * The connections are **edges** or **links**. 
 
 ## Types of networks {.smaller}
@@ -116,6 +115,7 @@ The possibilities to depict relational data are manifold. For example:
      * Affective: likes, trusts...
      * Interaction: give advice, talks to, retweets...
      * Affiliation: belong to same clubs, shares same interests...
+     
 * Relations among organizations
      * As corporate entities, joint ventures, strategic alliances
      * Buy from / sell to, leases to, outsources to
@@ -126,7 +126,7 @@ The possibilities to depict relational data are manifold. For example:
 
 # Relational data-structures
 
-## Edgelist{.smaller}
+## Edgelist
 
 * Common form of storing real-life relational data (eg. in relational databases)
 * An **edgelist** is a dataframe that contains a minimum of two columns, one of *nodes* that are the source of a connection and another  that are the target of the connection. 
@@ -135,32 +135,26 @@ The possibilities to depict relational data are manifold. For example:
 * If the distinction between source and target is meaningful, the network is **directed**. 
 * Can also contain additional columns that describe **attributes** of the edges such as a magnitude aspect for an edge, meaning the graph is **weighted** (e.g., number of interactions, strenght of friendship). 
 
-----
+```{r edgelists, results='asis'}
+edge_list <- tibble(from = c(1, 2, 2, 1, 4, 5, 3), 
+                    to = c(2, 3, 4, 5, 1, 2, 1))
 
-Example data structure
-
-```{r edgelists}
-edge_list <- tibble(from = c(1, 2, 2, 1, 4), 
-                    to = c(2, 3, 4, 5, 1))
-
-edge_list
+edge_list %>% kable("html") %>% kable_styling(bootstrap_options = c("striped", "condensed", "hover"))
 ```
 
-## Adjacency Matrix{.smaller}
+## Adjacency Matrix
 
 * Represented as a $n*n$ matrix, where $n$ stands for the number of elements of which their relationships should be represented. T
 * The value in the cell that intercepts row $n$ and column $m$ indicates if an edge is present (=1) or absent (=0).
 * Tip: Given an edgelist, an adjacency matrix can easily be produced by crosstabulating.
-* *Note:* Existing as well as not existing connections are stored. Since most networks in reality are **sparse** (= more potential connections are inactive than active), this is inneficient for storrage and computation.
 
-----
 
 ```{r matrix}
 adj_matrix <- edge_list %>%
   table() %>% 
   as.matrix()
 
-adj_matrix
+adj_matrix %>% kable("html") %>% kable_styling(bootstrap_options = c("striped", "condensed", "hover"))
 ```
 
 ## Nodelists{.smaller}
@@ -168,20 +162,16 @@ adj_matrix
 * Edgelists as well as adjacency matrices only stores connectivity pattern between nodes, but due to their structure cannot store informations on the nodes in which we might be interested. 
 * Therefore, we in many cases also provide a a **node list** with these informations (such as the names of the nodes or any kind of groupings).
 
----- 
-
 ```{r nodelists}
 node_list <- tibble(id = 1:5, 
                     name = c("Jesper", "Pernille", "Jacob", "Dorte", "Donald"),
                     gender = c("M", "F", "M", "F", "M"),
                     group = c("A", "B", "B", "A", "C"))
-node_list
+
+node_list %>% kable("html") %>% kable_styling(bootstrap_options = c("striped", "condensed", "hover"))
 ```
 
 ## Graph Objects
-
-* Up to now we see that relatonal data can be easily stored in traditional dataframe formats.
-* 
 
 * Tabular data
      * In tabular data, summary statistics of variables are **between observations** (column-wise) interdependent, meaning changing a value of some observation will change the corresponding variables summary statistics.
@@ -194,30 +184,269 @@ node_list
      * That is less of a problem for local network characteristics (eg., a node's degree on level 1). However, many node and edge characteristics such
      * That's mainly why graph computing is slightly more messy, and need own mathematical tools, and applications from graphical computing (graphical like graph, not like figure)
 
+---- 
+
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/networks_data_structure.png){.img}
 </center>
 
-# Network analysis and measures
-While being able to use the `dplyr` verbs on relational data is nice and all, one of the reasons we are dealing with graph data in the first place is because we need some *graph-based algorithms* for solving our problem at hand. If we need to break out of the tidy workflow every time this was needed we wouldn’t have gained much. Because of this `tidygraph` has wrapped more or less all of `igraphs` algorithms in different ways, ensuring a consistent syntax as well as output that fits into the tidy workflow. In the following we’re going to take a look at these.
+## Network / Graph concepts & terminology
 
-Central to all of these functions is that they know about which graph is being computed on (in the same way that `n()` knows about which tibble is currently in scope). Furthermore they always return results matching the node or edge position so they can be used directly in `mutate()` calls.
+Before we start creating graphs, lets fix some more terminology related to graphs. Some of them might sound unintuitive by now, but we will come back to that later.
+
+* The vertices `u` and `v` are called the end vertices of the edge `(u,v)`
+* If two edges have the same end vertices they are `Parallel`
+* An edge of the form `(v,v)` is a `loop`
+* A Graph is `simple` if it has no parallel edges and loops
+* A Graph is said to be `Empty` if it has no edges. Meaning `E` is empty
+* A Graph is a `Null` Graph if it has no vertices. Meaning `V` and `E` is empty
+* Edges are `Adjacent` if they have a common vertex. Vertices are `Adjacent` if they have a common edge
+* The `degree` of the vertex `v`, written as `d(v)`, is the number of edges with v as an end vertex. By convention, we count a loop twice and parallel edges contribute separately
+* `Isolated` Vertices are vertices with degree 1.
+* A Graph is `Complete` if its edge set contains every possible edge between ALL of the vertices
+* A `Walk` in a Graph` G = (V,E)` is a finite, alternating sequence of the form  ViEiViEi  consisting of vertices and edges of the graph `G`
+* A `Walk` is `Open` if the initial and final vertices are different. A `Walk` is `Closed` if the initial and final vertices are the same
+* A `Walk` is a `Path` if ANY vertex is appear atmost once (Except for a closed walk)
+
+
+# Network analysis and measures 
 
 ## Node-Level measures
 
-Often, we are interested in ways to summarize the pattern of node connectivity to infer something on their characteristics. 
-
-Lets create some example graph on which we will illustrate some of teh most popular ones.
-
 ```{r}
-# generate a sample network: play_smallworld() Create graphs based on the Watts-Strogatz small- world model.
-set.seed(1234)
+set.seed(1337)
 g <- play_barabasi_albert(n = 200, # Number of nodes
                           power = 0.75, # Power of preferential attachment effect
                           directed = FALSE # Undirected network
-                          )
+                          ) %N>%
+  mutate(centrality_dgr = centrality_degree(),
+         centrality_eigen = centrality_eigen(),
+         centrality_between = centrality_betweenness()) 
 ```
-     
-     
 
+```{r, fig.height=4, fig.align='center'}
+set.seed(1337)
+g %>%
+  ggraph(layout = "fr") + 
+  geom_edge_link() + 
+  geom_node_point() + 
+  theme_graph() + 
+  labs(title = 'Some Network',
+       subtitle = 'Randomely created using the Barabasi-Albert game')
+```
+
+* Often, we are interested in ways to summarize the pattern of node connectivity to infer something on their characteristics. 
+
+## Centralities
+
+* One of the simplest concepts when computing node level measures is that of centrality, i.e. how central is a node or edge in the graph. 
+* As this definition is inherently vague, a lot of different centrality scores exists that all treat the concept of "central" a bit different. 
+
+We in the following well briefly illustrate the idea behind three of the most popular centrality measures, namely:
+
+1. Degree centrality
+2. Eigenvector centrality
+3. Betweenness centrality
+
+## Degree centrality
+
+```{r, fig.height=3, fig.align='center'}
+set.seed(1337)
+g %>%
+    ggraph(layout = "fr") + 
+    geom_edge_link() + 
+    geom_node_point(aes(size = centrality_dgr, colour = centrality_dgr)) + 
+    scale_color_continuous(guide = "legend") + 
+    theme_graph()
+```
+
+* The degree centrality is probably the most intuitive node measure, which basically just counts the number of edges adjacent to a node.  
+* Formally, the degree of node $i$ is the number of existing edges $e_{ij}$ with other nodes $j$ in a network with $n$ nodes:
+
+<center>
+$$c^{dgr}_{j} =\sum\limits_{j=1}^{n} e_{ij} ~ where: ~ i \neq j$$
+</center>
+
+## Eigenvector centrality
+
+```{r, fig.height=3, fig.align='center'}
+set.seed(1337)
+g %>%
+    ggraph(layout = "fr") + 
+    geom_edge_link() + 
+    geom_node_point(aes(size = centrality_eigen, colour = centrality_eigen)) + 
+    scale_color_continuous(guide = "legend") + 
+    theme_graph()
+```
+
+* Similar to the degree centrality, the eigenvector centrality takes this idea of characterizing nodes by their importance in a network a step further. 
+* The basic idea is to weight a node's degree centrality by the centrality of the nodes adjacent to it (and their centrality in turn by their centrality).
+* The eigenvector here is just a clever mathematical trick to solve such a recurrent problem.
+
+<center>
+$$c^{ev}_{j}={\frac {1}{\lambda }}\sum _{t\in M(i)}x_{t}={\frac {1}{\lambda }}\sum _{t\in G}a_{i,t}x_{t}$$
+</center>
+
+## Betweenness centrality
+
+```{r, fig.height=3, fig.align='center'}
+set.seed(1337)
+g %>%
+    ggraph(layout = "fr") + 
+    geom_edge_link() + 
+    geom_node_point(aes(size = centrality_between, colour = centrality_between)) + 
+    scale_color_continuous(guide = "legend") + 
+    theme_graph()
+```
+
+* The betweenness centrality of an object in a network measures the extent to which it lies on short paths
+* A higher betweenness indicates that it lies on more short paths and hence should somehow be important for traversing between different parts of a network
+* How many pairs of individuals would have to go through you in order to reach one another in the minimum number of hops?
+
+<center>
+$$c^{btw}_{j} =  \sum_{s,t \in G} \frac{ \Psi_{s,t}(i) }{\Psi_{s,t}}$$
+</center>
+
+where vertices $s,t,i$ are all different from each other
+
+* $\Psi_{s,t}$ denotes the number of shortest paths (geodesics) between vertices $s$ and $t$
+* $\Psi_{s,t}(i)$ denotes the number of shortest paths (geodesics) between vertices $s$ and $t$ **that pass through vertex** $i$.
+* The geodesic betweenness $B_n$ of a network is the mean of $B_n(i)$ over all vertices $i$
+ 
+
+## Neighborhood of a Node
+
+Lastly, we can look at the surrounding of a node, meaning the ones it is connected to, its **neighborhood**. Here, we can look at the **ego-network of a node**. That means how many nodes are in a certain **geodesic distance**. Plainly speaking, how many nodes are not more than x-steps away.
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/networks_distance.jpg){.img}
+</center>
+
+## Clustering (Community detection)
+
+* Another common operation is to group nodes based on the graph topology, sometimes referred to as *community detection* based on its commonality in social network analysis.
+* The main logic: Form groups which have a maximum *within-connectivity* and a minimum *between-connectivity*. 
+* Consequently, nodes in the same community should have a higher probability of being connected than nodes from different communities.
+
+##  Example: The Louvain Algorithm{.columns-2}
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/networks_louvain.jpg)
+</center>
+
+* I will illustrate the idea using the **Louvain Method**, one of the most widely used community detection algorithms. 
+* It optimises a quantity called modularity:
+
+$$  \sum_{ij} (A_{ij} - \lambda P_{ij}) \delta(c_i,c_j) $$
+
+$A$ - The adjacency matrix
+
+$P_{ij}$ - The expected connection between $i$ and $j$.
+
+$\lambda$ - Resolution parameter
+
+Can use lots of different forms for $P_{ij}$ but the standard one is the so called configuration model:
+
+$P_{ij} = \frac{k_i k_j}{2m}$
+
+Loosely speaking, in an iterative process it 
+
+1. You take a node and try to aggregate it to one of its neighbours.
+2. You choose the neighbour that maximizes a modularity function. 
+3. Once you iterate through all the nodes, you will have merged few nodes together and formed some communities.
+4. This becomes the new input for the algorithm that will treat each community as a node and try to merge them together to create bigger communities.
+5. The algorithm stops when it's not possible to improve modularity any more. 
+
+This is the original paper, for those interested in further reads:
+
+* Blondel, Vincent D; Guillaume, Jean-Loup; Lambiotte, Renaud; Lefebvre, Etienne (9 October 2008). "Fast unfolding of communities in large networks". Journal of Statistical Mechanics: Theory and Experiment. 2008 (10): P10008
+
+---- 
+
+```{r}
+set.seed(1337)
+# We create an example network
+g <- play_islands(n_islands = 5, # 	The number of densely connected islands
+                  size_islands = 15, # The number of nodes in each island
+                  p_within = 0.75, # The probability of edges within and between groups/blocks
+                  m_between = 5 # The number of edges between groups/islands
+                  ) 
+```
+
+```{r}
+set.seed(1337)
+# As planned, we clearely see distinct communities
+g %>% 
+    ggraph(layout = 'kk') + 
+    geom_edge_link() + 
+    geom_node_point(size = 7) + 
+    theme_graph()
+```
+
+
+```{r}
+set.seed(1337)
+# We run a community detection simply with the group_* function of tidygraph. here, the Lovain algorithm is a well performing and fast choice.
+g <- g %N>% 
+    mutate(community = group_louvain() %>% as.factor()) 
+```
+
+----
+
+```{r}
+set.seed(1337)
+# Lets see how well it did...
+g %>% 
+    ggraph(layout = 'kk') + 
+    geom_edge_link() + 
+    geom_node_point(aes(colour = community), size = 7) + 
+    theme_graph()
+```
+
+
+# (Global) Network structure
+
+## (Global) Network structure
+
+Finally, it is often also informative to look at the overal characteristics of the network. We will do this in more detail next time, but just so you know:
+
+
+* The **density** of a measure represents the share of all connected to all possible connections in the network
+* **Transistivity**, also called the **Clustering Cefficient** indicates how much the network tends to be locally clustered. That is measured by the share of **closed triplets**. Again,w e will dig into that next time.
+* The **diameter** is the longest of the shortest paths between two nodes of the network.
+* The **mean distance**, or **average path lenght** represents the mean of all shortest paths between all nodes. It is a measure of diffusion potential within a network.
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/networks_ccoeff.png){.img}
+</center>
+
+# Summing up
+
+## Summing up
+
+In this session we talked about: 
+
+1. What are networks and why might it be interesting to study them.
+2. What are commong datastructures to represent networks.
+3. What are basic definitions and concepts relevant for network analysis
+4. What are common measures of local network structure?
+5. What are common measures of global network structure?
+
+## Further readings
+
+Textbooks
+
+* Jackson, Matthew O. Social and economic networks. Princeton university press, 2010.
+* Wasserman, Stanley, and Katherine Faust. Social network analysis: Methods and applications. Vol. 8. Cambridge university press, 1994.
+* Powell, Walter W., and Stine Grodal. "Networks of innovators." Chapter in: The Oxford handbook of innovation” (2005).
+
+Good research papers utulizing network analysis
+
+* Phelps, Corey, Ralph Heidl, and Anu Wadhwa. "Knowledge, networks, and knowledge networks: A review and research agenda." Journal of management 38.4 (2012): 1115-1166.
+* Rakas, Marija, and Daniel S. Hain. "The state of innovation system research: What happens beneath the surface?." Research Policy 48, no. 9 (2019): 103787.
+* Fleming, Lee, Charles King III, and Adam I. Juda. "Small worlds and regional innovation." Organization Science 18.6 (2007): 938-954.
+* Hidalgo, César A., et al. "The product space conditions the development of nations." Science 317.5837 (2007): 482-487.
+* Giuliani, Elisa, and Martin Bell. "The micro-determinants of meso-level learning and innovation: evidence from a Chilean wine cluster." Research policy 34.1 (2005): 47-68.
+* Balland, Pierre-Alexandre, et al. "Smart specialization policy in the European Union: relatedness, knowledge complexity and regional diversification." Regional Studies 53.9 (2019): 1252-1268.
+* Jurowetzki, Roman and Daniel S. Hain. Mapping the (r-) evolution of technological fields– a semantic network approach.  In Luca M. Aiello and Dan McFarland, editors,SocialInformatics, volume 8851 ofLecture Notes in Computer Science, pages 359–383. Springer International Publishing, 2014.
 
