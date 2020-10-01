@@ -1,0 +1,707 @@
+---
+title: 'Introduction to Network Analysis: Application (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+```
+
+### This session
+
+In this applied session, you will:
+
+
+# Network data structures
+
+* Below an example ofa minimal edge list created with the `tibble()` function. 
+* In this case, let us assume this network to be unweighted, meaning a connection can be eiter tresent or absent.
+
+```{r edgelists}
+edge_list <- tibble(from = c(1, 2, 2, 1, 4), 
+                    to = c(2, 3, 4, 5, 1))
+```
+
+```{r}
+edge_list
+```
+
+## Adjacency Matrix
+
+* A second popular form of network representation is the **adjacency-matrix** (also called **socio-matrix**). 
+* It is represented as a $n*n$ matrix, where $n$ stands for the number of elements of which their relationships should be represented. 
+* The value in the cell that intercepts row $n$ and column $m$ indicates if an edge is present (=1) or absent (=0).
+* Tip: Given an edgelist, an adjacency matrix can easily be produced by crosstabulating:
+
+```{r matrix}
+adj_matrix <- edge_list %>%
+  table() %>% 
+  as.matrix()
+```
+
+```{r}
+adj_matrix
+```
+
+
+*Note:* 
+
+* Existing as well as not existing connections are stored. Since most networks in reality are **sparse** (= more potential connections are inactive than active)
+* This is inefficient for storrage and computation. 
+* Here, a sparse `dgCMatrix` object from the `Matrix`can be helpful.
+* This sparse datasructure only stores a reference to non-empty cells and their values. 
+
+```{r}
+library(Matrix)
+sparse_matrix <- edge_list %>%
+  table() %>% 
+  Matrix(sparse = TRUE)
+```
+
+```{r}
+sparse_matrix
+```
+
+```{r}
+sparse_matrix %>% glimpse()
+```
+
+## Nodelists
+* Edgelists as well as adjacency matrices only stores connectivity pattern between nodes, but due to their structure cannot store informations on the nodes in which we might be interested. 
+* Therefore, we in many cases also provide a a **node list** with these informations (such as the names of the nodes or any kind of groupings).
+
+```{r nodelists}
+node_list <- tibble(id = 1:5, 
+                    name = c("Jesper", "Pernille", "Jacob", "Dorte", "Donald"),
+                    gender = c("M", "F", "M", "F", "M"),
+                    group = c("A", "B", "B", "A", "C"))
+```
+
+```{r}
+node_list
+```
+
+
+## Graph objects
+
+### Graph objects in [`igraph`](https://igraph.org/r/)
+
+* One of the most popular network/graph analytics framework in `R` and `Python` alike is [`igraph`](http://igraph.org). * It provides a powerful toolbox for analysis as well as plotting alike. Lets take a peak.
+* To create an `igraph` object from an edge-list data frame we can use the `graph_from_data_frame()` function. 
+* There are three arguments in the `graph_from_data_frame()` function: d, vertices, and directed. 
+   * d refers to the edge list, 
+   * vertices to the node list, 
+   *directed can be either `TRUE` or `FALSE` depending on whether the data is directed or undirected. 
+* By default, `graph.data.frame()` treats the first two columns of the edge list and any remaining columns as edge attributes.
+
+```{r}
+library(igraph)
+```
+
+
+```{r}
+g <- graph_from_data_frame(d = edge_list, vertices = node_list, directed = FALSE)
+# g <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected") # Same for the adjacency matrix
+```
+
+```{r}
+g
+```
+
+
+Lets inspect the resulting object. An `igraph` graph object summary reveals some interesting informations.
+
+* First, it tells us the graph-type: undirected `UN`, or  directed `DN`
+* Afterwards, the number of nodes (4), and edges (5)
+* Followed by the node attributes (node level variables), which in this case are only their name, gender, and group (`attr: name (v/c), gender (v/c), group (v/c)`)
+* Lastly, a list of all existing edges. Note: `n--m` indicates an undirected, `n->m` an directed edge.
+
+Lets take a look at the structure of the object:
+
+```{r}
+g[[1:2]]%>% glimpse() # Note the double brackets (g is a list object)
+```
+
+* We see, the object has a list-format, consisting of sepperate lists for every node, containing some attributes which are irrelevant now, and an edgelist for every node, capturing its ego-network (eg., `..$ Jesper: 'igraph.vs' Named int [1:3] 2 4 5`)
+* We can also plot it to take a look. `igraph` object can be directly used with the `plot()` function. 
+* The results can be adjusted with a set of parameters we will discover later. 
+* It's not super pretty, therefore we will later also explore more powerfull plotting tools for gaphs. However, its quick&dirty, so lets take it like that for now. 
+
+```{r}
+plot(g)
+```
+
+*Note:* We will not venture further into the `igraph` plotting functionality, since we will go all in with `ggraph`. However, there is a very neath tutorial [here](https://raw.githack.com/kateto/R-Network-Visualization-Workshop/master/Sunbelt%202019%20R%20Network%20Visualization%20Workshop.html), that will tell you everything you need to know, in case you are interested.
+
+We can inspect and manipulate the nodes via `V(g)` (V for vertices, its graph-theory slang), and edges with `E(g)`
+
+```{r}
+V(g)
+```
+
+```{r}
+E(g)
+```
+
+We can also use most of the base-R slicing&dicing.
+
+```{r}
+V(g)[1:3]
+```
+
+```{r}
+E(g)[2:4]
+```
+
+
+Remember, it's a list-object. So, if we just want to have the values, we have to use the double bracket `[[x]]`. 
+
+```{r}
+V(g)[[1:3]]
+```
+
+We can also use the `$` notation.
+
+```{r}
+V(g)$name
+```
+
+There is obviously a lot more to say about `igraph` and its rich functionality. You will learn much of the abse functionality of `igraph` in your DC assignments. Furthermore [Katya Ognyanova](https://kateto.net/), has a [brilliant tutorial](https://kateto.net/networks-r-igraph) that can be studied.
+
+### Graph objects in [`tidygraph`](https://tidygraph.data-imaginist.com/)
+
+* While the `igraph` functionality still represents the core of `R`'s network analysis toolbox, recent developments have made network analytics much more accessible and intuitive.
+* [Thomas Lin Pedersen](http://www.data-imaginist.com) (also known as the developer of beloved packages like `ggforce`, `gganimate`, and the `R` implementation of `lime`)  has recently released the [`tidygraph`](https://tidygraph.data-imaginist.com/) package.
+* It leverage the power of `igraph` in a manner consistent with the [`tidyverse`](http://www.tidyverse.org) workflow.
+* It represents a lightweight wrapper around the core `igraph` object and functionality which makes it accessible for much of the traditional `dplyr` workflows.
+* Even better, he tops it up with [`ggraph`](https://cran.r-project.org/web/packages/ggraph/index.html), a consistent `ggplot2`-look-and-feel network visualization package.
+* For that reason, we will mostly work with the `tidygraph` framework, while we still in some few cases need to draw from the base `igraph` functionality. 
+
+![](https://sds-aau.github.io/SDS-master/00_media/networks_data_structure.png)
+
+All `tidygraph`functions are excellently documented [here](https://tidygraph.data-imaginist.com/reference/index.html)
+
+
+### Creating a`tbl_graph`
+
+```{r}
+library(tidygraph)
+```
+
+
+* We here created the `tbl_graph` directly from the `igraph` object.
+
+```{r}
+g  %<>% as_tbl_graph()
+```
+
+```{r}
+g
+```
+
+* We see a more intuitive representation of the datastructure, consisting of a node as well as an edge dataframe. 
+* We could for sure also create it based on our initial node- and edgelist.
+
+```{r}
+g <- tbl_graph(edges = edge_list, nodes = node_list, directed = FALSE)
+```
+
+* **Note:** The `tbl_graph` class is a thin wrapper around an `igraph` object that provides methods for manipulating the graph using the tidy API. 
+* As it is just a subclass of `igraph`, every `igraph` method and its syntax will work as expected and can be used if necessary. However, it might convert it back into an original `igraph` object.
+
+```{r}
+V(g)
+```
+
+* In adittionan, the `as_tbl_graph()` function also can transform different types of network data from objects such as `data.frame`, `matrix`, `dendrogram`, `igraph`, etc.
+
+### Acessing and manipulating nodes and edges
+
+* But how can a graph object be manipulated with `dplyr` syntax? 
+* We know that a graph object contains an edge as well as node dataframe, so commands like `g %>% filter(name == "Pernille")` would be confusing, since it is unclear if we refer to nodes or edges. 
+* `tidygraph`'s solution here are selective **activation pipes**:
+   * `%N>%` activates nodes (short for longer alternative:`%>% activate_nodes()`)
+   * `%E>%` activates edges (short for longer alternative:`%>% activate_edges()`)
+* Consequently, functions are executed on the currently active dataframe of either nodes or edges. 
+* With this simple syntax trick, graphs become subject to most commonly known data manipulation workflows for tabular data.
+
+```{r}
+g %N>%
+  filter(gender == "F")
+```
+
+* Note that filtering nodes will simultaneously result in a filtering of edges. We for sure can also do manipulatings on both nodes and edges in one pipeline.
+
+```{r}
+g %N>%
+  filter(group %in% c("A", "B")) %E>%
+  filter(to == 2)
+```
+
+* Note that the filtering of edges did not reduce the nodeset. While nodes can be isolated in a nework, edges without an adjacent node cannot exist.
+* We can also pull the virtual node or edge dataframe out of the `tbl_graph` and use it for tabular analysis.
+
+```{r}
+g %N>%
+  filter(group == "B") %>%
+  as_tibble()
+```
+
+
+### Visualization (preview)
+
+* One last thing for now: While `igraph` also provides a powerful network visualization functionality, I will also mostly go with Thomas sister package, [`ggraph`](https://github.com/thomasp85/ggraph), which provides a network visualization interface compatible and consistent with `ggplot2`
+* The rest works like any `ggplot` function call, just that we use special geoms for our network
+* Fir instance, we use: `geom_edge_density()` to draw a shadow where the edge density is higher, `geom_edge_link()` to connect edges with a straight line, `geom_node_point()` to draw node points and `geom_node_text()` to draw the labels. More options can be found here.
+
+```{r}
+library(ggraph)
+```
+
+```{r}
+g %>% ggraph(layout = "nicely") + 
+  geom_edge_link() + 
+  geom_node_point() + 
+  geom_node_text(aes(label = name))
+```
+
+Not very impressive up to now, but wait for the real stuff to come in later sessions.
+
+# Network analysis and measures
+
+```{r}
+# generate a sample network: play_smallworld() Create graphs based on the Watts-Strogatz small- world model.
+set.seed(1337)
+g <- play_barabasi_albert(n = 200, # Number of nodes
+                          power = 0.75, # Power of preferential attachment effect
+                          directed = FALSE # Undirected network
+                          )              
+```
+
+```{r}
+set.seed(1337)
+g %>%
+    ggraph(layout = "fr") + 
+    geom_edge_link() + 
+    geom_node_point() + 
+    theme_graph() # Adding `theme_graph()` introduces a stileguide better suited for rgaphs
+```
+
+
+## Node level measures
+
+Centralities can be easily created on node level wit the `centrality_[...]` function. All centralities available can be found [here](https://tidygraph.data-imaginist.com/reference/index.html)
+
+```{r}
+g <- g %N>%
+  mutate(centrality_dgr = centrality_degree(),
+         centrality_eigen = centrality_eigen(),
+         centrality_between = centrality_betweenness()) 
+```
+
+```{r}
+g %N>%
+  as_tibble() %>% 
+  head()
+```
+
+#### Degree centrality
+
+```{r}
+set.seed(1337)
+g %>%
+    ggraph(layout = "fr") + 
+    geom_edge_link() + 
+    geom_node_point(aes(size = centrality_dgr, colour = centrality_dgr)) + 
+    scale_color_continuous(guide = "legend") + 
+    theme_graph()
+```
+
+#### Eigenvector centrality
+
+```{r}
+set.seed(1337)
+g %>%
+    ggraph(layout = "fr") + 
+    geom_edge_link() + 
+    geom_node_point(aes(size = centrality_eigen, colour = centrality_eigen)) + 
+    scale_color_continuous(guide = "legend") + 
+    theme_graph()
+```
+
+#### Betweenness centrality
+
+```{r}
+set.seed(1337)
+g %>%
+    ggraph(layout = "fr") + 
+    geom_edge_link() + 
+    geom_node_point(aes(size = centrality_between, colour = centrality_between)) + 
+    scale_color_continuous(guide = "legend") + 
+    theme_graph()
+```
+
+
+## Clustering (Community detection)
+
+* All clustering algorithms from `igraph` are available in tidygraph using the `group_*` prefix. 
+* All of these functions return an integer vector with nodes (or edges) sharing the same integer being grouped together.
+* There are-just like for clusterin of tabular data in UML-many different algorithms and approaches to 
+
+Lets illustrate 
+
+```{r}
+set.seed(1337)
+# We create an example network
+g <- play_islands(n_islands = 5, # 	The number of densely connected islands
+                  size_islands = 15, # The number of nodes in each island
+                  p_within = 0.75, # The probability of edges within and between groups/blocks
+                  m_between = 5 # The number of edges between groups/islands
+                  ) 
+```
+
+```{r}
+set.seed(1337)
+# As planned, we clearely see distinct communities
+g %>% 
+    ggraph(layout = 'kk') + 
+    geom_edge_link() + 
+    geom_node_point(size = 7) + 
+    theme_graph()
+```
+
+```{r}
+set.seed(1337)
+# We run a community detection simply with the group_* function of tidygraph. here, the Lovain algorithm is a well performing and fast choice.
+g <- g %N>% 
+    mutate(community = group_louvain() %>% as.factor()) 
+```
+
+```{r}
+set.seed(1337)
+# Lets see how well it did...
+g %>% 
+    ggraph(layout = 'kk') + 
+    geom_edge_link() + 
+    geom_node_point(aes(colour = community), size = 7) + 
+    theme_graph()
+```
+
+## Neighborhood of a Node
+
+* Lets check the size of all nodes neighborhood at distance 2.
+
+```{r}
+g %N>%
+  mutate(neighborhood_size = local_size(order = 2)) %>%
+  as_tibble() %>%
+  arrange(desc(neighborhood_size)) %>%
+  head()
+```
+
+' We can also not only look at it, but produce a new sub-graph only of this ego-network. 
+' Here, we need to use the base `igraph` function. Note that it produces an `igraph` object, so we have to make a `tidygraph` again...
+
+```{r}
+g1 <- make_ego_graph(g, 2, nodes = 1)[[1]] %>% as_tbl_graph()
+g50 <- make_ego_graph(g, 2, nodes = 50)[[1]] %>% as_tbl_graph()
+```
+
+```{r}
+set.seed(1337)
+g1 %>% 
+    ggraph(layout = 'kk') + 
+    geom_edge_link() + 
+    geom_node_point(aes(colour = community), size = 7) + 
+    theme_graph()
+```
+
+```{r}
+set.seed(1337)
+g50 %>% 
+    ggraph(layout = 'kk') + 
+    geom_edge_link() + 
+    geom_node_point(aes(colour = community), size = 7) + 
+    theme_graph()
+```
+
+## (Global) Network structure
+
+* Finally, it is often also informative to look at the overal characteristics of the network. We will do this in more detail next time, but just so you know:
+
+* The **density** of a measure represents the share of all connected to all possible connections in the network
+
+```{r}
+edge_density(g)
+```
+
+***Transistivity**, also c alled the **Clustering Cefficient** indicates how much the network tends to be locally clustered. 
+* That is measured by the share of **closed triplets**. Again,w e will dig into that next time.
+
+```{r}
+transitivity(g)
+```
+
+* The **diameter** is the longest of the shortest paths between two nodes of the network.
+
+```{r}
+diameter(g, directed = F, weights = NA)
+```
+
+* Finally, the **mean distance**, or **average path lenght** represents the mean of all shortest paths between all nodes. It is a measure of diffusion potential within a network.
+
+```{r}
+mean_distance(g, directed = F)
+```
+
+
+# Case: Networks are coming...
+
+![](https://sds-aau.github.io/SDS-master/00_media/random_got.jpg)
+
+* So, lets get serious. Appropriate for the weather these days in Denmark, the theme is "winter is comming...".
+* Therefore, we will have some fun analysing the Game of Thrones data provided by [Andrew Beveridge](https://github.com/mathbeveridge/asoiaf). 
+* It is a Character Interaction Networks for George R. R. Martin's "A Song of Ice and Fire" saga (yes, we are talking about the books...). 
+* These networks were created by connecting two characters whenever their names (or nicknames) appeared within 15 words of one another in one of the books in "A Song of Ice and Fire." 
+* The edge weight corresponds to the number of interactions. 
+* This is a nice skill you will have after the second part of M2 on your own.
+
+## Build the graph
+
+* First, we load all nodes, representing all characters appearing in the books:
+
+```{r}
+edges <- read_csv('https://sds-aau.github.io/SDS-master/00_data/GoT_network/asoiaf-all-edges.csv') 
+```
+
+```{r}
+edges %>% head()
+```
+
+```{r}
+colnames(edges) <- tolower(colnames(edges))
+```
+
+
+* So, that's what we have, a classical edgelist, with id1 in column 1 and id2 in column2. 
+* Note, the edges are in this case weighted. 
+
+Ok, lets see how many characters we have overal.
+
+```{r}
+n_distinct(c(edges$source, edges$target))
+```
+
+* Because there are so many characters in the books, many of them minor, 
+* I am subsetting the data to the 100 characters with the most interactions across all books. 
+* The edges are undirected, therefore there are no redundant Source-Target combinations.
+* Because of this, I pivot Source and Target data before summing up the weights.
+
+
+```{r}
+chars_main <- edges %>%
+  select(-type) %>%
+  pivot_longer(source:target) %>%
+  group_by(value) %>%
+  summarise(sum_weight = sum(weight)) %>%
+  ungroup() %>%
+  arrange(desc(sum_weight)) %>%
+  slice(1:100) %>%
+  rename(name = value)
+```
+
+```{r}
+head(chars_main)
+```
+
+* So far so good, if we only go by edge weights, 
+* Lets reduce our edgelist to this main characters, just to warm up and keep the overview.
+
+```{r}
+edges %<>%
+  filter(source %in% chars_main$name & target %in% chars_main$name) %>%
+  select(source, target, weight) %>%
+  rename(from = source,
+         to = target)
+# Note: Since it is small data, this way with %in% is ok. However, with large datasets I would filter via semi_join() instead (more efficient)
+```
+
+Now we can convert our edgelist into a `tbl_graph` object structure. 
+
+```{r}
+g <- edges %>% as_tbl_graph(directed = FALSE)
+```
+
+```{r}
+g
+```
+
+* We can use some of the `tidygraph` helpers to briefly clean the graph. Check `?node_is_*` and `?edge_is_*` for options.
+
+```{r}
+# Filtering out multiple edges and isolated nodes (unconnected), in case there are some
+g <- g %E>%
+  filter(!edge_is_multiple()) %N>%
+  filter(!node_is_isolated()) 
+```
+
+* Note that the edges in this graph are weighted. We can briefly look at the weight distribution:
+
+```{r}
+g %E>%
+  as_tibble() %>%
+  ggplot(aes(x = weight)) +
+  geom_histogram()
+```
+
+We see a right skewed distribution with many weak and some very strong edges. Lets take a look what are the edges with the highest weight (meaning here: the characters with most intraction).
+
+```{r}
+g %E>%
+  as_tibble() %>%
+  arrange(desc(weight)) %>%
+  head()
+```
+
+`tidygraph` always uses numeric IDs for nodes, which are also labeling the edges. This is not very helpful to get insights. So, lets take the node names in instead.
+
+```{r}
+# We access the nodes directly via .N(). The same can be done for edges with .E() and the graph with .G(). Check ?context_accessors for more infos
+g %E>%
+  mutate(name_from = .N()$name[from],
+         name_to = .N()$name[to]) %>%
+  as_tibble() %>%
+  select(name_from, name_to, weight) %>%
+  arrange(desc(weight)) %>%
+  head()
+```
+
+## Node Characteristics
+
+```{r}
+g <- g %N>%
+  mutate(centrality_dgr = centrality_degree(weights = weight),
+         centrality_eigen = centrality_eigen(weights = weight),
+         centrality_between = centrality_betweenness(weights = weight)) 
+```
+
+```{r}
+bind_cols(g %N>%
+            select(name, centrality_dgr) %>%
+            arrange(desc(centrality_dgr)) %>%
+            as_tibble(),
+          g %N>%
+            select(name, centrality_eigen) %>%
+            arrange(desc(centrality_eigen)) %>%
+            as_tibble(),
+          g %N>%
+            select(name, centrality_between) %>%
+            arrange(desc(centrality_between)) %>%
+            as_tibble()) %>%
+  mutate_if(is.numeric, round, 1) %>%
+  head()
+```
+
+## Communities & Groups
+
+```{r}
+g <- g %N>% 
+    mutate(community = group_louvain() %>% as.factor()) 
+```
+
+```{r}
+g %N>%
+  select(name, community, centrality_dgr) %>%
+  as_tibble() %>% 
+  arrange(community, desc(centrality_dgr)) %>%
+  group_by(community) %>%
+  slice(1:5) %>% mutate(n = 1:5) %>%
+  ungroup() %>%
+  select(-centrality_dgr) %>%
+  spread(community, name)
+    
+```
+
+## Network Visualization I
+
+Ok, lets give it a first minimal shot:
+
+```{r}
+g %>% ggraph(layout = "fr") + 
+    geom_edge_link() + 
+    geom_node_point() +
+  geom_node_text(aes(label = name)) 
+```
+
+Not very exciting. Maybe we can do a bit better, using more options in the `ggraph` functionality to visualize aspects of the network.
+
+```{r, fig.height=15, fig.width=20}
+g %E>% 
+  filter(weight >= quantile(weight, 0.5)) %N>%
+  filter(!node_is_isolated()) %>%
+  ggraph(layout = "fr") + 
+    geom_edge_link(aes(width = weight), alpha = 0.2) + 
+    geom_node_point(aes(color = community, size = centrality_eigen)) +
+    geom_node_text(aes(label = name, size = centrality_eigen), repel = TRUE) +
+    scale_color_brewer(palette = "Set1") +
+    theme_graph() +
+    labs(title = "A Song of Ice and Fire character network",
+         subtitle = "Nodes are colored by community")
+```        
+
+## Your turn
+Please do **Exercise 1** in the corresponding section on `Github`.
+
+# Endnotes
+
+### Packages & Ecosystem
+
+* tidygraph [here](https://tidygraph.data-imaginist.com/)
+* ggraph [here](https://www.data-imaginist.com/2017/announcing-ggraph/)
+
+### Suggestions for further study
+
+* DataCamp (!All courses have somewhat outdated ecosystems)
+   * [Network Analysis in R](https://learn.datacamp.com/courses/network-analysis-in-r): Good for some of the basics
+   * [Case Studies: Network Analysis in R](https://learn.datacamp.com/courses/case-studies-network-analysis-in-r): Good to get some first practice.
+   * [Predictive Analytics using Networked Data in R](https://learn.datacamp.com/courses/predictive-analytics-using-networked-data-in-r): 
+   * Further: A Datacamp Python project for the same (GoT) data set [here](https://www.datacamp.com/projects/76?utm_campaign=broadcast&utm_medium=broadcast_8&utm_source=main)
+
+  
+### Session Info
+
+```{r}
+sessionInfo()
+```
+
+
+
+
+
