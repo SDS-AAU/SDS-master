@@ -1,0 +1,467 @@
+---
+title: 'Introduction to Network Analysis: Application (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+
+library(tidygraph)
+library(ggraph)
+```
+
+
+Welcome to your second part of the introduction to network analysis. In this session you will learn:
+
+1. What directed networks are, and when that matters.
+2. How different measures have to be calculated in directed networks.
+3. What multidimensional networks are, and how they matter.
+4. How to compare network measures between graphs, and with random graphs
+
+# Introduction
+
+Hello so far :) 
+
+# Directed networks
+
+* Up to now, we did not pay attention to the direction of edges, and assumed them to be symetric (`A->B == B->A`). this makes sense in a lot of setting, for instance when we look at co-occurence networks. 
+* However, in many cases, such as friendship networks, that might not be the case (the person you name a close friend not necessarily thinks the same about you). 
+* In such cases, we would like to take this directionality into account, and analyse **directed networks**. 
+
+Lets look a brief example of highschool students data, which had to name their close friends.
+
+```{r}
+highschool %>%
+  head()
+```
+
+Again, here it sometimes happens that friendship is not reciprocal, so we will create a directed friendship graph.
+
+```{r}
+g <- highschool %>% 
+  as_tbl_graph(directed = TRUE)
+```
+
+```{r}
+g
+```
+
+
+```{r}
+set.seed(1337)
+# The names where anonymized, which is a bit boring. So I will just give them some random names to associate with.
+library(randomNames)
+
+g <- g %N>%
+  mutate(gender = rbinom(n = n(), size = 1, prob = 0.5),
+         label= randomNames(gender = gender, name.order = "first.last"))
+```
+
+```{r}
+g %N>% as_tibble()
+```
+
+* Lets plot this network briefly to get a sense. 
+* Notice that we have edges for two years, so we can do a facet plot for every year.
+
+```{r}
+set.seed(1337)
+g %E>% 
+  ggraph(layout = "nicely") + 
+    geom_edge_link(arrow = arrow()) + 
+    geom_node_point() +
+    theme_graph() +
+    facet_edges(~year)
+```
+We indeed see that the friendship structure alters slightly between years. To make it less complicated for now, we will only look at the 1958 network.
+
+```{r}
+g <- g %E>% 
+  filter(year == 1958) %N>%
+  filter(!node_is_isolated()) 
+```
+
+```{r}
+set.seed(1337)
+g %E>% 
+  ggraph(layout = "nicely") + 
+    geom_edge_link(arrow = arrow()) + 
+    geom_node_point() +
+    theme_graph() 
+```
+
+## Centrality measures
+
+Our network is now directed, meaning a node-pair now has two different roles:
+
+* **Ego:** The node the edge loriginates from.
+* **Alter:** The node the edge leads to.
+
+Consequently, most network metrics have to take this directionality into account. For example, degree centrality is now differentiated between the **in-degree** centrality (now many edges lead to the node) and the **out-degree** centrality (now many edges lead to the node)
+
+```{r}
+g <- g %N>%
+  mutate(cent_dgr_in = centrality_degree(mode = "in"),
+         cent_dgr_out = centrality_degree(mode = "out")) 
+```
+
+## Community Structures
+
+Now it is getting a bit more complicated. Most community detection algorithms implemented in `igraph` only work with undirected networks. So, now we could do 2 things:
+
+1. Convert the network in an undirected one.
+2. Use the "edge betweenness" algorithm, the only one implemented that can handle directed networks.
+
+```{r, warning=FALSE,comment=FALSE,error=FALSE,message=FALSE}
+g <- g %N>%
+  mutate(community = group_edge_betweenness(directed = TRUE) %>% as.factor())
+```
+
+```{r}
+g %E>% 
+  ggraph(layout = "nicely") + 
+    geom_edge_link(arrow = arrow()) + 
+    geom_node_point(aes(col = community, size = cent_dgr_in)) +
+    theme_graph() 
+```
+
+
+# Case: Lawyers, Friends & Foes
+
+## Introduction to the case
+
+* Emmanuel Lazega, The Collegial Phenomenon: The Social Mechanisms of Cooperation Among Peers in a Corporate Law Partnership, Oxford University Press (2001).
+
+### Data 
+* This data set comes from a network study of corporate law partnership that was carried out in a Northeastern US corporate law firm, referred to as SG&R, 1988-1991 in New England. 
+* It includes (among others) measurements of networks among the 71 attorneys (partners and associates) of this firm, i.e. their strong-coworker network, advice network, friendship network, and indirect control networks. 
+* Various members' attributes are also part of the dataset, including seniority, formal status, office in which they work, gender, lawschool attended, individual performance measurements (hours worked, fees brought in), attitudes concerning various management policy options, etc. 
+* This dataset was used to identify social processes such as bounded solidarity, lateral control, quality control, knowledge sharing, balancing powers, regulation, etc. among peers.
+
+### Setting
+* What do corporate lawyers do? Litigation and corporate work.
+* Division of work and interdependencies.
+* Three offices, no departments, built-in pressures to grow, intake and assignment rules.
+* Partners and associates: hierarchy, up or out rule, billing targets.
+* Partnership agreement (sharing benefits equally, 90% exclusion rule, governance structure, elusive committee system) and incompleteness of the contracts.
+* Informal, unwritten rules (ex: no moonlighting, no investment in buildings, no nepotism, no borrowing to pay partners, etc.).
+* Huge incentives to behave opportunistically ; thus the dataset is appropriate for the study of social processes that make cooperation among rival partners possible. 
+* Sociometric name generators used to elicit coworkers, advice, and 'friendship' ties at SG&R:"Here is the list of all the members of your Firm."
+
+The networks where created according to the follwoing questionaire:
+
+* Strong coworkers network: "Because most firms like yours are also organized very informally, it is difficult to get a clear idea of how the members really work together. Think back over the past year, consider all the lawyers in your Firm. Would you go through this list and check the names of those with whom you have worked with. By "worked with" I mean that you have spent time together on at least one case, that you have been assigned to the same case, that they read or used your work product or that you have read or used their work product; this includes professional work done within the Firm like Bar association work, administration, etc."
+* Basic advice network: "Think back over the past year, consider all the lawyers in your Firm. To whom did you go for basic professional advice? For instance, you want to make sure that you are handling a case right, making a proper decision, and you want to consult someone whose professional opinions are in general of great value to you. By advice I do not mean simply technical advice."
+* 'Friendship' network:
+"Would you go through this list, and check the names of those you socialize with outside work. You know their family, they know yours, for instance. I do not mean all the people you are simply on a friendly level with, or people you happen to meet at Firm functions."
+
+## Data preperation
+
+###  Load the data
+
+Lets load the data! The three networks refer to cowork, friendship, and advice. The first 36 respondents are the partners in the firm. 
+
+```{r}
+# Note the .dat format is a bit unconfortable to load with readr, since we have to specify the delimiters on our own. Therefore I use the convenient fread function by the data.table package, which is able to detect them without help
+library(data.table)
+mat_friendship <- fread('https://sds-aau.github.io/SDS-master/00_data/network_lawyers/ELfriend.dat') %>% as.matrix()
+mat_advice <- fread('https://sds-aau.github.io/SDS-master/00_data/network_lawyers/ELadv.dat') %>% as.matrix(dimnames = list(c(1:nrow(.)), c(1:ncol(.))))
+mat_work <- fread('https://sds-aau.github.io/SDS-master/00_data/network_lawyers/ELwork.dat') %>% as.matrix(dimnames = list(c(1:nrow(.)), c(1:ncol(.))))
+
+dimnames(mat_friendship) = list(c(1:nrow(mat_friendship)), c(1:ncol(mat_friendship)))
+dimnames(mat_advice) = list(c(1:nrow(mat_advice)), c(1:ncol(mat_advice)))
+dimnames(mat_work) = list(c(1:nrow(mat_work)), c(1:ncol(mat_work)))
+# Note that we have to overwrite the column and rownames of the matrices with 1:71 (corresponding to the name codes in the nodeslist)
+```
+
+We also load a set of nodes
+
+```{r}
+nodes <- fread('https://sds-aau.github.io/SDS-master/00_data/network_lawyers/ELattr.dat') %>% as_tibble()
+```
+
+```{r}
+nodes %>% head()
+```
+
+### Cleaning up
+
+The variables in `nodes` are unnamed, but from the paper I know how they are coded, so we can give them names.
+
+```{r}
+colnames(nodes) <- c("name", "seniority", "gender", "office", "tenure", "age", "practice", "school")
+```
+
+We can also recode the numeric codes in the data into something more intuitive. I agaion know from the data description of the paper the coding.
+
+* seniority status (1=partner; 2=associate)
+* gender (1=man; 2=woman)
+* office (1=Boston; 2=Hartford; 3=Providence)
+* years with the firm
+* age
+* practice (1=litigation; 2=corporate)
+* law school (1: harvard, yale; 2: ucon; 3: other)
+
+```{r}
+nodes %<>%
+  mutate(name = name %>% as.numeric(),
+         seniority = recode(seniority, "1" = "Partner", "2" = "Associate"),
+         gender = recode(gender, "1" = "Man", "2" = "Woman"),
+         office = recode(office, "1" = "Boston", "2" = "Hartford", "3" = "Providence"),
+         practice = recode(practice, "1" = "Litigation", "2" = "Corporate"),
+         school = recode(school, "1" = "Harvard, Yale", "2" = "Ucon", "3" = "Others"))   
+```
+
+```{r}
+nodes %>% head()
+```
+
+### Generate the graph
+
+* Since we have now a **multidimensional** network (=different types of edges), we first load them into isolated networks.
+* We could also directly load them into one network with labeled edges, but that's a bit more complicated, so we keep it for the sake of clarity seperated for now.
+
+```{r}
+g_friendship <- mat_friendship %>% as_tbl_graph(directed = TRUE) %E>%
+  mutate(type = "friendship") %N>%
+  mutate(name = name %>% as.numeric()) %>%
+  left_join(nodes, by = "name")
+
+g_advice <- mat_advice %>% as_tbl_graph(directed = TRUE) %E>%
+  mutate(type = "advice") %N>%
+  mutate(name = name %>% as.numeric()) %>%
+  left_join(nodes, by = "name")
+
+g_work <- mat_work %>% as_tbl_graph(directed = TRUE) %E>%
+  mutate(type = "work") %N>%
+  mutate(name = name %>% as.numeric()) %>%
+  left_join(nodes, by = "name")
+
+# Notice: The node names are taken from the matrices dimnames as string, therefore need to be converted as numeric
+```
+
+### Calculate dimensional centralities
+
+There might be better ways to do that (still experimenting), but for now lets first create centralities upfront for all networks. We for now only look at the in-degree.
+
+```{r}
+g_friendship <- g_friendship %N>%
+  mutate(centrality_dgr_in_friendship = centrality_degree(mode = "in")) 
+
+g_advice <- g_advice %N>%
+  mutate(centrality_dgr_in_advice = centrality_degree(mode = "in")) 
+
+g_work <- g_work %N>%
+  mutate(centrality_dgr_in_work = centrality_degree(mode = "in")) 
+```
+
+
+### Join the networks
+
+```{r}
+g <- g_friendship %>%
+  graph_join(g_advice, by = "name") %>%
+  graph_join(g_work, by = "name")
+```
+
+```{r}
+g %>% 
+  ggraph(layout = "fr") + 
+  geom_node_point() +
+  geom_edge_fan(aes(col = type), arrow = arrow(), alpha = 0.5) + 
+  theme_graph() +
+  facet_edges(~type)
+```
+
+
+```{r,fig.width=15,fig.height=15}
+library(igraph)
+plot(g,
+     layout= layout_with_fr(g),
+     vertex.label = degree(g, mode = "in"),
+     vertex.size = 1+ sqrt(degree(g, mode = "in")),
+     vertex.color = as.numeric(factor(V(g)$office)),
+     vertex.label = NA,
+     edge.arrow.size = 0.5)
+```
+
+## Network effects & structures
+
+![](https://sds-aau.github.io/SDS-master/00_media/networks_directed_metrics.png){width=500px}
+
+### Node level (local)
+
+We could look at all the node level characteristics (degree, betweenness etc.) again, but for the sake of time I skip that for now, since its all already in the last notebook.
+
+### Network level (global)
+
+Ok, lets do the whole exercise with getting the main-determinants of the network structure again. We can look at the classical structural determinants.
+
+```{r}
+# Get density of a graph
+edge_density(g)
+
+# Get the diameter of the graph g
+diameter(g, directed = TRUE)
+
+# Get the average path length of the graph g
+mean_distance(g, directed = TRUE)
+
+# Transistivity
+transitivity(g, type ="global")
+
+# reciprocity
+reciprocity(g)
+```
+
+* We have another important concept that often explains edge-formation in social networks: **Assortativity**, also called **homopholy**. 
+* This is a measure of how preferentially attached vertices are to other vertices with identical attributes. In other words: How much "*birds of the same feather flock together *".
+* Lets first look at people of the same tenure flock together.
+
+```{r}
+assortativity(g, V(g)$tenure, directed = TRUE)
+```
+
+* What about people from elite universities?
+
+
+```{r}
+assortativity(g, V(g)$school == "Harvard, Yale", directed = TRUE)
+```
+
+* Lastly, what about the popularity (or "Matthew") effect?
+
+```{r}
+assortativity(g, degree(g, mode = "in"), directed = TRUE)
+```
+
+Also not that much.....
+
+* One more thing we didn't talk about yet: Small worlds.
+* Small worlds are an interesting network structure, combining short path lenght betwen the nodes with a high clustering coefficient. 
+* That means, that we have small interconected clusters, which are in turn connected by **gatekeepers** (the edges we call **bridges** or **structural holes**). 
+
+![](https://sds-aau.github.io/SDS-master/00_media/networks_smallworld2.jpg){width=500px}
+
+This leads to an interesting setup, which has proven to be conductive for efficient communication and fast diffusion of information in social networks.
+
+![](https://sds-aau.github.io/SDS-master/00_media/networks_smallworld1.jpg){width=500px}
+
+We calculate it for now in an easy way:
+
+```{r}
+transitivity(g, type ="global") / mean_distance(g, directed = TRUE)
+```
+
+However, you by now probably wonder how to interprete this numbers. Are they high, low, or whatever? What is the reference? In fact, it's very hard to say. The best way to say something about that is to compare it with what a random network would look like.
+
+So, lets create a random network. Here, we use the `play_erdos_renyi()` function, which creates a network with a given number of nodes and edge-density, but where the edges are constructed completely random.
+
+```{r}
+g_r <- play_erdos_renyi(n = g %>% gorder(),  
+                        m  = g %>% gsize(), 
+                        directed = TRUE, 
+                        loops = FALSE)
+```
+
+Looks kind of different. However, one randomly created network doesn't present a good bseline. So, lets better create a bunch, and compare our network to the average values of the randomly generated ones.
+
+```{r}
+# Generate n random graphs
+n = 1000
+
+g_l <- vector('list', n)
+  
+for(i in 1:n){
+  g_l[[i]] <- play_erdos_renyi(n = g %>% gorder(),  
+                        m  = g %>% gsize(), 
+                        directed = TRUE, 
+                        loops = FALSE)
+}
+```
+
+
+Now we can see how meaningful our observed network statistics are, by comparing them with the mean of the statistics in the random network.
+
+```{r}
+# Calculate average path length of 1000 random graphs
+dist_r <- g_l %>% lapply(mean_distance, directed = TRUE) %>% unlist() #%>% mean()
+cc_r <- g_l %>% lapply(transitivity, type = "global") %>% unlist() #%>% mean()
+rp_r <- g_l %>% lapply(reciprocity) %>% unlist() #%>% mean()
+```
+
+Lets see:
+
+```{r}
+stats_friend <- tibble(density = g %>% edge_density(),
+                       diameter = g %>% diameter(directed = TRUE),
+                       reciprocity = g %>% reciprocity(),
+                       reciprocity_score = mean(reciprocity(g) > rp_r),
+                       distance = g %>% mean_distance(directed = TRUE),
+                       distance_score = mean(mean_distance(g, directed = TRUE) > dist_r),
+                       clustering = g %>% transitivity(type = "global"),
+                       clustering_score = mean(transitivity(g, type = "global")  > cc_r),
+                       small_world = mean(transitivity(g, type = "global")  > cc_r) / mean(mean_distance(g, directed = TRUE) > dist_r) )
+
+```
+
+```{r}
+stats_friend
+```
+
+## Your turn
+Please do **Exercise 1** in the corresponding section on `Github`.
+
+# Endnotes
+
+### Packages & Ecosystem
+
+* tidygraph [here](https://tidygraph.data-imaginist.com/)
+* ggraph [here](https://www.data-imaginist.com/2017/announcing-ggraph/)
+
+### Suggestions for further study
+
+* DataCamp (!All courses have somewhat outdated ecosystems)
+   * [Network Analysis in R](https://learn.datacamp.com/courses/network-analysis-in-r): Good for some of the basics
+   * [Case Studies: Network Analysis in R](https://learn.datacamp.com/courses/case-studies-network-analysis-in-r): Good to get some first practice.
+   * [Predictive Analytics using Networked Data in R](https://learn.datacamp.com/courses/predictive-analytics-using-networked-data-in-r): 
+   * Further: A Datacamp Python project for the same (GoT) data set [here](https://www.datacamp.com/projects/76?utm_campaign=broadcast&utm_medium=broadcast_8&utm_source=main)
+
+  
+### Session Info
+
+```{r}
+sessionInfo()
+```
+
+
+
+
+

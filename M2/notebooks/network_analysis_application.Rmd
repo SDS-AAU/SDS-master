@@ -45,8 +45,8 @@ In this applied session, you will:
 * In this case, let us assume this network to be unweighted, meaning a connection can be eiter tresent or absent.
 
 ```{r edgelists}
-edge_list <- tibble(from = c(1, 2, 2, 1, 4), 
-                    to = c(2, 3, 4, 5, 1))
+edge_list <- tibble(from = c(1, 2, 2, 1, 4, 3, 5), 
+                    to = c(2, 3, 4, 5, 1, 2, 5))
 ```
 
 ```{r}
@@ -430,8 +430,8 @@ g %N>%
 ' Here, we need to use the base `igraph` function. Note that it produces an `igraph` object, so we have to make a `tidygraph` again...
 
 ```{r}
-g1 <- make_ego_graph(g, 2, nodes = 1)[[1]] %>% as_tbl_graph()
-g50 <- make_ego_graph(g, 2, nodes = 50)[[1]] %>% as_tbl_graph()
+g1 <- make_ego_graph(g, 1, nodes = 1)[[1]] %>% as_tbl_graph()
+g50 <- make_ego_graph(g, 1, nodes = 50)[[1]] %>% as_tbl_graph()
 ```
 
 ```{r}
@@ -662,7 +662,7 @@ g %>% ggraph(layout = "fr") +
 
 Not very exciting. Maybe we can do a bit better, using more options in the `ggraph` functionality to visualize aspects of the network.
 
-```{r, fig.height=15, fig.width=20}
+```{r, fig.height=10, fig.width=10}
 g %E>% 
   filter(weight >= quantile(weight, 0.5)) %N>%
   filter(!node_is_isolated()) %>%

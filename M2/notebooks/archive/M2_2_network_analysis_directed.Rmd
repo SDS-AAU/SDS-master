@@ -179,7 +179,7 @@ dimnames(mat_work) = list(c(1:nrow(mat_work)), c(1:ncol(mat_work)))
 # Note that we have to overwrite the column and rownames of the matrices with 1:71 (corresponding to the name codes in the nodeslist)
 ```
 
-We also load a set of 
+We also load a set of nodes
 
 ```{r}
 nodes <- fread("https://www.dropbox.com/s/qz7fvfgx8lvjgpr/ELattr.dat?dl=1") %>% as_tibble()
@@ -263,9 +263,6 @@ g_work <- g_work %N>%
 
 ### Join the networks
 
-
-
-
 ```{r}
 g <- g_friendship %>%
   graph_join(g_advice, by = "name") %>%
@@ -280,11 +277,6 @@ g %>%
   theme_graph() +
   facet_edges(~type)
 ```
-
-
-
-
-
 
 ```{r,fig.width=15,fig.height=15}
 plot(g,
