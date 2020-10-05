@@ -285,32 +285,27 @@ g_work <- g_work %N>%
 
 ### Join the networks
 
+We could also join all the networks together.
+
 ```{r}
 g <- g_friendship %>%
   graph_join(g_advice, by = "name") %>%
   graph_join(g_work, by = "name")
 ```
 
-```{r}
+```{r, fig.height= 7.5, fig.width=12.5}
 g %>% 
   ggraph(layout = "fr") + 
+  geom_edge_fan(aes(col = type), 
+                arrow = arrow(angle = 30, length = unit(0.25, 'cm'),
+                              type = "closed"), 
+                alpha = 0.25) + 
   geom_node_point() +
-  geom_edge_fan(aes(col = type), arrow = arrow(), alpha = 0.5) + 
   theme_graph() +
-  facet_edges(~type)
+  theme(legend.position = "bottom") +
+  facet_edges(~type) 
 ```
 
-
-```{r,fig.width=15,fig.height=15}
-library(igraph)
-plot(g,
-     layout= layout_with_fr(g),
-     vertex.label = degree(g, mode = "in"),
-     vertex.size = 1+ sqrt(degree(g, mode = "in")),
-     vertex.color = as.numeric(factor(V(g)$office)),
-     vertex.label = NA,
-     edge.arrow.size = 0.5)
-```
 
 ## Network effects & structures
 
@@ -327,19 +322,29 @@ Ok, lets do the whole exercise with getting the main-determinants of the network
 ```{r}
 # Get density of a graph
 edge_density(g)
+```
 
+```{r}
 # Get the diameter of the graph g
 diameter(g, directed = TRUE)
+```
 
+```{r}
 # Get the average path length of the graph g
 mean_distance(g, directed = TRUE)
+```
 
+```{r}
 # Transistivity
 transitivity(g, type ="global")
+```
 
+```{r}
 # reciprocity
 reciprocity(g)
 ```
+
+
 
 * We have another important concept that often explains edge-formation in social networks: **Assortativity**, also called **homopholy**. 
 * This is a measure of how preferentially attached vertices are to other vertices with identical attributes. In other words: How much "*birds of the same feather flock together *".
@@ -391,12 +396,11 @@ g_r <- play_erdos_renyi(n = g %>% gorder(),
                         loops = FALSE)
 ```
 
-Looks kind of different. However, one randomly created network doesn't present a good bseline. So, lets better create a bunch, and compare our network to the average values of the randomly generated ones.
+Looks kind of different. However, one randomly created network doesn't present a good baseline. So, lets better create a bunch, and compare our network to the average values of the randomly generated ones.
 
 ```{r}
 # Generate n random graphs
 n = 1000
-
 g_l <- vector('list', n)
   
 for(i in 1:n){
