@@ -1,5 +1,5 @@
 ---
-title: 'Introduction to Network Analysis: Application (R)'
+title: 'Intermediate (Directed) Network Analysis: Application (R)'
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
@@ -281,6 +281,7 @@ g_all %E>%
   as_tibble() %>%
   head()
 ```
+
 ```{r, fig.height= 7.5, fig.width=12.5}
 # Then we could plot them pointly via an edge facett...
 g_all %>% 
@@ -311,11 +312,11 @@ Lets take a look
 set.seed(1337)
 # Then we could plot them pointly via an edge facett...
 g %N>% 
-  #filter(!node_is_isolated()) %>%
+  filter(!node_is_isolated()) %>%
   ggraph(layout = 'stress') + 
   geom_edge_fan(arrow = arrow(angle = 30, length = unit(0.25, 'cm'),type = 'closed'), alpha = 0.25) + 
-  geom_node_point(aes(col = office, size = centrality_eigen())) +
-  geom_node_text(aes(label = name, size = centrality_eigen())) + 
+  geom_node_point(aes(col = office, size = centrality_eigen(directed = TRUE))) +
+  geom_node_text(aes(label = name, size = centrality_eigen(directed = TRUE))) + 
   theme_graph() +
   theme(legend.position = "bottom") +
   facet_edges(~type) 
@@ -326,6 +327,11 @@ g %N>%
 * We could look at all the node level characteristics (degree, betweenness etc.) again, but for the sake of time I skip that for now, since its all already in the last notebook.
 
 ### Network level (global)
+
+```{r}
+library(igraph)
+```
+
 
 * Ok, lets do the whole exercise with getting the main-determinants of the network structure again. We can look at the classical structural determinants.
 
@@ -372,7 +378,6 @@ assortativity(g, V(g)$tenure, directed = TRUE)
 ```
 
 * What about people from elite universities?
-
 
 ```{r}
 assortativity(g, V(g)$school == "Harvard, Yale", directed = TRUE)
