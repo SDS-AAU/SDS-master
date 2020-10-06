@@ -267,57 +267,67 @@ g_work <- mat_work %>% as_tbl_graph(directed = TRUE) %E>%
 # Notice: The node names are taken from the matrices dimnames as string, therefore need to be converted as numeric
 ```
 
-### Calculate dimensional centralities
-
-There might be better ways to do that (still experimenting), but for now lets first create centralities upfront for all networks. We for now only look at the in-degree.
+### First inspection
 
 ```{r}
-g_friendship <- g_friendship %N>%
-  mutate(centrality_dgr_in_friendship = centrality_degree(mode = "in")) 
-
-g_advice <- g_advice %N>%
-  mutate(centrality_dgr_in_advice = centrality_degree(mode = "in")) 
-
-g_work <- g_work %N>%
-  mutate(centrality_dgr_in_work = centrality_degree(mode = "in")) 
-```
-
-
-### Join the networks
-
-We could also join all the networks together.
-
-```{r}
-g <- g_friendship %>%
+# We could also join all the networks together.
+g_all <- g_friendship %>%
   graph_join(g_advice, by = "name") %>%
   graph_join(g_work, by = "name")
 ```
 
+```{r}
+g_all %E>%
+  as_tibble() %>%
+  head()
+```
 ```{r, fig.height= 7.5, fig.width=12.5}
-g %>% 
-  ggraph(layout = "fr") + 
+# Then we could plot them pointly via an edge facett...
+g_all %>% 
+  ggraph(layout = 'fr') + 
   geom_edge_fan(aes(col = type), 
-                arrow = arrow(angle = 30, length = unit(0.25, 'cm'),
-                              type = "closed"), 
+                arrow = arrow(angle = 30, length = unit(0.25, 'cm'),type = "closed"), 
                 alpha = 0.25) + 
-  geom_node_point() +
+  geom_node_point(col = 'purple') +
+  geom_node_text(aes(label = name)) + 
+  theme_graph() +
+  theme(legend.position = "none") +
+  facet_edges(~type) 
+```
+
+This is convenient, yet somewhat of a compromise, since the layout is optimized on the full network of all edges. So it kind of fits to all, but not fully to one...
+
+## Network effects & structures
+
+for the following, we will only look at the friendship network, while i leave the analysis of the other's up to you.
+
+```{r}
+g <- g_friendship
+```
+
+Lets take a look
+
+```{r, fig.height= 7.5, fig.width=12.5}
+set.seed(1337)
+# Then we could plot them pointly via an edge facett...
+g %N>% 
+  #filter(!node_is_isolated()) %>%
+  ggraph(layout = 'stress') + 
+  geom_edge_fan(arrow = arrow(angle = 30, length = unit(0.25, 'cm'),type = 'closed'), alpha = 0.25) + 
+  geom_node_point(aes(col = office, size = centrality_eigen())) +
+  geom_node_text(aes(label = name, size = centrality_eigen())) + 
   theme_graph() +
   theme(legend.position = "bottom") +
   facet_edges(~type) 
 ```
 
-
-## Network effects & structures
-
-![](https://sds-aau.github.io/SDS-master/00_media/networks_directed_metrics.png){width=500px}
-
 ### Node level (local)
 
-We could look at all the node level characteristics (degree, betweenness etc.) again, but for the sake of time I skip that for now, since its all already in the last notebook.
+* We could look at all the node level characteristics (degree, betweenness etc.) again, but for the sake of time I skip that for now, since its all already in the last notebook.
 
 ### Network level (global)
 
-Ok, lets do the whole exercise with getting the main-determinants of the network structure again. We can look at the classical structural determinants.
+* Ok, lets do the whole exercise with getting the main-determinants of the network structure again. We can look at the classical structural determinants.
 
 ```{r}
 # Get density of a graph
@@ -339,14 +349,21 @@ mean_distance(g, directed = TRUE)
 transitivity(g, type ="global")
 ```
 
+### Network level (global direced)
+
+* Since we here have a directed network, a couple of interesting additional metrics are available, explicitly taking into account th direction of edges.
+* While there are many more, we here will just take a look at some of the most important ones, which are also known to be popular mechanisms in social networks.
+
+![](https://sds-aau.github.io/SDS-master/00_media/networks_directed_metrics.png){width=500px}
+
+* Reciprocity measures the extend to which edges are reciprocal, meaning a edge between i & j implies also an edge between j & i
+
 ```{r}
 # reciprocity
 reciprocity(g)
 ```
 
-
-
-* We have another important concept that often explains edge-formation in social networks: **Assortativity**, also called **homopholy**. 
+* We have another important concept that often explains edge-formation in directed (social) networks: **Assortativity**, also called **homopholy**. 
 * This is a measure of how preferentially attached vertices are to other vertices with identical attributes. In other words: How much "*birds of the same feather flock together *".
 * Lets first look at people of the same tenure flock together.
 
@@ -367,11 +384,9 @@ assortativity(g, V(g)$school == "Harvard, Yale", directed = TRUE)
 assortativity(g, degree(g, mode = "in"), directed = TRUE)
 ```
 
-Also not that much.....
-
 * One more thing we didn't talk about yet: Small worlds.
 * Small worlds are an interesting network structure, combining short path lenght betwen the nodes with a high clustering coefficient. 
-* That means, that we have small interconected clusters, which are in turn connected by **gatekeepers** (the edges we call **bridges** or **structural holes**). 
+* That means, that we have small interconnected clusters, which are in turn connected by **gatekeepers** (the edges we call **bridges** or **structural holes**). 
 
 ![](https://sds-aau.github.io/SDS-master/00_media/networks_smallworld2.jpg){width=500px}
 
@@ -445,18 +460,19 @@ Please do **Exercise 1** in the corresponding section on `Github`.
 
 # Endnotes
 
-### Packages & Ecosystem
-
-* tidygraph [here](https://tidygraph.data-imaginist.com/)
-* ggraph [here](https://www.data-imaginist.com/2017/announcing-ggraph/)
-
 ### Suggestions for further study
 
-* DataCamp (!All courses have somewhat outdated ecosystems)
-   * [Network Analysis in R](https://learn.datacamp.com/courses/network-analysis-in-r): Good for some of the basics
-   * [Case Studies: Network Analysis in R](https://learn.datacamp.com/courses/case-studies-network-analysis-in-r): Good to get some first practice.
-   * [Predictive Analytics using Networked Data in R](https://learn.datacamp.com/courses/predictive-analytics-using-networked-data-in-r): 
-   * Further: A Datacamp Python project for the same (GoT) data set [here](https://www.datacamp.com/projects/76?utm_campaign=broadcast&utm_medium=broadcast_8&utm_source=main)
+#### Literature
+
+Classics
+
+* Wasserman, S., & Faust, K. (1994). Social network analysis: Methods and applications (Vol. 8). Cambridge university press.
+* Carrington, P. J., Scott, J., & Wasserman, S. (Eds.). (2005). Models and methods in social network analysis (Vol. 28). Cambridge university pres
+
+Own work on directed networks
+
+* Hain, D., Buchmann, T., Kudic, M., & Müller, M. (2018). Endogenous dynamics of innovation networks in the German automotive industry: analysing structural network evolution using a stochastic actor-oriented approach. International Journal of Computational Economics and Econometrics, 8(3-4), 325-344.
+* Hain, Daniel S., and Roman Jurowetzki. "Incremental by Design? On the Role of Incumbents in Technology Niches." Foundations of Economic Change. Springer, Cham, 2017. 299-332.
 
   
 ### Session Info
