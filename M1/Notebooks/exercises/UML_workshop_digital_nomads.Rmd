@@ -16,6 +16,7 @@ output:
 ```{r setup, include=FALSE}
 # Knitr options
 ### Generic preamble
+rm(list=ls()); graphics.off() 
 Sys.setenv(LANG = "en") # For english language
 options(scipen = 5) # To deactivate annoying scientific number notation
 
@@ -61,25 +62,23 @@ countries %>% glimpse()
 ```
 
 ```{r}
-cities <- read_delim('https://sds-aau.github.io/SDS-master/M1/data/nomad_cities.csv', delim = '\t')
+cities <- read_csv('https://sds-aau.github.io/SDS-master/M1/data/cities.csv')
 cities %>% glimpse()
-```
-```{r}
-cities <- cities %>%
-  mutate(fragile_states_index = fragile_states_index %>% as.numeric(),
-         peace_score = peace_score %>% as.numeric(),
-         fredom_score = freedom_score %>% as.numeric(),
-         press_freedom_index = press_freedom_index %>% as.numeric())
 ```
 
 ```{r}
-cities %>% glimpse()
+# cities <- cities %>%
+#   mutate(fragile_states_index = fragile_states_index %>% as.numeric(),
+#          peace_score = peace_score %>% as.numeric(),
+#          fredom_score = freedom_score %>% as.numeric(),
+#          press_freedom_index = press_freedom_index %>% as.numeric())
 ```
+
 # EDA
 
 ```{r}
 # Variables for descriptives
-vars.desc <- c("nomad_score", "cost_nomad", "places_to_work", "freedom_score", "friendly_to_foreigners", "life_score")
+vars.desc <- c("cost_nomad", "places_to_work", "freedom_score", "friendly_to_foreigners", "life_score")
 ```
 
 ```{r,warning=FALSE,echo=FALSE}
@@ -100,16 +99,17 @@ library(factoextra)
 ```
 
 ```{r}
-cities <- cities %>%
-  select(-X1) %>%
-  drop_na()
+# cities <- cities %>%
+#  select(-X1) %>%
+#  drop_na()
 ```
 
 
 ```{r}
 res_pca <- cities %>%
+  column_to_rownames('place') %>%
   select_if(is_numeric) %>%
-  PCA(scale.unit = TRUE, graph = TRUE)
+  PCA(scale.unit = TRUE, graph =FALSE)
 ```
 
 
@@ -126,8 +126,7 @@ res_pca %>%
   fviz_pca_var(alpha.var = "cos2",
                col.var = "contrib",
                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-               repel = TRUE,
-               ggtheme = theme_gray()) 
+               repel = TRUE) 
 ```
 
 ```{r,,fig.width=15,fig.height=10,fig.align='center'}
@@ -135,8 +134,7 @@ res_pca %>%
   fviz_pca_biplot(alpha.ind = "cos2",
                   col.ind = "contrib",
                   gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-                  geom = "point", 
-                  ggtheme = theme_gray()) 
+                  geom = "point") 
 ```
 
 # Clustering
@@ -144,11 +142,11 @@ res_pca %>%
 ```{r,fig.align='center'}
 cities %>% 
   drop_na() %>%
+  column_to_rownames('place') %>%
   select_if(is_numeric) %>%
   scale() %>%
-  fviz_nbclust(kmeans, method = "wss")  
+  fviz_nbclust(hcut, method = "wss")  
 ```
-
 
 ```{r}
 hc <- cities %>%
@@ -162,13 +160,16 @@ hc <- cities %>%
 hc %>%
   glimpse()
 ```
+
 ```{r,,fig.width=15,fig.height=10,fig.align='center'}
 hc %>% 
   fviz_cluster(data = cities %>% select_if(is_numeric))  
 ```
+
 ```{r}
 hc$cluster
 ```
+
 ```{r}
 res_pca %>% 
   glimpse()
@@ -183,34 +184,8 @@ cities[,"pca1"] <- res_pca$ind$coord[,1]
 cities[,"pca2"] <- res_pca$ind$coord[,2]
 ```
 
-
-```{r}
-x <-trips %>%
-  count(place, country_code)
-```
-
-```{r}
-x <- x %>%
-  left_join(countries, by = c('country_code' = 'alpha_2'))
-```
-
-```{r}
-cities <- cities %>%
-  left_join(x, by = 'place')
-```
-
-```{r}
-cities %>%
-  glimpse()
-```
-
-
-
 ```{r}
 table(cities$cluster, cities$region)
-```
-```{r}
-table(cities$cluster, cities$sub_region)
 ```
 
 ```{r}
@@ -220,10 +195,7 @@ cities %>%
             pca2 = pca2 %>% mean())
 ```
 
-```{r}
-trips %>%
-  count(place, sort = TRUE, name = 'n_city')
-```
+
 
 ```{r}
 cities <- cities %>%
@@ -232,24 +204,73 @@ cities <- cities %>%
 
 ```{r}
 cities %>%
-  distinct(place, .keep_all = TRUE) %>%
   select(place, cluster, n_city) %>%
   group_by(cluster) %>%
   arrange(desc(n_city)) %>%
   slice(1:5) %>%
-  ungroup()
+  ungroup() 
 ```
 
 To finish up, lets plot it in a map, simplest way possible.
 
+```{r}
+geo_merge <- trips %>%
+  select(place, longitude, latitude) %>%
+  distinct(place, .keep_all = TRUE)
+```
+
+```{r}
+cities %<>%
+  left_join(geo_merge , by = 'place')
+```
+
+
 ```{r, fig.height=10, fig.width=15}
 library(ggmap)
 mapWorld <- borders("world", colour = "gray50", fill = "gray50")
+```
 
+```{r}
+mapWorld
+```
+
+
+```{r}
 mp <- ggplot() +   
   mapWorld 
-
-mp + 
-  geom_point(aes(x = cities$longitude, y = cities$latitude) , color = cities$cluster) 
 ```
+
+```{r}
+mp
+```
+
+```{r}
+nomad_map <- mp + 
+  geom_point(data = cities, aes(x = longitude, y = latitude)) +
+  scale_colour_discrete()
+```
+
+```{r}
+nomad_map
+```
+
+```{r}
+#library(plotly)
+#nomad_map +
+#  ggplotly()
+```
+
+
+
+```{r}
+mp + 
+  stat_density2d(data = trips, 
+                 aes(x = longitude, y = latitude, fill = stat(nlevel), col = stat(nlevel) ), 
+                 alpha = 0.2, size = 0.2, bins = 10, geom = "polygon") +
+  scale_fill_gradient(low = "skyblue", high = "red") +
+  scale_color_gradient(low = "skyblue", high = "red")
+```
+
+
+
 

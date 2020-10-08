@@ -1,71 +1,17 @@
-# M2 - Working with unstructured data
+# Working with unstructured data
 
+## Part I: Social Network Analysis
 
-## Part I: Network Analysis & Working with relational data
+* Theory: The Data Science Ecosystem: R [Video](https://www.loom.com/share/307f388fbb3d4e73919250aa6eb535f0) [Slides](https://sds-aau.github.io/SDS-master/M2/notebooks/network_analysis_theory.html)
+* Application: Introduction to Network Analysis
+   * R: Video [1: Intro & ecosystem](https://www.loom.com/share/abe75a61d7374ae99f946e1a5829430e)  [2: Network Measures](https://www.loom.com/share/981c493c990c46f591f465455a0d5bba) [3: Mini Case](https://www.loom.com/share/9fc0c009945c4fb0b3aaa0be77f52707) [Html](https://sds-aau.github.io/SDS-master/M2/notebooks/network_analysis_application.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/notebooks/network_analysis_application.ipynb)
+   * Python: Video [1: Intro & ecosystem](https://www.loom.com/share/e2a1e501c1474b70aaa64bad5257d635)  [2: Network Measures](https://www.loom.com/share/3556014c3e2b4fd39d675e05258f5041) [3: Mini Case](https://www.loom.com/share/75ed0b7f781a447991f28149bbe54c04) [Colab](https://github.com/SDS-AAU/SDS-master/blob/master/M2/notebooks/M2_Networks_hands_on_in_python.ipynb)
 
-### [Introduction to Network Analysis Part I (R)](https://raw.githack.com/SDS-AAU/M2-2019/master/notebooks/M2_1_network_analysis_intro.html) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/M2_1_network_analysis_intro.ipynb#offline=true&sandboxMode=true)
+* Application: Intermediate Network Analysis Directed & Social networks
+   * R: [Video](https://www.loom.com/share/1f905b64ba014819a0c0b45c0757f92c) [Html](https://sds-aau.github.io/SDS-master/M2/notebooks/network_analysis_application_directed.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/notebooks/network_analysis_application_directed.ipynb)
 
-* Exercises
-
-    * Exercise 1: Undirected networks basics [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/exercises/M2_1_network_analysis_intro_ex1.ipynb#offline=true&sandboxMode=true)
-
-### [Introduction to Network Analysis Part II (R)](https://raw.githack.com/SDS-AAU/M2-2019/master/notebooks/M2_2_network_analysis_directed.html) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/M2_2_network_analysis_directed.ipynb#offline=true&sandboxMode=true)
-
-* Exercises
-
-    * Exercise 1: Directed networks basics [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/exercises/M2_2_network_analysis_directed_ex1.ipynb#offline=true&sandboxMode=true)
-
-### [Introduction to Network Analysis Part III (R)](https://raw.githack.com/SDS-AAU/M2-2019/master/notebooks/M2_3_network_analysis_advanced.html) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/M2_3_network_analysis_advanced.ipynb#offline=true&sandboxMode=true)
-
-* Exercises
-
-    * Exercise 1: 2 mode networks bibliometrics [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/exercises/M2_3_network_analysis_advanced_ex1.ipynb#offline=true&sandboxMode=true)
-
-### Introduction to Network Analysis - Instagram Analysis(Python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/network_analysis_and_the_gram.ipynb#offline=true&sandboxMode=true)
-
-## Part II: Natural Language Processing & working with text data 
-
-### Introduction to Natural Language Processing (Python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/NLP_Intro_2019.ipynb#offline=true&sandboxMode=true)
-(Too much stuff - too little time)
-
-### Supervised ML & NLP (Python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/NLP_supervised_and_other_text_based_fun.ipynb#offline=true&sandboxMode=true)
-
-### Training custom word-embeddings (Python) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/training_word2vec_%26_co_on_custom_text.ipynb#offline=true&sandboxMode=true)
-
-### [Natural language Processing: Case Studies (R)](https://raw.githack.com/SDS-AAU/M2-2019/master/notebooks/M2_8_NLP_case.html) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SDS-AAU/M2-2019/blob/master/notebooks/M2_8_NLP_case.ipynb#offline=true&sandboxMode=true)
-
-
-# Further Resources
-
-## Asignments
-* [Assignment 1](https://github.com/SDS-AAU/M2-2019/tree/master/notebooks/assignments/assignment_1)
-* [Assignment 2](https://github.com/SDS-AAU/M2-2019/tree/master/notebooks/assignments/assignment_2)
-* [Final Group Assignment](https://github.com/SDS-AAU/M2-2019/blob/master/notebooks/assignments/assignment_final/README.md)    
-    
-
-
-## Tutorials & Knowledge
-
-### Network Analysis
-
-#### General
-
-* [Awesome Network Analysis Resource Collection](https://github.com/briatte/awesome-network-analysis)
-
-#### Network Analysis in R
-
-#### Network Analysis in Python
-
-
-### Natural Language Processing
-
-#### General
-
-#### Natural Language Processing in R
-
-* [Text Mining with R: A Tidy Approach](https://www.tidytextmining.com/)
-
-#### Natural Language Processing in Python
+* Application: Network Visualization
+   * R: Video [1: Node & Edge Visualization](https://www.loom.com/share/1f905b64ba014819a0c0b45c0757f92c) [2: Graph Layouts](https://www.loom.com/share/91375f4f85df4ce2b6f199f6b52390c2) [Html](https://sds-aau.github.io/SDS-master/M2/notebooks/network_analysis_application_visualization.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/notebooks/network_analysis_application_visualization.ipynb)
 
 
 

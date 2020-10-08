@@ -1,0 +1,294 @@
+---
+title: "Workshop: Exploring the InsideAirBnB dataset - EDA"
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+### Generic preamble
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+# rm(list=ls()); graphics.off() # get rid of everything in the workspace
+if (!require("knitr")) install.packages("knitr"); library(knitr) # For display of the markdown
+
+### Knitr options
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     fig.align="center"
+                     )
+```
+
+## Preamble
+
+```{r}
+# Clear workspace
+rm(list=ls()); graphics.off() 
+```
+
+```{r}
+### Load packages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+library(skimr) # For nice data summaries
+```
+
+
+# The InsideAirBnB data
+
+## Instroduction
+
+
+* The data is sourced from the [**Inside Airbnb**](http://insideairbnb.com/get-the-data.html) which hosts publicly available data from the Airbnb site.
+* Interactive visualizations are provided [here](http://insideairbnb.com/copenhagen/?neighbourhood=&filterEntireHomes=false&filterHighlyAvailable=false&filterRecentReviews=false&filterMultiListings=false)
+
+The dataset comprises of three main tables:
+
+* `listings` - Detailed listings data showing 96 atttributes for each of the listings. Some of the attributes which are intuitivly interesting are: `price` (continuous), `longitude` (continuous), `latitude` (continuous), `listing_type` (categorical), `is_superhost` (categorical), `neighbourhood` (categorical), `ratings` (continuous) among others.
+* `reviews` - Detailed reviews given by the guests with 6 attributes. Key attributes include `date` (datetime), `listing_id` (discrete), `reviewer_id` (discrete) and `comment` (textual).
+* `calendar` - Provides details about booking for the next year by listing. Four attributes in total including `listing_id` (discrete), `date` (datetime), `available` (categorical) and `price` (continuous).
+
+## Load data
+
+```{r}
+listings <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz')
+listings %>% head()
+```
+
+```{r}
+calendar <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/calendar.csv.gz')
+calendar %>% head()
+```
+
+```{r}
+reviews <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/reviews.csv.gz')
+reviews %>% head()
+```
+
+```{r}
+# The geodat of the hoods comes as a geojson, so we need the right package to load it
+library(geojsonio)
+neighbourhoods_geojson <- geojson_read( 'http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/visualisations/neighbourhoods.geojson',  what = "sp")
+```
+
+
+```{r}
+listings %>% skim()
+```
+
+```{r}
+listings %>% select(price) %>% skim()
+```
+
+```{r}
+listings %>% select(price) %>% head()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Some preprocessing
+
+```{r}
+listings %<>% mutate(price = price %>% parse_number()) 
+```
+
+# Ad-hoc investigation
+
+## Problem 1: Professional hosts & their characteristics
+
+```{r}
+listings %>%
+  count(host_id, sort = TRUE)
+```
+
+Where are they?
+
+```{r}
+listings %>%
+  filter(host_id == 187610263) %>%
+  count(neighbourhood_cleansed, sort = TRUE)
+```
+Dummy for professional host
+```{r}
+listings %<>%
+  group_by(host_id) %>%
+  mutate(host_professional = n() >= 5) %>%
+  ungroup()
+```
+
+```{r}
+listings %>%
+  group_by(host_professional) %>%
+  summarise(review = review_scores_rating %>% mean(na.rm = TRUE),
+            price = price %>% mean(na.rm = TRUE))
+```
+-> Profressional hosts charge more...
+
+```{r}
+listings %>%
+  group_by(neighbourhood_cleansed, host_professional) %>%
+  summarise(review = review_scores_rating %>% mean(na.rm = TRUE)) %>%
+  pivot_wider(names_from = host_professional, values_from = review)
+```
+
+-> This is true everywhere, yet in some hoods mnore tghan in others
+
+## Problem 2: Length of description -> Satisfaction
+
+```{r}
+listings %<>%
+  mutate(desc_lenght = description %>% str_count('\\w+')) %>%
+  mutate(desc_long =  percent_rank(desc_lenght) > 0.9 )
+```
+
+```{r}
+listings %>%
+  group_by(desc_long) %>%
+  summarise(review = review_scores_rating %>% mean(na.rm =TRUE))
+```
+-> No overall effect
+
+## P3: Best party place
+
+```{r}
+listings %<>% 
+  mutate(party_place = accommodates >= 10) 
+```
+
+```{r}
+listings %>% 
+  filter(party_place == TRUE) %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(n = n(),
+         review = review_scores_rating %>% mean(na.rm = TRUE),
+         price = price %>% mean(na.rm = TRUE),
+         price_pp = (price / accommodates) %>% mean(na.rm = TRUE)) %>%
+  arrange(desc(n))
+```
+
+If you are on a tight budget, best go to Amager-Vest.
+
+# Geoplotting
+
+## Interactive map
+
+```{r}
+library(leaflet)
+```
+
+```{r}
+listings %>% leaflet() %>%
+  addTiles() %>%
+  addMarkers(~longitude, ~latitude,
+             labelOptions = labelOptions(noHide = F),
+             clusterOptions = markerClusterOptions(),
+             popup = paste0("<b> Name: </b>", listings$name, 
+                            "<br/><b> Host Name: </b>", listings$host_name, 
+                            "<br> <b> Price: </b>", listings$price, 
+                            "<br/><b> Room Type: </b>", listings$room_type, 
+                            "<br/><b> Property Type: </b>", listings$property_type
+                 )) %>% 
+#  setView(-74.00, 40.71, zoom = 12) %>%
+  addProviderTiles("CartoDB.Positron")
+```
+
+## Choropleth Plots
+
+```{r}
+# Using broom to tidy the geojson
+library(broom)
+neighbourhoods_tidy <-  neighbourhoods_geojson %>%
+  tidy(region = "neighbourhood")
+```
+
+```{r}
+neighbourhoods_tidy %>% glimpse()
+```
+
+```{r}
+neighbourhoods_tidy %>%
+  ggplot(aes(x = long, y = lat, group = group)) +
+  geom_polygon() +
+  theme_void() +
+  coord_map()
+```
+```{r}
+neighborhood_agg <- listings %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarise(n = n(),
+            price_mean = price %>% mean(na.rm = TRUE),
+            review_mean = review_scores_rating %>% mean(na.rm = TRUE))
+  
+```
+
+```{r}
+neighbourhoods_tidy %<>%
+  left_join(neighborhood_agg, by = c('id' = 'neighbourhood_cleansed'))
+```
+
+Number of places
+
+```{r}
+neighbourhoods_tidy %>%
+  ggplot(aes(x = long, y = lat, group = group, fill = n)) +
+  geom_polygon() +
+  theme_void() +
+  coord_map()
+```
+Prices
+
+```{r}
+neighbourhoods_tidy %>%
+  ggplot(aes(x = long, y = lat, group = group, fill = price_mean)) +
+  geom_polygon() +
+  theme_void() +
+  coord_map()
+```
+Review scores
+
+```{r}
+neighbourhoods_tidy %>%
+  ggplot(aes(x = long, y = lat, group = group, fill = review_mean)) +
+  geom_polygon() +
+  theme_void() +
+  coord_map()
+```
+

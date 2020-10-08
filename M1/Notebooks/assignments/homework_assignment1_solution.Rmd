@@ -355,9 +355,18 @@ Could be done pettier, though
 
 ## d. Do nomad Startup Founders tend to have shorter or longer trips on average?
 
-Here, we first need to do a join...
+* Here, we first need to do a join with the people dataframe.
+* Then we only have to create a founder dummy variable and summarize.
 
-## e. visualize over-time median trip duration overall (bonus: and split by world-region) The plot will
-look weird ^^.
+```{r}
+trips %>% 
+  left_join(people %>% select(username, work_raw), by = 'username') %>%
+  mutate(founder = work_raw %>% str_detect('Startup Founder')) %>%
+  group_by(founder) %>%
+  summarize(duration_mean = trip_duration %>% mean(na.rm = TRUE))
+```
+Indeed, it seems they on average have the shortest trips... busy people....
+
+## e. visualize over-time median trip duration overall (bonus: and split by world-region) The plot will look weird ^^.
 
 

@@ -1,0 +1,682 @@
+---
+title: 'M2-8: Natural Language Processing: Case Studies (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+set.seed(1337) # To have a seed defined for reproducability
+
+### Knitr options
+if (!require("knitr")) install.packages("knitr"); library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Install packages if necessary
+if (!require("pacman")) install.packages("pacman") # package for loading and checking packages :)
+pacman::p_load(tidyverse, # Standard datasciewnce toolkid (dplyr, ggplot2 et al.)
+               magrittr, # For advanced piping (%>% et al.)
+               tidytext, # For text analysis
+               tm # text mining library
+               )
+```
+
+
+In this session, we will deal with:
+
+1. The simple application of simple NLP techniques such as wordcounts and tokenizing
+2. Application of topic models (LDA, LSA)
+3. Creating word and document embeddings
+
+# Introduction
+
+## The R NLP ecosystem 
+
+Most language analysis approaches are based on the analysis of texts word-by-word. Here, their order might matter (word sequence models) or not (bag-of-words models), but the smallest unit of analysis is usually the word. This is usually done in context of the document the word appeared in. Therefore, on first glance three types datastructures make sense:
+
+1. **Tidy:**  Approach, where data is served in a 2-column document-word format (e.g., `tidytext`)
+2. **Token lists:** Creation of special objects, saved as document-token lists or corpus (e.g., `tm`, `quanteda`)
+3. **Matrix:** Long approach, where data is served as document-term matrix, term-frequency matrix, etc.
+
+Different forms of analysis (and the packages used therefore) favor different structures, so we need to be fluent in transfering original raw-text in these formats, as well as switching between them. (for more infos, check [here](https://www.tidytextmining.com/dtm.html)).
+
+![](https://www.dropbox.com/s/ou05c8np4j47r0q/nlp_tidyworkflow.png?dl=1)
+
+
+
+# Case: DS & ML on twitter 
+
+## Get some twitter data
+
+Why not also use a bit of twitter data. Here, I would recommend the well maintained `rtweet` package
+
+```{r}
+pacman::p_load(rtweet)
+```
+
+To get started you’ll need to do the following things:
+
+1. Set up a twitter account if you don’t have one already.
+2. Using your account, setup an application that you will use to access twitter from R. How to do that, check [here](https://cran.r-project.org/web/packages/rtweet/vignettes/auth.html)
+
+When all is done, we can create an access token to use the twitter API. You would create it like that with your own keys:
+
+```{r}
+# authenticate via access token. Replace by own data
+token <- create_token(
+  app = "appname",
+  consumer_key = "key",
+  consumer_secret = "secret",
+  access_token = "a_token",
+  access_secret = "a_secret")
+```
+
+Now we define some terms we would like to search for.
+
+```{r}
+terms <- c("#rstats", "#rstudio", "#tidyverse", "#tidytuesday", "#rladies", "#ggplot", "#tidygraph", "#ggraph", 
+           "tidytext", "quanteda", "#spaCy", "NLP", "#dataviz", "machinelearning")
+```
+
+And finally, we would send the request to the API. I dont do that now, however.
+
+```{r}
+# # Search tweets
+# rstats_tweets <- search_tweets(q = paste(terms, collapse = " OR "),
+#                                n = 18000, 
+#                                include_rts = FALSE,
+#                                verbose = TRUE,
+#                                retryonratelimit = TRUE,
+#                                lang = "en",
+#                                token = token)
+```
+
+## First inspection
+
+With the code you see above, i already downloaded rstats, NLP, and ML related tweets of the last days, which we can load now.
+
+```{r}
+rm(list=ls())
+
+# We wiull use the predownloaded data here now
+tweets <- readRDS(url("https://github.com/SDS-AAU/M2-2019/blob/master/notebooks/data/rstats_tweets_no_rt.rds?raw=true"))
+```
+
+Lets take a look at the tweets:
+
+```{r}
+tweets %>% head()
+```
+
+We see that we get quite an amount of information. Notice also that the data is already parsed into a tabular `tibble` format, where multi-item datacells are represented as lists.
+
+```{r}
+tweets %>% glimpse()
+```
+
+Lets look when people are posting:
+
+```{r}
+## plot time series of tweets
+tweets %>%
+  ts_plot("3 hours") +
+  labs(x = NULL, y = NULL,
+    title = "Frequency of #rstats (and related) Twitter statuses from past 7 days",
+    subtitle = "Twitter status (tweet) counts aggregated using three-hour intervals",
+    caption = "Source: Data collected from Twitter's REST API via rtweet"
+  )
+```
+
+And lets look briefly which are the most active tweeter.
+
+```{r}
+tweets %>% 
+  count(screen_name, sort = TRUE) %>%
+  top_n(20)
+```
+
+The tweet-text, which we will be most interested in, can be found in the `text` variable.
+
+```{r}
+tweets %>%
+  select(text) %>%
+  head()
+```
+
+
+
+## Tidy NLP
+
+First of all, lets transform the data into a format we can easily work. For ease, we will start exploring the data in a tidy format (2 row: category-word) with `tidytext`. To do so, we need to sepperate the words (which will be our tokens) in the `text` field. This can be easily done using standard regular expressions, but easiest is using the `tidytext` function `unnest_tokens()`. We treat the tweet text here as "bag-of-words", since we do not care about the sequencing of the words.
+
+```{r}
+tweets_tidy <- tweets %>% 
+  select(user_id, status_id, text) %>%
+  unnest_tokens(output = word, input = text) 
+```
+
+Lets take a look at the data structure. 
+
+```{r}
+tweets_tidy %>%
+  head()
+```
+
+So, lets see what are the most popular words:
+
+```{r}
+tweets_tidy %>%
+  count(word, sort = TRUE) %>%
+  head(20)
+```
+
+As always, text data is a bit of a mess. This is particularly trye for twitter. We see that most popular words are either generic (to, in, a, of), or artefacts of the way how/what people write on twitter. To first make this bag-of-words a bit more informative, we can 1. filter out common stopwords, and 2. define own words we would like to get rid of.
+
+For 1., `tidytext` conveniently already comes with a collection of stopwords from different lexica, to be found in the `stop_words` data.
+
+```{r}
+stop_words %>%
+  head()
+```
+
+We can also expand that by defining own ones.
+
+```{r}
+own_stopwords <- tibble(word= c("t.co", "https", "amp", "rstats"),
+                        lexicon = "OWN")
+```
+
+Now, we can just get rid of these words with a filtering `anti_join()`. 
+
+```{r}
+tweets_tidy %<>%
+  anti_join(stop_words %>% bind_rows(own_stopwords), by = "word") 
+```
+
+We also do a bit of general cleaning, in this case removing all special characters, and 1-letter words.
+
+```{r}
+tweets_tidy %<>%
+  mutate(word = word %>% str_remove_all("[^[:alnum:]]") ) %>%
+  filter(str_length(word) > 1) 
+```
+
+
+```{r}
+tweets_tidy %<>%
+  add_count(status_id, word, name = "nword") %>%
+  add_count(status_id, name = "ntweet") %>%
+  filter(nword > 1 & ntweet > 5) %>%
+    select(-nword, -ntweet)
+```
+
+
+So, what are the most popular words now? did that help?
+
+```{r}
+topwords <- tweets_tidy %>%
+  count(word, sort = TRUE) 
+```
+
+```{r}
+topwords %>% head()
+```
+
+We can also plot them:
+
+```{r}
+topwords %>%
+  top_n(20, n) %>%
+  ggplot(aes(x = word %>% fct_reorder(n), y = n)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Word Counts", 
+       x = "Frequency", 
+       y = "Top Words")
+```
+
+And their distribution....
+
+```{r}
+topwords %>%
+  ggplot(aes(x = n)) + 
+  geom_histogram()
+```
+
+Notice the extreme left-skewedness of the distribution. We might have to deal with that later. Just for the sake of doing so, lets plot a word-cloud. There are many ways to do so. I will now just use the `wordcloud` package to do so.
+
+```{r}
+pacman::p_load(wordcloud)
+```
+
+```{r}
+wordcloud(topwords$word, topwords$n, random.order = FALSE, max.words = 50, colors = brewer.pal(8,"Dark2"))
+```
+
+Ohhh... how nice...
+
+## Topic modelling
+
+So, lets find out a bit what is happening in the corpus. First, lets perform an LDA topic modelling. The mechanics should be clear by now, so I will not review them.
+
+I will use the `R` package `topicmodels`
+
+```{r}
+# for LDA analysis
+pacman::p_load(topicmodels)
+```
+
+### Preparing the Data
+
+For this application, we have to leave the world of tidy data, since the `topicmodels` package requires a document-term matrix as imput. We can easily produce it using the `cast_dtm()` function of `tidytext`. Since this matrix has to be term-frequency weighted, we do so using the `weightTf` function of the `tm` package for the `weighting` argument.
+
+```{r}
+tweets_dtm <- tweets_tidy %>%
+  count(status_id, word) %>%
+  cast_dtm(document = status_id, term = word, value = n, weighting = tm::weightTf)
+```
+
+Lets take a look:
+
+```{r}
+tweets_dtm
+```
+
+We see again hat the matrix is still rather sparse, which is an artefact of text data generally, but even more so when using twitter data. Lets try to see if we could reduce that somewhat by deleting less often used terms.
+
+```{r}
+tweets_dtm %>% removeSparseTerms(sparse = .99)
+```
+
+```{r}
+tweets_dtm %>% removeSparseTerms(sparse = .999)
+```
+
+```{r}
+tweets_dtm %>% removeSparseTerms(sparse = .9999)
+```
+
+Ok, we might have to accept a high level of sparsity in order to still have a meaningful number of unique words.
+
+Now we can perform a LDA, using the more accurate Gibbs sampling as `method`.
+
+```{r}
+tweets_lda <- tweets_dtm %>% 
+  LDA(k = 4, method = "Gibbs",
+      control = list(seed = 1337))
+```
+
+### $\beta$: Word-Topic Association
+
+$\beta$ is an output of the LDA model, indicating the propability that a word occurs in a certain topic. Therefore, loking at the top probability words of a topic often gives us a good intuition regarding its properties.
+
+```{r}
+# LDA output is defined for tidy(), so we can easily extract it
+lda_beta <- tweets_lda %>% 
+  tidy(matrix = "beta") %>%
+  group_by(topic) %>%
+  arrange(topic, desc(beta)) %>%
+  slice(1:10) %>%
+  ungroup() 
+```
+
+```{r}
+lda_beta %>% head()
+```
+
+
+
+```{r}
+# Notice the "reorder_within()"
+lda_beta %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  group_by(topic, term) %>%    
+  arrange(desc(beta)) %>%  
+  ungroup() %>%
+  ggplot(aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  scale_x_reordered() +
+  labs(title = "Top 10 terms in each LDA topic",
+       x = NULL, y = expression(beta)) +
+  facet_wrap(~ topic, ncol = 2, scales = "free")
+```
+
+### $\gamma$: Document-Topic Association
+
+In LDA, documents are represented as a mix of topics. This association of a document to a topic is captured by $\gamma$
+
+```{r}
+lda_gamma <- tweets_lda %>% 
+  tidy(matrix = "gamma")
+```
+
+```{r}
+lda_gamma %>% head()
+```
+
+```{r}
+lda_gamma %>%
+  ggplot(aes(gamma)) +
+  geom_histogram() +
+  scale_y_log10() +
+  labs(title = "Distribution of probabilities for all topics",
+       y = "Number of documents", x = expression(gamma))
+```
+
+
+```{r}
+lda_gamma %>%
+  ggplot(aes(gamma, fill = as.factor(topic))) +
+  geom_histogram(show.legend = FALSE) +
+  facet_wrap(~ topic, ncol = 2) +
+  scale_y_log10() +
+  labs(title = "Distribution of probability for each topic",
+       y = "Number of documents", x = expression(gamma))
+```
+
+```{r}
+top_topics <- tweets_lda %>% 
+  tidy(matrix = "gamma")  %>%
+  group_by(document) %>%
+  top_n(1, wt = gamma) %>%
+  ungroup()
+```
+
+```{r}
+top_topics %>%
+  count(topic)
+```
+
+## Latent Semantic Analysis (LSA)
+
+```{r}
+pacman::p_load(quanteda)
+```
+
+Alright, now we will perform a LSA, which is less helpful for finding human interpretable topics, but way more stable when attempting to do dimensionality reduction as preprocessing for supervised ML workflows, or for visualization.
+
+We now loaded the `quanteda` package, which is the giggest competitor to `tm` for corpus-token based text analysis.
+
+Ww first have to create a document-feature-matrix
+
+```{r}
+tweets_dfm <- tweets_tidy %>%
+  count(status_id, word) %>%
+  cast_dfm(document = status_id, term = word, value = n)
+```
+
+```{r}
+tweets_dfm 
+```
+
+From there, we can directly execute a LDA with the `quanteda` function `textmodel_lsa()`
+
+```{r}
+tweets_lsa <- tweets_dfm %>%
+  textmodel_lsa(nd = 5)
+```
+
+```{r}
+tweets_lsa %>% glimpse()
+```
+
+
+```{r}
+tweets_lsa_loading <- tweets_lsa$docs %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "status_id") %>% 
+  as_tibble()
+```
+
+```{r}
+tweets_lsa_loading %>% head()
+```
+
+We can niecly visualize it now using UMAP dimensionality reduction for optimizing the visualization of the feature space.
+
+```{r}
+pacman::p_load(uwot, # for UMAP
+       dbscan # For density based clustering
+       )
+```
+
+
+```{r}
+tweets_lsa_umap <- umap(tweets_lsa_loading %>% column_to_rownames("status_id"), 
+                       n_neighbors = 15, metric = "cosine", min_dist = 0.01, scale = TRUE,
+                       verbose = TRUE, n_threads = 8) 
+```
+
+```{r}
+tweets_lsa_umap %<>% as.data.frame()
+```
+
+
+```{r}
+tweets_lsa_umap %>% 
+  ggplot(aes(x = V1, y = V2)) + 
+  geom_point(shape = 21, alpha = 0.5) 
+```
+
+```{r}
+tweets_lsa_hdbscan <- tweets_lsa_umap %>% as.matrix() %>% hdbscan(minPts = 500)
+```
+
+
+```{r}
+tweets_lsa_umap %>% 
+  bind_cols(cluster = tweets_lsa_hdbscan$cluster %>% as.factor(), 
+            prob = tweets_lsa_hdbscan$membership_prob) %>%
+  ggplot(aes(x = V1, y = V2, col = cluster)) + 
+  geom_point(aes(alpha = prob), shape = 21) 
+```
+
+
+
+
+
+## Word and Document Embeddings (GloVe)
+
+```{r}
+pacman::p_load(text2vec)
+```
+
+Ok, finally, we will make use of word and document embedding techniques, in this case GloVe vectors. We will do so in a `quanteda` corpus->token->fcm workflow. To create the mebeddings, we will use the `text2vec` library.
+
+First, we create an corpus object.
+
+```{r}
+# Generate corpus
+tweets_corpus <- tweets %>% corpus(docid_field = "status_id", text_field = "text")
+```
+
+```{r}
+tweets_corpus
+```
+
+We will now tokenize it and apply a bit of minimal preprocessing.
+
+```{r}
+tweet_toks <- tokens(tweets_corpus, what = "word") %>%
+  tokens_tolower() %>%
+  tokens(remove_punct = TRUE, 
+         remove_symbols = TRUE) 
+```
+
+Out of that, we can create a Document-Feature-Matrix.
+
+```{r}
+feats <- dfm(tweet_toks, verbose = TRUE) %>%
+  dfm_trim(min_termfreq = 5) %>%
+  featnames()
+```
+
+And finally, a feature-co-occurence matrix.
+
+```{r}
+tweet_fcm <- fcm(tweet_toks, 
+                 context = "window", 
+                 count = "weighted", 
+                 weights = 1 / (1:5), 
+                 tri = TRUE)
+```
+
+This, we can use use to train GloVe embeddings. First, we retrain the original GloVe embeddings
+
+```{r}
+glove <- GlobalVectors$new(word_vectors_size = 50, vocabulary = featnames(tweet_fcm), x_max = 10)
+```
+
+And then, we assign the new embeddings to words.
+
+```{r}
+tweet_word_vectors <- fit_transform(tweet_fcm, glove, n_iter = 20)
+```
+
+We now extract them.
+
+```{r}
+tweet_word_vectors %<>% as.data.frame() %>%
+  rownames_to_column(var = "word") %>% 
+  as_tibble()
+```
+
+```{r}
+tweet_word_vectors %>% head()
+```
+
+We now out of this corpus again create a tidy representation.
+
+```{r}
+tweets_tidy2 <- tweet_toks %>% 
+  dfm() %>% 
+  tidy()
+```
+
+And now can join them with the word vectors.
+
+```{r}
+tweet_vectors <- tweets_tidy2 %>%
+  inner_join(tweet_word_vectors, by = c("term" = "word"))
+```
+
+
+```{r}
+tweet_vectors %>% head()
+```
+
+To get an tweet embedding, we could do different things, such as doing a TFIDI weighting. The simplest thing, however, is to just create an embedding representing the average of all word vectors.
+
+```{r}
+tweet_vectors %<>%
+  select(-term, -count) %>%
+  group_by(document) %>%
+  summarise_all(mean)
+```
+
+We can again use UMAP to visualize:
+
+```{r}
+tweet_vectors_umap <- umap(tweet_vectors %>% column_to_rownames("document"), 
+                       n_neighbors = 15, 
+                       metric = "cosine", 
+                       min_dist = 0.01, 
+                       scale = TRUE,
+                       verbose = TRUE) %>% 
+  as.data.frame()
+```
+
+
+```{r}
+tweet_vectors_umap %>% 
+  ggplot(aes(x = V1, y = V2)) + 
+  geom_point(shape = 21, alpha = 0.25) 
+```
+
+## Networks (addon)
+
+And finally, lets do some networks:
+
+```{r}
+pacman::p_load(tidygraph,
+               ggraph
+               )
+```
+
+
+```{r}
+users <- tweets %>%
+  distinct(user_id, .keep_all = TRUE) %>% 
+  select(user_id, screen_name, location, description, followers_count, friends_count, listed_count, statuses_count, favourites_count)
+```
+
+```{r}
+el_mentions <- tweets %>% 
+  select(user_id, mentions_user_id) %>%
+  unnest() %>%
+  drop_na() %>% 
+  count(user_id, mentions_user_id) %>%
+  rename(from = user_id,
+         to = mentions_user_id,
+         weight = n) %>%
+  filter(weight > 1)
+```
+
+```{r}
+g_mentions <- as_tbl_graph(el_mentions, directed = TRUE) %N>%
+  inner_join(users, by = c("name" = "user_id"))
+```
+
+```{r}
+g_mentions <- g_mentions %N>%
+  filter(!node_is_isolated()) %N>%
+  mutate(cent_dgr = centrality_degree(weights = weight, mode = "in"))
+```
+
+
+```{r}
+g_mentions %>% ggraph(layout = "fr") + 
+  geom_edge_fan(aes(edge_width = weight), alpha = 0.25) +
+  geom_node_point(aes(size = cent_dgr)) +
+  geom_node_text(aes(label = screen_name, filter = cent_dgr > quantile(cent_dgr, 0.9))) +
+  theme_graph() 
+```
+
+
+
+# Endnotes
+
+### References
+
+### More info
+You can find more info about:
+
+* `tidytext` [here](https://www.tidytextmining.com/)
+* `tm` [here](https://cran.r-project.org/web/packages/tm/)
+* `quanteda` [here](https://quanteda.io/), and many many great tutorials [here](https://tutorials.quanteda.io/)
+* `text2vec` [here](http://text2vec.org/)
+* `rtweets` [here](https://rtweet.info)
+
+
+### Session info
+```{r}
+sessionInfo()
+```

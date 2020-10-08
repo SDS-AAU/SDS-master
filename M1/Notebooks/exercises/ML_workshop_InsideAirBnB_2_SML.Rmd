@@ -1,0 +1,315 @@
+---
+title: "Workshop: Exploring the InsideAirBnB dataset - Prediction"
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+### Generic preamble
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+# rm(list=ls()); graphics.off() # get rid of everything in the workspace
+if (!require("knitr")) install.packages("knitr"); library(knitr) # For display of the markdown
+
+### Knitr options
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     fig.align="center"
+                     )
+```
+
+## Preamble
+
+```{r}
+# Clear workspace
+rm(list=ls()); graphics.off() 
+```
+
+```{r}
+### Load packages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+library(skimr) # For nice data summaries
+```
+
+
+# Load the data
+
+```{r}
+listings <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz')
+listings %>% head()
+```
+
+```{r}
+calendar <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/calendar.csv.gz')
+calendar %>% head()
+```
+
+```{r}
+reviews <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/reviews.csv.gz')
+reviews %>% head()
+```
+
+# Data munging/tidying
+
+Inspect again...
+
+```{r}
+data <- listings 
+```
+
+```{r}
+data %>% glimpse()
+```
+
+### Variable transformations
+
+```{r}
+data %<>%
+  mutate(price = price %>% parse_number(),
+         cleaning_fee = parse_number(cleaning_fee),
+         price_all = price + cleaning_fee) %>%
+  filter(number_of_reviews >= 2)
+```
+
+### Varriable selection
+
+```{r}
+data %<>% 
+  rename(y = price_all) %>%
+  select(y, review_scores_rating, neighbourhood_cleansed, accommodates, room_type, bathrooms,is_business_travel_ready,
+         number_of_reviews, cancellation_policy, host_is_superhost, host_identity_verified, bedrooms) 
+
+```
+
+### Filtring observations
+
+```{r}
+data %<>% 
+  drop_na(y) %>%
+  filter(percent_rank(y) <0.95)
+```
+
+Also check the categorical variables for rare types
+
+```{r}
+data %>% count(room_type, sort = TRUE)
+```
+
+```{r}
+data %<>%
+  filter(!(room_type %in% c('Shared room', 'Hotel room')))
+```
+
+
+### Misssing data
+
+```{r}
+# Get rid of empty strings
+listings %<>%
+    mutate(across(is_character, ~ifelse(.x == "", NA, .x)))
+```
+
+```{r}
+library(VIM) # To inspct missing data pattern
+```
+
+```{r}
+data %>%
+  aggr(numbers = TRUE, prop = c(TRUE, FALSE))
+```
+Looks fine, litte missing
+
+# EDA
+
+```{r}
+data %>%
+  skim()
+```
+
+```{r, fig.height=12, fig.width=12}
+library(GGally)
+data %>% ggpairs() 
+```
+
+# Preprocessing
+
+```{r}
+library(tidymodels)
+```
+
+### Train and test split
+
+```{r}
+data_split <- initial_split(data, prop = 0.75, strata = y)
+
+data_train <- data_split  %>%  training()
+data_test <- data_split %>% testing()
+```
+
+```{r}
+data_recipe <- data_train %>%
+  recipe(y ~.) %>%
+  step_center(all_numeric(), -all_outcomes()) %>%
+  step_scale(all_numeric(), -all_outcomes()) %>%
+  step_dummy(all_nominal(), -all_outcomes(), one_hot = TRUE) 
+```
+
+
+# Models & Workflows
+
+### Define Models
+
+```{r}
+model_lm <- linear_reg(mode = 'regression') %>%
+  set_engine('lm') 
+```
+
+```{r}
+model_xg <- boost_tree(mode = 'regression', 
+                       trees = 100,
+                       mtry = tune(), 
+                       min_n = tune(), 
+                       tree_depth = tune(), 
+                       learn_rate = tune()
+                       ) %>%
+  set_engine("xgboost") 
+```
+
+### Workflows
+```{r}
+workflow_general <- workflow() %>%
+  add_recipe(data_recipe) 
+
+workflow_lm <- workflow_general %>%
+  add_model(model_lm)
+
+workflow_xg <- workflow_general %>%
+  add_model(model_xg)
+```
+
+# Hyperparameter Tuning
+
+### Resampling
+
+```{r}
+data_resample <- data_train %>% 
+  vfold_cv(strata = y,
+           v = 3,
+           repeats = 2)
+```
+
+### Hyperparameter Tuning
+
+```{r}
+tune_xg <-
+  tune_grid(
+    workflow_xg,
+    resamples = data_resample,
+    grid = 10
+  )
+```
+
+```{r}
+tune_xg %>% autoplot()
+```
+
+```{r}
+best_param_xg <- tune_xg %>% select_best(metric = 'rmse')
+best_param_xg
+```
+
+```{r}
+tune_xg %>% show_best(metric = 'rmse', n = 1)
+```
+
+# Fit models
+
+### Fit models with tuned hyperparameters
+
+```{r}
+workflow_final_xg <- workflow_xg %>%
+  finalize_workflow(parameters = best_param_xg)
+```
+
+```{r}
+fit_lm <- workflow_lm %>%
+  fit(data_train)
+
+fit_xg <- workflow_final_xg %>%
+  fit(data_train)
+```
+
+### Predict
+
+```{r}
+pred_collected <- tibble(
+  truth = data_test %>% pull(y),
+  base = mean(truth),
+  lm = fit_lm %>% predict(new_data = data_test) %>% pull(.pred),
+  xg = fit_xg %>% predict(new_data = data_test) %>% pull(.pred),
+  ) %>% 
+  pivot_longer(cols = -truth,
+               names_to = 'model',
+               values_to = '.pred')
+```
+
+# Evaluate
+
+### Metrics
+
+```{r}
+pred_collected %>%
+  group_by(model) %>%
+  rmse(truth = truth, estimate = .pred) %>%
+  select(model, .estimate) %>%
+  arrange(.estimate)
+```
+
+```{r}
+pred_collected %>%
+  group_by(model) %>%
+  rsq(truth = truth, estimate = .pred) %>%
+  select(model, .estimate) %>%
+  arrange(.estimate)
+```
+### Visuals
+
+```{r}
+pred_collected %>%
+  ggplot(aes(x = truth, y = .pred, color = model)) +
+  geom_abline(lty = 2, color = "gray80", size = 1.5) +
+  geom_point(alpha = 0.5) +
+  labs(
+    x = "Truth",
+    y = "Predicted price",
+    color = "Type of model"
+  )
+```
+### Variable Importance
+
+Linear model
+```{r}
+fit_lm %>% 
+#  pluck(".workflow", 1) %>%   
+  pull_workflow_fit() %>% 
+  vip::vip(num_features = 10)
+```
+XGBoost
+```{r}
+fit_xg %>% 
+#  pluck(".workflow", 1) %>%   
+  pull_workflow_fit() %>% 
+  vip::vip(num_features = 10)
+```
