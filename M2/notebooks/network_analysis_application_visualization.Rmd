@@ -48,15 +48,16 @@ Welcome to your second part of the introduction to network analysis. In this ses
 
 # Introduction
 
-The main concern in designing a network visualization is the purpose it has to serve. What are the structural properties that we want to highlight? What are the key concerns we want to address?
+* The main concern in designing a network visualization is the purpose it has to serve. 
+* What are the structural properties that we want to highlight? What are the key concerns we want to address?
 
 ![](https://sds-aau.github.io/SDS-master/00_media/networks_viz_goal.png){width=500px}
 
-Network maps are far from the only visualization available for graphs - other network representation formats, and even simple charts of key characteristics, may be more appropriate in some cases.
+* Network maps are far from the only visualization available for graphs - other network representation formats, and even simple charts of key characteristics, may be more appropriate in some cases.
 
 ![](https://sds-aau.github.io/SDS-master/00_media/networks_viz_type.png){width=500px}
 
-In network maps, as in other visualization formats, we have several key elements that control the outcome. The major ones are color, size, shape, and position.
+* In network maps, as in other visualization formats, we have several key elements that control the outcome. The major ones are color, size, shape, and position.
 
 ![](https://sds-aau.github.io/SDS-master/00_media/networks_viz_controls.png){width=500px}
 
@@ -77,9 +78,7 @@ g <- as_tbl_graph(highschool, directed = TRUE) %E>%
 set.seed(1337)
 g <- g %N>%
   mutate(community = group_edge_betweenness(weights = weight, directed = TRUE) %>% as.factor()) %N>%
-  filter(!node_is_isolated()) %E>%
-  mutate(community_from = .N()$community[from],
-         community_to = .N()$community[to])
+  filter(!node_is_isolated()) 
 ```
 
 ```{r}
@@ -252,7 +251,6 @@ g %>% ggraph(layout = g_layout) +
 ```{r}
 g %>% ggraph(layout = g_layout) + 
   geom_edge_link(aes(width = weight), alpha = 0.25) +
-  scale_edge_width() +
   geom_node_point() +
   theme_graph() 
 ```
@@ -339,7 +337,7 @@ g %>%
 set.seed(1337)
 g %>%
   ggraph(layout = 'nicely') + 
-  geom_edge_fan(aes(color = .N()$community[from]), # Notice that
+  geom_edge_fan(aes(color = .N()$community[to]), # Notice that
                 alpha = 0.5,
                 show.legend = FALSE) +
   geom_node_point(aes(color = community),
@@ -406,7 +404,7 @@ g %>% ggraph(layout = 'linear') +
 ```{r}
 # An arc diagram
 g %>% ggraph(layout = 'linear', circular = TRUE) + 
-  geom_edge_arc() +
+  geom_edge_arc(aes(color = .N()$community[to])) +
   geom_node_point(aes(size = centrality_degree(), 
                       color = community),
                   show.legend = FALSE) +
@@ -458,9 +456,11 @@ connections <- flare$imports
 ```{r}
 vertices %>% head()
 ```
+
 ```{r}
 edges %>% head()
 ```
+
 ```{r}
 connections %>% head()
 ```
@@ -505,7 +505,7 @@ to = match(connections$to, vertices$name)
 ```{r}
 g_hir %>% ggraph(layout = 'dendrogram', circular = TRUE) + 
   geom_conn_bundle(data = get_con(from = from, to = to), alpha = 0.1) + 
-  #geom_edge_diagonal0() +
+  geom_edge_diagonal0() +
   #geom_node_text(aes(filter = leaf, angle = node_angle(x, y), label = shortName),
   # hjust = 'outward', size = 2) +
   coord_fixed() +
@@ -615,16 +615,15 @@ coords <- g_geo %N>%
 g_geo %>%
   ggraph(layout = coords) +
   geom_polygon(data = map_us, aes(x=long, y = lat, group = group), fill = "#CECECE", color = "#515151") + 
-  geom_node_point() +
   geom_edge_arc(aes(width = weight,   
-                    #alpha = weight,
-                    #filter = percent_rank(weight) >= 0.75,
+                    alpha = weight,
+                    filter = percent_rank(weight) >= 0.75,
                     circular = FALSE),
                 strength = 0.33,
                 color = 'chocolate2') +
-  scale_edge_width_continuous(range = c(0.1, 1)) +
   geom_node_point(aes(size = centrality_degree(),
                       col = centrality_degree())) + 
+  scale_edge_width_continuous(range = c(0.1, 1)) + 
   coord_fixed(1.3) + 
   theme_graph() + 
   theme(legend.position = 'none')
@@ -683,8 +682,10 @@ Please do **Exercise 1** in the corresponding section on `Github`. This time you
 
 #### Other souces
 
+* [Intro: Network Visualizations in R using ggraph and graphlayouts](http://mr.schochastics.net/netVizR.html): Good intros to ggraph functionality & finetuning.
 * [Katherine Ognyanova's Blog)](https://kateto.net/): Her blog is full of some of the most complete introductions to network visualization. Does use igraph, but there are for sure 1 or tricks you can learn from her, particularly when it's about interactive network viosualization.
 * [Good slidedeck on static / interactive network viz in R](http://curleylab.psych.columbia.edu/netviz/netviz1.html#/): Worth visiting
+
 
 ### Session info
 ```{r}
