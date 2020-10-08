@@ -1,19 +1,693 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: 'Intermediate Network Analysis: Network Vizualization: Application (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
-
-```{r}
-plot(cars)
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+library(tidygraph)
+library(igraph)
+library(ggraph)
+```
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+### This session
+
+Welcome to your second part of the introduction to network analysis. In this session you will learn:
+
+1. xxx
+
+
+
+# Introduction
+
+The main concern in designing a network visualization is the purpose it has to serve. What are the structural properties that we want to highlight? What are the key concerns we want to address?
+
+![](https://sds-aau.github.io/SDS-master/00_media/networks_viz_goal.png){width=500px}
+
+Network maps are far from the only visualization available for graphs - other network representation formats, and even simple charts of key characteristics, may be more appropriate in some cases.
+
+![](https://sds-aau.github.io/SDS-master/00_media/networks_viz_type.png){width=500px}
+
+In network maps, as in other visualization formats, we have several key elements that control the outcome. The major ones are color, size, shape, and position.
+
+![](https://sds-aau.github.io/SDS-master/00_media/networks_viz_controls.png){width=500px}
+
+# Visualization Basics
+
+```{r}
+# We load the highschool network nd make up som characteristics
+set.seed(1337)
+g <- as_tbl_graph(highschool, directed = TRUE) %E>%
+  mutate(weight = sample(1:5, n(), replace = TRUE),
+         year = year %>% as.factor()) %N>%
+  mutate(class = sample(LETTERS[1:3], n(), replace = TRUE),
+         gender = rbinom(n = n(), size = 1, prob = 0.5) %>% as.logical(),
+         label = randomNames::randomNames(gender = gender, name.order = "first.last"))
+```
+
+```{r,warning=FALSE, message=FALSE, error=FALSE, comment=FALSE}
+set.seed(1337)
+g <- g %N>%
+  mutate(community = group_edge_betweenness(weights = weight, directed = TRUE) %>% as.factor()) %N>%
+  filter(!node_is_isolated()) %E>%
+  mutate(community_from = .N()$community[from],
+         community_to = .N()$community[to])
+```
+
+```{r}
+g <- g %N>%
+  mutate(popular = case_when(
+    centrality_degree(mode = 'in') < 5 ~ 'unpopular',
+    centrality_degree(mode = 'in') >= 15 ~ 'popular',
+    TRUE  ~ 'medium') %>% factor()
+    )
+```
+
+```{r}
+g %N>%
+  as_tibble() %>%
+  head()
+```
+
+## Node Visualization
+
+* Nodes in a network are the entities that are connected. Sometimes these are also referred to as vertices. 
+* While the nodes in a graph are the abstract concepts of entities, and the layout is their physical placement, the node geoms are the visual manifestation of the entities. 
+
+### Node positions
+
+* Conceptually one can simply think of it in terms of a scatter plot — the layout provides the x and y coordinates, and these can be used to draw nodes in different ways in the plotting window. 
+* Actually, due to the design of ggraph the standard scatterplot-like geoms from ggplot2 can be used directly for plotting nodes:
+
+```{r}
+set.seed(1337)
+g %>%
+  ggraph(layout = "nicely") + 
+    geom_point(aes(x = x, y = y))
+```
+
+* The reason this works is that layouts (about which we talk in a moment) return a `data.frame` of node positions and metadata and this is used as the default plot data:
+
+```{r}
+set.seed(1337)
+g_layout <- g %>% create_layout(layout = "nicely") %>% select(x,y) 
+```
+
+```{r}
+g_layout %>% head()
+```
+* While usage of the default `ggplot2` is theoreticlly fine, `ggraph` practically comes with its own set of node geoms (`geom_node_*()`). 
+* They by default already inherit the layout x and y coordinates, and come with extra features for network visualization.
+* `ggraph` also comes with an own plotting theme (`theme_graph()`), which optimizes for graph visualization, and we might want to use.
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_node_point() +
+  theme_graph()
+```
+
+* Usually (but not always) when visualizing a network, we are interested in the connectivity structure as expressed by the interplay between nodes and edges. 
+* So, lets also plot the edges (the geometries from the `geom_edge_*` family, about which we talk in a moment)
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_node_point() + 
+  geom_edge_link(alpha = 0.25) +
+  theme_graph()
+```
+
+### Size
+
+* Size is the first obvious choice to highlight important (eg. central) nodes on a contineous scale.
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(alpha = 0.25) +
+  geom_node_point(aes(size = centrality_degree())) +
+  theme_graph()
+```
+
+### Color
+
+* Color can also be used to visualize importance in a second continuous dimension, or to highlight categorical features
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(alpha = 0.25) +
+  geom_node_point(aes(color = community)) +
+  theme_graph()
+```
+
+### Alpha
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(alpha = 0.25) +
+  geom_node_point(aes(alpha = centrality_degree())) +
+  theme_graph()
+```
+
+### Shapes
+
+* In case we want to express even more categorical characteristics, we can also (just like in the visualiation of tabular data) use node shapes.
+
+```{r}
+shapes() 
+```
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(alpha = 0.25) +
+  geom_node_point(aes(shape = gender)) +
+  theme_graph() 
+```
+
+### Labels
+
+* With the `geom_node_text` geometry, we can also ad labels to the node. They are subject to common aestetics.
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(alpha = 0.25) +
+  geom_node_text(aes(label = label)) +
+  theme_graph() 
+```
+
+In large graphs, plotting labels can appear messy, so it might make sense to only focus on important nodes to label
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(alpha = 0.25) +
+  geom_node_point() +
+  geom_node_text(aes(label = label), repel = TRUE) +
+  theme_graph() 
+```
+
+* Still looks like too much. If we want to highlight only certain important nodes with label, we can also only plot them.
+* Note that (very practical) all `ggraph` geoms have a `filter` aestetic we can use for that
+
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(alpha = 0.25) +
+  geom_node_point() +
+  geom_node_text(aes(label = label, 
+                     filter = centrality_degree() >= centrality_degree()  %>% quantile(0.9)), 
+                 repel = TRUE) +
+  theme_graph() 
+```
+
+### Combined node visualization tools
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(alpha = 0.25) +
+  geom_node_point(aes(size = centrality_eigen(), 
+                      color = community,
+                      shape = gender)) +
+  geom_node_text(aes(label = label, 
+                     filter = centrality_eigen() >= centrality_eigen() %>% quantile(0.90)), 
+                 repel = TRUE) +
+  theme_graph() +
+  theme(legend.position = 'none')
+```
+
+
+## Edge Visualization
+
+* So, now that we captured nodes, lets see how we can highlight aspects of edges, which are visualized with the geometries of the `geom_edge_*` family.
+
+### Weight
+
+* Obviously, the edge weight (=thickness)
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(aes(width = weight), alpha = 0.25) +
+  scale_edge_width() +
+  geom_node_point() +
+  theme_graph() 
+```
+
+* Unfortunately, I wind the default to thick. We can also scale it.
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(aes(width = weight), alpha = 0.25) +
+  scale_edge_width(range = c(0.1, 2)) + 
+  geom_node_point() +
+  theme_graph() 
+```
+
+### Color
+
+* Color can also be used to highlight edge significance (continuous)
+* However, color is more often used to highlight different edge categories.
+* Notice, since we want to represent the colors of potentially multiple edges between a node pair, I now use the `geom_edge_fan` geometry.
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_fan(aes(size = weight,
+                     color = year), alpha = 0.25) +
+  geom_node_point() +
+  theme_graph() 
+```
+
+### Density
+
+* Density plots can also be used to highlight densely connected regions.
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_link(aes(col = year), alpha = 0.1) +
+  geom_edge_density(aes(fill = year)) +
+  geom_node_point() +
+  theme_graph() 
+```
+
+### Directionality
+
+* The easiest way to express directionality is by defining the `arrow()`, which comes with own aestetics.
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_fan(aes(color = year), 
+                arrow = arrow(),
+                alpha = 0.5) +
+  geom_node_point() +
+  theme_graph() 
+```
+
+* The default open arrow and other settings are a bit ugly, so we use some adittional aestetics
+
+```{r}
+g %>% ggraph(layout = g_layout) + 
+  geom_edge_fan(aes(color = year), 
+                arrow = arrow(type = "closed", length = unit(2, "mm")),
+                start_cap = circle(1, "mm"),
+                end_cap = circle(1, "mm"),
+                alpha = 0.5) +
+  geom_node_point() +
+  theme_graph() 
+```
+
+* Another nice trick is to work with alphas or colors, which change between start and end node.
+
+```{r}
+g %>%
+  ggraph(layout = g_layout) + 
+  geom_edge_fan(aes(color = year,
+                    alpha = stat(index)) # Notice that
+                ) +
+  geom_node_point() +
+  theme_graph() + 
+  scale_edge_alpha("Edge direction", guide = "edge_direction")
+```
+
+* It can also be really practical to change edge characteristics by the characteristics of their adjacent nodes. 
+* Remember, with `.N()`, we can access them to do so.
+
+```{r}
+set.seed(1337)
+g %>%
+  ggraph(layout = 'nicely') + 
+  geom_edge_fan(aes(color = .N()$community[from]), # Notice that
+                alpha = 0.5,
+                show.legend = FALSE) +
+  geom_node_point(aes(color = community),
+                  show.legend = FALSE) +
+  theme_graph() 
+```
+
+
+## Layouts
+
+* The graph layout refers to the node position on the reference system.
+
+### Ordinary graph style
+
+* Graphs can be represented in simple geometries such as squares, circles, lines, or randomly.
+* Or, specialized algorithms can be used to position nodes according to the properties of their connectivity.
+* They are usually designed to highlight different aspects of the network.
+* Lets inspect some standard layouts
+
+```{r, fig.height=30, fig.width= 20}
+set.seed(1337)
+library(ggpubr)
+layout_list <- c("randomly", "linear", "circle", 
+                 "grid", "fr", "kk", 
+                 "graphopt", "stress", 'mds', 
+                 'dh', 'drl', 'lgl')
+
+g_list <- list(NULL)
+for(i in 1:length(layout_list)){
+  g_list[[i]] <-g %>% 
+    ggraph(layout = layout_list[i]) + 
+  geom_edge_fan(aes(color = year,
+                    width = weight,
+                    alpha = weight), 
+                arrow = arrow(type = "closed", length = unit(2, "mm")),
+                start_cap = circle(1, "mm"),
+                end_cap = circle(1, "mm"),
+                show.legend = FALSE) +
+    scale_edge_width(range = c(0.1, 0.5)) + 
+    geom_node_point(aes(size = centrality_degree(mode = 'in'), 
+                        color = community,
+                        shape = gender),
+                    show.legend = FALSE) +
+    theme_graph() +
+    labs(title = paste("Layout:", layout_list[i], sep = " "))
+}
+
+ggarrange(plotlist = g_list, nrow = 4, ncol = 3)
+```
+
+
+### Arcs and circles
+
+```{r}
+# An arc diagram
+g %>% ggraph(layout = 'linear') + 
+  geom_edge_arc() +
+  geom_node_point(aes(size = centrality_degree(), 
+                      color = community),
+                  show.legend = FALSE) +
+    theme_graph() 
+```
+
+```{r}
+# An arc diagram
+g %>% ggraph(layout = 'linear', circular = TRUE) + 
+  geom_edge_arc() +
+  geom_node_point(aes(size = centrality_degree(), 
+                      color = community),
+                  show.legend = FALSE) +
+    theme_graph() +
+  coord_fixed()
+```
+
+### Hive plots
+
+* A hive plot, while still technically a node-edge diagram, is a bit different from the rest as it uses information pertaining to the nodes, rather than the connection information in the graph. 
+* This means that hive plots, to a certain extent are more interpretable as well as less vulnerable to small changes in the graph structure. 
+* They are less common though, so use will often require some additional explanation.
+
+```{r}
+g %>%
+  ggraph(layout = 'hive', axis = popular, sort.by = centrality_degree(mode = 'in')) + 
+    geom_edge_hive(aes(colour = year, alpha = ..index..), show.legend = FALSE) + 
+    geom_axis_hive(aes(colour = popular), size = 3, label = FALSE) + 
+    coord_fixed() + 
+  theme_graph() +
+  theme(legend.position = 'bottom')
+```
+
+### Social Fabric
+
+```{r}
+g %>% ggraph(layout = 'fabric', sort.by = community) + 
+  geom_node_range(aes(colour = community), alpha = 0.3) + 
+  geom_edge_span(aes(col = .N()$community[to]), end_shape = 'circle', alpha = 0.5) + 
+  coord_fixed() + 
+  theme_graph() +
+  theme(legend.position = 'none')
+```
+
+
+## Visualizing Hirarchical networks
+
+* If the network is by definition hierarchical, edges can only exist between nodes of higher to lower dept (eg. tree structures).
+* This offers us possibility for quite some adittional ways of representing it which are geared towards hirarchical (=nested) structures
+
+* Here an example of the dependency structures of the `flare` package
+
+```{r}
+edges <- flare$edges
+vertices <- flare$vertices %>% arrange(name) %>% mutate(name=factor(name, name))
+connections <- flare$imports
+```
+
+```{r}
+vertices %>% head()
+```
+```{r}
+edges %>% head()
+```
+```{r}
+connections %>% head()
+```
+
+```{r}
+g_hir <- tbl_graph(vertices, edges)
+```
+
+```{r}
+g_hir
+```
+
+### Tree structures
+
+```{r}
+g_hir %>% ggraph('tree') + 
+  geom_edge_diagonal() +
+  theme_graph()
+```
+
+
+```{r}
+g_hir %>% ggraph( 'dendrogram') + 
+    geom_edge_elbow() +
+  theme_graph()
+```
+
+```{r}
+g_hir %>% ggraph('dendrogram', circular = TRUE) + 
+    geom_edge_elbow() + 
+    coord_fixed() +
+  theme_graph()
+```
+
+```{r}
+# The connection object must refer to the ids of the leaves:
+from = match(connections$from, vertices$name)
+to = match(connections$to, vertices$name)
+```
+
+
+```{r}
+g_hir %>% ggraph(layout = 'dendrogram', circular = TRUE) + 
+  geom_conn_bundle(data = get_con(from = from, to = to), alpha = 0.1) + 
+  #geom_edge_diagonal0() +
+  #geom_node_text(aes(filter = leaf, angle = node_angle(x, y), label = shortName),
+  # hjust = 'outward', size = 2) +
+  coord_fixed() +
+  theme_graph()
+```
+
+### Non-edge-based 
+
+```{r}
+# An icicle plot
+g_hir %>% ggraph('partition') + 
+  geom_node_tile(aes(fill = depth), size = 0.25) +
+  theme_graph()
+```
+
+```{r}
+# A sunburst plot
+g_hir %>% ggraph('partition', circular = TRUE) + 
+  geom_node_arc_bar(aes(fill = depth), size = 0.25) + 
+  coord_fixed() +
+  theme_graph()
+```
+
+```{r}
+g_hir %>% ggraph('circlepack') + # , weight = size
+  geom_node_circle(aes(fill = depth), size = 0.25, n = 50) + 
+  coord_fixed() +
+  theme_graph()
+```
+
+
+
+
+```{r}
+g_hir %>% ggraph('treemap') + 
+  geom_node_tile(aes(fill = depth), size = 0.25) +
+  theme_graph()
+```
+
+## Geospatial networks
+
+### Defining a map
+
+```{r}
+library(maps)
+```
+
+```{r}
+map_us <- map_data("usa")
+```
+
+```{r}
+map_us %>%
+  head()
+```
+
+### Getting some network data
+
+```{r}
+library(anyflights)
+```
+
+```{r}
+us_airports <- get_airports() %>%
+  filter(lat >= 24 & lat <= 49 & lon >= -124 & lon <= -66)  %>%
+  rename(name_full = name,
+         name = faa)
+```
+
+```{r}
+us_airports %>% head()
+```
+
+```{r}
+flights <- get_flights(station = us_airports %>% pull(name), year = 2015, month = 5)
+```
+
+```{r}
+flights %>% head()
+```
+
+
+```{r}
+edges <- flights %>% count(origin, dest, sort = TRUE) %>%
+  rename(from = origin, to = dest, weight = n) %>%
+  semi_join(us_airports, by = c('from' = 'name')) %>%
+  semi_join(us_airports, by = c('to' = 'name')) %>% 
+  filter(percent_rank(weight) >= 0.25)
+```
+
+```{r}
+g_geo <- tbl_graph(nodes = us_airports, edges = edges, directed = TRUE) %N>%
+  filter(!node_is_isolated())
+```
+
+
+### Constructing a graph
+
+```{r}
+coords <- g_geo %N>% 
+  as_tibble() %>% 
+  select(lat, lon) %>%
+  rename(x = lon, y = lat)
+```
+
+```{r}
+g_geo %>%
+  ggraph(layout = coords) +
+  geom_polygon(data = map_us, aes(x=long, y = lat, group = group), fill = "#CECECE", color = "#515151") + 
+  geom_node_point() +
+  geom_edge_arc(aes(width = weight,   
+                    #alpha = weight,
+                    #filter = percent_rank(weight) >= 0.75,
+                    circular = FALSE),
+                strength = 0.33,
+                color = 'chocolate2') +
+  scale_edge_width_continuous(range = c(0.1, 1)) +
+  geom_node_point(aes(size = centrality_degree(),
+                      col = centrality_degree())) + 
+  coord_fixed(1.3) + 
+  theme_graph() + 
+  theme(legend.position = 'none')
+```
+
+## Interactive networks
+
+* There are numerous ways to to interactive network visualizations in R
+* For the sake of time, I just show you what I find the easiest and most consistent implementation (plotly unfortunately does by now not support ggraph)
+
+```{r}
+library(ggiraph)
+```
+
+
+```{r}
+g_plot_int <- g %>% 
+  ggraph(layout = layout_list[i]) + 
+  geom_edge_fan(aes(color = year,
+                    width = weight,
+                    alpha = weight), 
+                arrow = arrow(type = "closed", length = unit(2, "mm")),
+                start_cap = circle(1, "mm"),
+                end_cap = circle(1, "mm"),
+                show.legend = FALSE) +
+    scale_edge_width(range = c(0.1, 0.5)) + 
+    geom_node_point(aes(size = centrality_degree(mode = 'in'), 
+                        color = community,
+                        shape = gender),
+                    show.legend = FALSE) +
+  geom_point_interactive(aes(x, y, # Notice this extra layer
+                             tooltip = label, data_id = name, 
+                             size = centrality_degree(mode = 'in')), alpha = 0.01) +  
+    theme_graph() +
+  theme(legend.position = 'none')
+```
+
+```{r, fig.height=10, fig.width=10}
+girafe(ggobj = g_plot_int, width_svg = 10, height_svg = 10) %>% 
+    girafe_options(opts_zoom(max = 10), opts_tooltip(opacity = 0.7) )
+```
+
+
+# Your turn
+Please do **Exercise 1** in the corresponding section on `Github`. This time you are about to do your own bibliographic analysis!
+
+# Endnotes
+
+### More info
+
+#### Packages & Ecosystem
+
+* `tidygraph` [here](https://tidygraph.data-imaginist.com/)
+* `ggraph` [here](https://ggraph.data-imaginist.com/)
+* `ggiraph` [here](https://davidgohel.github.io/ggiraph/)
+
+#### Other souces
+
+* [Katherine Ognyanova's Blog)](https://kateto.net/): Her blog is full of some of the most complete introductions to network visualization. Does use igraph, but there are for sure 1 or tricks you can learn from her, particularly when it's about interactive network viosualization.
+* [Good slidedeck on static / interactive network viz in R](http://curleylab.psych.columbia.edu/netviz/netviz1.html#/): Worth visiting
+
+### Session info
+```{r}
+sessionInfo()
+```
 

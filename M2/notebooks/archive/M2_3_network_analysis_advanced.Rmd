@@ -374,23 +374,24 @@ g %>%
 
 ### Ordinary graph style
 
-```{r, fig.height=10, fig.width= 20}
-pacman::p_load(ggpubr)
-layout_list <- c("randomly", "circle", "grid", "fr", "kk", "graphopt")
+```{r, fig.height=30, fig.width= 15}
+library(ggpubr)
+layout_list <- c("randomly", "linear", "circle", "grid", "fr", "kk", "graphopt", "stress")
 
 g_list <- list(NULL)
 for(i in 1:length(layout_list)){
   g_list[[i]] <-g %>% 
     ggraph(layout = layout_list[i]) + 
-    geom_edge_fan(aes(size = weight)) +
-    geom_node_point(aes(size = cent_dgr, 
+    geom_edge_fan(aes(c),
+                  alpha = 0.75) +
+    geom_node_point(aes(size = centrality_degree(mode = 'in'), 
                         color = community),
                     show.legend = FALSE) +
     theme_graph() +
     labs(title = paste("Layout:", layout_list[i], sep = " "))
 }
 
-ggarrange(plotlist = g_list, nrow = 2, ncol = 3, common.legend = TRUE, legend = "bottom")
+ggarrange(plotlist = g_list, nrow = 4, ncol = 2, common.legend = TRUE, legend = "bottom")
 
 ```
 
