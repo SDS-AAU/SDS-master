@@ -13,6 +13,7 @@
 
 * Application: Network Visualization
    * R: Video [1: Node & Edge Visualization](https://www.loom.com/share/a76f6ef6a09e4c8280e306c5458ca1bd) [2: Graph Layouts](https://www.loom.com/share/91375f4f85df4ce2b6f199f6b52390c2) [Html](https://sds-aau.github.io/SDS-master/M2/notebooks/network_analysis_application_visualization.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/notebooks/network_analysis_application_visualization.ipynb)
+      * Exercises R: [1: Directed NWs](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/exercises/network_analysis_application_directed_ex1.ipynb)
 
 
 * Application: Bipartite (2-mode) Networks
