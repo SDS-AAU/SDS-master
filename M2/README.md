@@ -18,5 +18,6 @@
 
 * Application: Bipartite (2-mode) Networks
    * R: Video [comming soon]() [Html](https://sds-aau.github.io/SDS-master/M2/notebooks/network_analysis_application_bipartite.nb.html) [Colab](network_analysis_application_bipartite.ipynb)
+      * Exercise R: [Bibliometric Networks](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/exercises/network_analysis_application_bipartit_ex1.ipynb)
 
 
