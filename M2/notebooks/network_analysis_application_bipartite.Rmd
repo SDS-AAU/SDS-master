@@ -1,0 +1,201 @@
+---
+title: 'Advanced Network Analysis: Bipartite (2-mode) and other netwpoks: Application (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+
+library(tidygraph)
+library(ggraph)
+library(igraph)
+```
+
+
+In this session, you will learn:
+
+1. What are alternative ways to create network structures.
+2. What are different options to visualize networks and highlight properties.
+3. How to analyse multi-modal networks.
+
+# Types of networks
+
+We up to now already talked about different ways how networks can be constructed. Up to now, we mainly focussed on:
+
+* Interaction between entities
+* Co-occurence
+
+However, network analysis and modelling is also fully consistent with other structures, which are often a natural outcome of supervised or unsupervised ML exercises:
+
+* Similarities
+* Hirarchies (tree-structures)
+
+## Similarity networks
+
+Since similarity is a relational property between entities, similarity matrices obviously can be modeled as a network. Lets illustrate that at the classican `mtcars` example.
+
+```{r}
+mtcars %>% head() 
+```
+
+Whe could first run a PCA to reduce the dimensionality of the numerical data.
+
+```{r}
+cars_pca <- mtcars[,c(1:7,10,11)] %>% 
+  drop_na() %>%
+  prcomp(center = TRUE , scale = TRUE)
+```
+
+Next, we could create a distance matrice (using the `dist()`) function.
+
+```{r}
+cars_dist <- cars_pca$x %>% dist(method = "euclidean") 
+```
+
+La voila. Such a distance matrix representas a relational structure and can be modelled as a network.
+
+```{r}
+g <- cars_dist %>% 
+  as.matrix() %>%
+  as_tbl_graph(directed = FALSE) 
+```
+
+```{r}
+g <- g %>% simplify() %>% as_tbl_graph()
+```
+
+```{r}
+g
+```
+
+
+Since the network is based on a distance matrix, we would like to reverse that to get edges representing similarity. Since similarity structures are usually fully connected networks, we probably also want to create some sparsity by deleting lower quantile edge weights.
+
+```{r}
+g <- g %E>%
+  mutate(weight = max(weight) - weight) %>%
+  filter(weight >= weight %>% quantile(0.75)) %N>%
+  filter(!node_is_isolated()) %>%
+  mutate(community = group_louvain(weights = weight) %>% factor())
+```
+
+Lets take a look!
+
+```{r}
+set.seed(1337)
+g %>% ggraph(layout = "nicely") + 
+  geom_node_point(aes(col = community, size = centrality_degree(weights = weight))) + 
+  geom_edge_link(aes(width = weight), alpha = 0.25) +
+  scale_edge_width(range = c(0.1, 2)) + 
+  geom_node_text(aes(label = name, filter = percent_rank(centrality_degree(weights = weight)) > 0.5), repel = TRUE) +
+  theme_graph() + 
+  theme(legend.position = 'bottom')
+```
+
+
+## Hierarchy (tree) networks
+
+Hirarchical structures are obviously also relational. The difference is, that the connectivity structure tends to be constraint to other levels.
+
+```{r}
+create_tree(20, 3) %>% 
+    mutate(leaf = node_is_leaf(), root = node_is_root()) %>% 
+    ggraph(layout = 'tree') +
+    geom_edge_diagonal() +
+    geom_node_point(aes(filter = leaf), colour = 'forestgreen', size = 10) +
+    geom_node_point(aes(filter = root), colour = 'firebrick', size = 10) +
+    theme_graph()
+```
+
+* In addition to real life examples such as organigrams, evolutionary trees etc., many ML models result in tree-structures (eg. decision trees).
+* We will at our car example execute a hierarchical clustering, which leads to a tree structure (visualized in the dendogram).
+
+```{r}
+cars_hc <- cars_dist %>%
+  hclust(method = "ward.D2")
+```
+
+Again, this structure can be directly transfered to a graph object.
+
+```{r}
+g <- cars_hc %>% as_tbl_graph()
+```
+
+```{r}
+g
+```
+
+
+
+```{r}
+g %>% ggraph(layout = 'dendrogram') + 
+  geom_edge_diagonal(aes(col = .N()$height[from])) +
+  geom_node_point(aes(col =height)) +
+  geom_node_text(aes(filter = leaf, label = label), angle=90, hjust=1, nudge_y=-0.1) + 
+  theme_graph() + 
+  ylim(-0.6, NA) 
+```
+
+# Multi-Modal Networks
+
+Now its time to talk about an interesting type of networks, multi-modal. This means, a network has several "modes", meaning connects entities on different conceptual levels. The most commone one is a **2-mode** (or **bipartite**) network. Examples could be an Author $\rightarrow$ Paper, Inventor $\rightarrow$ Patent, Member $\rightarrow$ Club network. Here, the elements in the different modes represent different things. 
+
+We can alalyse them in sepperation (and sometimes we should), but often its helpful to "project"" them onto one mode. Here, we create a node in one mode by joint association with another mode.
+
+![](https://sds-aau.github.io/SDS-master/00_media/networks_2mode.png){width=500px}
+
+While that sounds simple, it can be a very powerful technique, as I will demonstrate now.
+
+
+```{r}
+#data <- whigs %>% as_tibble()
+#data %>% head()
+```
+
+```{r}
+g <- create_bipartite(20, 5, directed = FALSE, mode = "out")
+```
+
+```{r}
+g
+```
+
+
+```{r}
+g %>% ggraph("bipartite") + 
+  geom_edge_link() + 
+  theme_graph()
+```
+
+
+
+
+
+

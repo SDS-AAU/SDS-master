@@ -1,0 +1,74 @@
+---
+title: 'Advanced Network Analysis: A look into Danish Elite NEtworks'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+# Danish elites
+
+https://github.com/antongrau/eliter
+https://magtelite.dk/data/
+
+
+```{r}
+# remotes::install_github("antongrau/soc.elite") # Somehow doesnt work
+```
+
+
+```{r}
+den <- readRDS('../../00_data/networks/elite_den.rda') %>% as_tibble()
+```
+
+```{r}
+den %>% glimpse()
+```
+
+
+```{r}
+# directors08 %>% saveRDS('../../00_data/networks/elite_directors08.rda') 
+```
+
+
+```{r}
+directors08 <- readRDS('../../00_data/networks/elite_directors08.rda') %>% as_tibble()
+```
+
+```{r}
+directors08 %>% glimpse()
+```
+
+```{r}
+directors08 %>% count(virksomhedsnavn, sort = TRUE)
+```
+
+```{r}
+directors08 %>% count(navn, sort = TRUE)
+```
+
+
+```{r}
+den17 %>% count(ROLE, sort = TRUE)
+```
+
+```{r}
+den17 %<>% drop_na(CVR_AFFILIATION)
+```
+
+
+```{r}
+den17 %>% count(PERSON_ID, NAME, sort = TRUE)
+```
+
+```{r}
+den17 %<>% add_count(PERSON_ID) %>%
+  filter(n >= 2)
+```
