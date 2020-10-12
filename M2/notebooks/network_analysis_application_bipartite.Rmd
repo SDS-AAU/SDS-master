@@ -1,5 +1,5 @@
 ---
-title: 'Advanced Network Analysis: Bipartite (2-mode) and other netwpoks: Application (R)'
+title: 'Advanced Network Analysis: Bipartite (2-mode) netwpoks: Application (R)'
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:

@@ -18,41 +18,25 @@ output:
 https://github.com/antongrau/eliter
 https://magtelite.dk/data/
 
+## Get the data
 
 ```{r}
 # remotes::install_github("antongrau/soc.elite") # Somehow doesnt work
 ```
 
 
+## first inspection
+
+### All
+
 ```{r}
-den <- readRDS('../../00_data/networks/elite_den.rda') %>% as_tibble()
+den17 <- readRDS('../../00_data/networks/elite_den17.rda') %>% as_tibble()
 ```
 
 ```{r}
-den %>% glimpse()
+den17 %>% write_csv('../../00_data/networks/elite_den17.csv')
 ```
 
-
-```{r}
-# directors08 %>% saveRDS('../../00_data/networks/elite_directors08.rda') 
-```
-
-
-```{r}
-directors08 <- readRDS('../../00_data/networks/elite_directors08.rda') %>% as_tibble()
-```
-
-```{r}
-directors08 %>% glimpse()
-```
-
-```{r}
-directors08 %>% count(virksomhedsnavn, sort = TRUE)
-```
-
-```{r}
-directors08 %>% count(navn, sort = TRUE)
-```
 
 
 ```{r}
@@ -72,3 +56,25 @@ den17 %>% count(PERSON_ID, NAME, sort = TRUE)
 den17 %<>% add_count(PERSON_ID) %>%
   filter(n >= 2)
 ```
+
+
+
+
+```{r}
+directors08 <- readRDS('../../00_data/networks/elite_directors08.rda') %>% as_tibble()
+```
+
+```{r}
+directors08 %>% glimpse()
+```
+
+```{r}
+directors08 %>% count(virksomhedsnavn, sort = TRUE)
+```
+
+```{r}
+directors08 %>% count(navn, sort = TRUE)
+```
+
+
+
