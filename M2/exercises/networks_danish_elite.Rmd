@@ -15,8 +15,8 @@ output:
 
 # Danish elites
 
-https://github.com/antongrau/eliter
-https://magtelite.dk/data/
+* https://github.com/antongrau/eliter
+* https://magtelite.dk/data/
 
 ## Get the data
 
@@ -30,32 +30,76 @@ https://magtelite.dk/data/
 ### All
 
 ```{r}
-den17 <- readRDS('../../00_data/networks/elite_den17.rda') %>% as_tibble()
+den17 <- read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/networks/elite_den17.csv') 
 ```
 
 ```{r}
-den17 %>% write_csv('../../00_data/networks/elite_den17.csv')
+den17 %>% head()
 ```
-
 
 
 ```{r}
 den17 %>% count(ROLE, sort = TRUE)
 ```
 
+
+```{r}
+den17 %<>% filter(ROLE %in% c('Member', 'Chairman', 'Vice chairman', 'Chief executive', 'Executive'))
+```
+
+
 ```{r}
 den17 %<>% drop_na(CVR_AFFILIATION)
 ```
 
-
 ```{r}
 den17 %>% count(PERSON_ID, NAME, sort = TRUE)
 ```
+```{r}
+el <-den17 %>%
+  select(PERSON_ID, AFFILIATION_ID) %>%
+  left_join(den17 %>% select(PERSON_ID, AFFILIATION_ID), by = "AFFILIATION_ID") 
+```
+
+```{r}
+el %<>% 
+  select(-AFFILIATION_ID) %>%
+  rename(from = PERSON_ID.x, 
+         to = PERSON_ID.y) %>%
+  filter(from != to)
+```
+
+```{r}
+el %<>%
+  count(from, to, name = 'weight') 
+```
+
+```{r}
+el %>% 
+  head()
+```
+
+
+
+
+
+
+
 
 ```{r}
 den17 %<>% add_count(PERSON_ID) %>%
   filter(n >= 2)
 ```
+
+```{r}
+den17 %>%
+  glimpse()
+```
+
+
+
+
+
 
 
 
