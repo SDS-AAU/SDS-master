@@ -136,7 +136,7 @@ g
 ```
 
 ```{r}
-g <- g %>%
+g <- g %N>%
   mutate(community = group_louvain(weights = weight) )
 ```
 
@@ -148,10 +148,14 @@ g %N>%
 
 ```{r}
 g <- g %N>%
-  mutate(community = ifelse(community > 6, NA, community))
+  mutate(community = ifelse(community > 4, NA, community))
 ```
 
-
+```{r}
+g %N>%
+  as_tibble() %>%
+  count(community)
+```
 
 
 
@@ -162,8 +166,8 @@ g %N>%
   filter(percent_rank(centrality_degree(weights = weight)) > 0.99 ) %>%
   ggraph(layout = 'fr') + 
   geom_edge_link(alpha = 0.25) +
-  geom_node_point(aes(size= centrality_degree(), col = community %>% factor())) +
-  geom_node_text(aes(label = label, filter = percent_rank(centrality_degree(weights = weight)) > 0.95, alpha = percent_rank(centrality_degree(weights = weight))), repel = TRUE) + 
+  geom_node_point(aes(size= centrality_betweenness(weights = weight), col = community %>% factor())) +
+  geom_node_text(aes(label = label, filter = percent_rank(centrality_betweenness(weights = weight)) > 0.90), repel = TRUE) + 
   theme_graph() +
   theme(legend.position = 'bottom')
 ```
@@ -179,8 +183,8 @@ g %N>%
   mutate(cent_dgr = centrality_degree(weights = weight)) %>%
   as_tibble() %>%
   group_by(community) %>%
-  arrange(desc(cent_dgr)) %>%
-  slice(1:10) %>%
+    arrange(desc(cent_dgr)) %>%
+    slice(1:10) %>%
   ungroup()
 ```
 
@@ -207,25 +211,20 @@ g %N>%
 
 
 
-
-
-
-
-
 ```{r}
-directors08 <- readRDS('../../00_data/networks/elite_directors08.rda') %>% as_tibble()
+#directors08 <- readRDS('../../00_data/networks/elite_directors08.rda') %>% as_tibble()
 ```
 
 ```{r}
-directors08 %>% glimpse()
+#directors08 %>% glimpse()
 ```
 
 ```{r}
-directors08 %>% count(virksomhedsnavn, sort = TRUE)
+#directors08 %>% count(virksomhedsnavn, sort = TRUE)
 ```
 
 ```{r}
-directors08 %>% count(navn, sort = TRUE)
+#directors08 %>% count(navn, sort = TRUE)
 ```
 
 
