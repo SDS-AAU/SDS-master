@@ -85,6 +85,16 @@ el %>%
   head()
 ```
 
+```{r}
+el %>% arrange(desc(weight)) 
+```
+```{r}
+el %>% 
+  ggplot(aes(x = weight)) +
+  geom_histogram()
+```
+
+
 ## create the network
 
 Node names
@@ -101,6 +111,18 @@ g <- as_tbl_graph(el, directed = FALSE)
 ```
 
 ```{r}
+g <- g %>% simplify() %>% as_tbl_graph()
+```
+
+```{r}
+g <- g %E>%
+  filter(weight > 1) %N>%
+  filter(!node_is_isolated())
+```
+
+
+
+```{r}
 g
 ```
 
@@ -114,12 +136,24 @@ g
 ```
 
 ```{r}
-g %>% ggraph(layout = 'nicely') + 
+set.seed(1337)
+g %N>% 
+  filter(percent_rank(centrality_degree()) > 0.99 ) %>%
+  ggraph(layout = 'nicely') + 
   geom_edge_link(alpha = 0.25) +
   geom_node_point(aes(size= centrality_degree())) +
-  geom_node_text(aes(label = label)) + 
+  geom_node_text(aes(label = label, filter = percent_rank(centrality_degree()) > 0.90, alpha = percent_rank(centrality_degree())), repel = TRUE) + 
   theme_graph()
 ```
+```{r}
+g  %N>%
+  mutate(cent_drg = centrality_degree()) %>%
+  as_tibble() %>%
+  arrange(desc(cent_drg)) %>%
+  head(50)
+```
+
+
 
 
 
