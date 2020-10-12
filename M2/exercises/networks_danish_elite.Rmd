@@ -16,6 +16,7 @@ output:
 # Danish elites
 
 * https://github.com/antongrau/eliter
+
 * https://magtelite.dk/data/
 
 ## Get the data
@@ -45,6 +46,11 @@ den17 %>% count(ROLE, sort = TRUE)
 
 ```{r}
 den17 %<>% filter(ROLE %in% c('Member', 'Chairman', 'Vice chairman', 'Chief executive', 'Executive'))
+```
+
+
+```{r}
+den17 %>% count(TYPE, sort = TRUE)
 ```
 
 
@@ -79,22 +85,59 @@ el %>%
   head()
 ```
 
+## create the network
 
-
-
-
-
-
+Node names
 
 ```{r}
-den17 %<>% add_count(PERSON_ID) %>%
-  filter(n >= 2)
+nodes <- den17 %>% select(PERSON_ID, NAME) %>%
+  rename(name = PERSON_ID, label = NAME) %>%
+  mutate(name = name %>% as.character()) %>%
+  distinct(name, .keep_all = TRUE)
 ```
 
 ```{r}
-den17 %>%
-  glimpse()
+g <- as_tbl_graph(el, directed = FALSE)
 ```
+
+```{r}
+g
+```
+
+```{r}
+g <- g %N>% 
+  left_join(nodes, by = 'name')
+```
+
+```{r}
+g
+```
+
+```{r}
+g %>% ggraph(layout = 'nicely') + 
+  geom_edge_link(alpha = 0.25) +
+  geom_node_point(aes(size= centrality_degree())) +
+  geom_node_text(aes(label = label)) + 
+  theme_graph()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
