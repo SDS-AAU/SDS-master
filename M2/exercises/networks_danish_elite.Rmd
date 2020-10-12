@@ -136,21 +136,52 @@ g
 ```
 
 ```{r}
+g <- g %>%
+  mutate(community = group_louvain(weights = weight) )
+```
+
+```{r}
+g %N>%
+  as_tibble() %>%
+  count(community)
+```
+
+```{r}
+g <- g %N>%
+  mutate(community = ifelse(community > 6, NA, community))
+```
+
+
+
+
+
+
+```{r, fig.width=15, fig.height=15}
 set.seed(1337)
 g %N>% 
-  filter(percent_rank(centrality_degree()) > 0.99 ) %>%
-  ggraph(layout = 'nicely') + 
+  filter(percent_rank(centrality_degree(weights = weight)) > 0.99 ) %>%
+  ggraph(layout = 'fr') + 
   geom_edge_link(alpha = 0.25) +
-  geom_node_point(aes(size= centrality_degree())) +
-  geom_node_text(aes(label = label, filter = percent_rank(centrality_degree()) > 0.90, alpha = percent_rank(centrality_degree())), repel = TRUE) + 
-  theme_graph()
+  geom_node_point(aes(size= centrality_degree(), col = community %>% factor())) +
+  geom_node_text(aes(label = label, filter = percent_rank(centrality_degree(weights = weight)) > 0.95, alpha = percent_rank(centrality_degree(weights = weight))), repel = TRUE) + 
+  theme_graph() +
+  theme(legend.position = 'bottom')
 ```
 ```{r}
 g  %N>%
-  mutate(cent_drg = centrality_degree()) %>%
+  mutate(cent_drg = centrality_degree(weights = weight)) %>%
   as_tibble() %>%
   arrange(desc(cent_drg)) %>%
   head(50)
+```
+```{r}
+g %N>%
+  mutate(cent_dgr = centrality_degree(weights = weight)) %>%
+  as_tibble() %>%
+  group_by(community) %>%
+  arrange(desc(cent_dgr)) %>%
+  slice(1:10) %>%
+  ungroup()
 ```
 
 
