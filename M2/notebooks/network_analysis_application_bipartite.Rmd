@@ -153,7 +153,6 @@ g
 ```
 
 
-
 ```{r}
 g %>% ggraph(layout = 'dendrogram') + 
   geom_edge_diagonal(aes(col = .N()$height[from])) +
@@ -163,7 +162,12 @@ g %>% ggraph(layout = 'dendrogram') +
   ylim(-0.6, NA) 
 ```
 
+
+
+
 # Multi-Modal Networks
+
+## Intuition
 
 Now its time to talk about an interesting type of networks, multi-modal. This means, a network has several "modes", meaning connects entities on different conceptual levels. The most commone one is a **2-mode** (or **bipartite**) network. Examples could be an Author $\rightarrow$ Paper, Inventor $\rightarrow$ Patent, Member $\rightarrow$ Club network. Here, the elements in the different modes represent different things. 
 
@@ -173,27 +177,89 @@ We can alalyse them in sepperation (and sometimes we should), but often its help
 
 While that sounds simple, it can be a very powerful technique, as I will demonstrate now.
 
-
 ```{r}
-#data <- whigs %>% as_tibble()
-#data %>% head()
+set.seed(1337)
+g <- create_bipartite(4, 10, directed = TRUE, mode = "out") %E>%
+  sample_n(15)
 ```
 
 ```{r}
-g <- create_bipartite(20, 5, directed = FALSE, mode = "out")
+people <- c('Jesper', 'Pernille', 'Morten', 'Lise', 'Christian', 'Mette', 'Casper', 'Dorte', 'Jacob', 'Helle')
+places <- c('Yoga House', 'Crossfit', 'Jazz Club', 'Jomfru Anne Gade')
 ```
 
 ```{r}
-g
+g <- g %N>%
+  mutate(name = c(places, people))
 ```
 
 
 ```{r}
 g %>% ggraph("bipartite") + 
-  geom_edge_link() + 
-  theme_graph()
+  geom_edge_link(alpha = 0.25) + 
+  geom_node_point(aes(col = type, size = centrality_degree(mode = 'all'))) + 
+  geom_node_text(aes(label = name), repel = TRUE) + 
+  theme_graph() +
+  theme(legend.position = 'none')
+```
+TODO: A bit more
+
+# Case study: Bibliographic networks
+
+## Basics
+
+Lets talk about bibliographic networks. In short, that are networks between documents which cite each others. That can be (commonly) academic publications, but also patents or policy reports. Conceptually, we can see them as 2 mode networks, between articles and their reference. That helps us to apply some interesting metrics, such as:
+
+* direct citations
+* Bibliographic coupling
+* Co--citations
+
+Interestingly, different projections of this 2-mode network give the whole resulting 1-mode network a different meaning.
+
+![](https://sds-aau.github.io/SDS-master/00_media/networks_biblio.png){width=500px}
+
+
+I will illustrate more in detail in the following. The example is based on some own work.[^1]
+
+## Doing it by hand
+
+Lets imagine we do it the hard way. We download some bibliographic data, and have to do all the munging on our own, till we end up with a nice network representation. Lets go through some of these steps together.
+
+Lets get started. I will load some bibliographic data (selection process explained in the paper) on articles concerned with the field of "Innovation Studies". It already went through some upfront cleaning, but is very similar to what you get when you download data from WoS.
+
+```{r}
+rm(list=ls())
+articles <- readRDS(url("https://github.com/SDS-AAU/SDS-master/raw/master/00_data/networks_bibliometrics/publications.RDS"))
 ```
 
+```{r}
+articles %<>%
+  select(SR, AU, TI, JI, PY, AU_UN, DE, TC, NR, CR) %>%
+  rename(article = SR,
+         author = AU,
+         title = TI,
+         journal = JI,
+         year = PY,
+         affiliation = AU_UN,
+         keywords = DE,
+         citations = TC,
+         references = NR,
+         reference.list = CR)
+```
+
+
+```{r}
+articles %>%
+  arrange(desc(citations)) %>%
+  glimpse()
+```
+
+
+So, where are the links to the references? Its a bit messy, they are all found in the `CRF` field, sepperated by `;`.
+
+```{r}
+articles[1, "reference.list"]
+```
 
 
 
