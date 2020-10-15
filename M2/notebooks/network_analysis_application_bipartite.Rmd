@@ -169,9 +169,9 @@ g %>% ggraph(layout = 'dendrogram') +
 
 ## Intuition
 
-Now its time to talk about an interesting type of networks, multi-modal. This means, a network has several "modes", meaning connects entities on different conceptual levels. The most commone one is a **2-mode** (or **bipartite**) network. Examples could be an Author $\rightarrow$ Paper, Inventor $\rightarrow$ Patent, Member $\rightarrow$ Club network. Here, the elements in the different modes represent different things. 
+Now its time to talk about an interesting type of networks, multi-modal. This means, a network has several "modes", meaning connects entities on different conceptual levels. The most common one is a **2-mode** (or **bipartite**) network. Examples could be an Author $\rightarrow$ Paper, Inventor $\rightarrow$ Patent, Member $\rightarrow$ Club network. Here, the elements in the different modes represent different things. 
 
-We can alalyse them in sepperation (and sometimes we should), but often its helpful to "project"" them onto one mode. Here, we create a node in one mode by joint association with another mode.
+We can alalyse them in seperation (and sometimes we should), but often its helpful to "project"" them onto one mode. Here, we create a node in one mode by joint association with another mode.
 
 ![](https://sds-aau.github.io/SDS-master/00_media/networks_2mode.png){width=500px}
 
@@ -204,6 +204,44 @@ g %>% ggraph("bipartite") +
 ```
 TODO: A bit more
 
+
+
+
+
+```{r}
+## Helper function
+el_to_sparse_matrix <- function(data, # the edgelist
+                                mode_1, # which variable indicates mode 1
+                                mode_2, # which variable indicates mode 2
+                                projection = 'none' # If a pojection should be done, possible is 'none', 'mode1', 'mode2' 
+                                ){
+  
+  # Define inputs
+  i_input <- data %>% pull({{mode_1}}) 
+  j_input <- data %>% pull({{mode_2}}) 
+  
+  require(Matrix)
+  mat <- spMatrix(nrow = i_input %>% n_distinct(),
+                  ncol = j_input %>% n_distinct(),
+                  i = i_input %>% factor() %>% as.numeric(),
+                  j = j_input %>% factor() %>% as.numeric(),
+                  x = rep(1, i_input %>% length() ) )
+  
+  row.names(mat) <- i_input %>% factor() %>% levels()
+  colnames(mat) <- j_input %>% factor() %>% levels()
+  
+  # Projection if necessary
+  if(projection == 'mode1'){mat %<>% tcrossprod()}
+  if(projection == 'mode2'){mat %<>% crossprod()}  
+    
+  return(mat)
+}
+```
+
+
+
+* creating 2-mode networks
+
 # Case study: Bibliographic networks
 
 ## Basics
@@ -221,45 +259,137 @@ Interestingly, different projections of this 2-mode network give the whole resul
 
 I will illustrate more in detail in the following. The example is based on some own work.[^1]
 
-## Doing it by hand
+## The DATA
 
 Lets imagine we do it the hard way. We download some bibliographic data, and have to do all the munging on our own, till we end up with a nice network representation. Lets go through some of these steps together.
 
-Lets get started. I will load some bibliographic data (selection process explained in the paper) on articles concerned with the field of "Innovation Studies". It already went through some upfront cleaning, but is very similar to what you get when you download data from WoS.
+`TITLE-ABS-KEY ( "network analysis" )  AND  ( LIMIT-TO ( DOCTYPE ,  "ar" )  OR  LIMIT-TO ( DOCTYPE ,  "cp" ) )  AND  ( LIMIT-TO ( LANGUAGE ,  "English" ) )  AND  ( LIMIT-TO ( SRCTYPE ,  "j" )  OR  LIMIT-TO ( SRCTYPE ,  "p" ) )  AND  ( LIMIT-TO ( PUBYEAR ,  2021 )  OR  LIMIT-TO ( PUBYEAR ,  2020 )  OR  LIMIT-TO ( PUBYEAR ,  2019 )  OR  LIMIT-TO ( PUBYEAR ,  2018 )  OR  LIMIT-TO ( PUBYEAR ,  2017 )  OR  LIMIT-TO ( PUBYEAR ,  2016 )  OR  LIMIT-TO ( PUBYEAR ,  2015 ) ) `
 
 ```{r}
 rm(list=ls())
-articles <- readRDS(url("https://github.com/SDS-AAU/SDS-master/raw/master/00_data/networks_bibliometrics/publications.RDS"))
+data <- read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/networks_bibliometrics/biblio_nw.csv')
 ```
 
 ```{r}
-articles %<>%
-  select(SR, AU, TI, JI, PY, AU_UN, DE, TC, NR, CR) %>%
-  rename(article = SR,
-         author = AU,
-         title = TI,
-         journal = JI,
-         year = PY,
-         affiliation = AU_UN,
-         keywords = DE,
-         citations = TC,
-         references = NR,
-         reference.list = CR)
-```
-
-
-```{r}
-articles %>%
-  arrange(desc(citations)) %>%
+data %>%
   glimpse()
 ```
 
-
-So, where are the links to the references? Its a bit messy, they are all found in the `CRF` field, sepperated by `;`.
+## Preprocessing
 
 ```{r}
-articles[1, "reference.list"]
+data %<>%
+  select(EID, Authors, `Author(s) ID`, Title, `Abbreviated Source Title`, Year, Affiliations, `Author Keywords`, `Cited by`, Abstract, References) %>%
+  rename(author = Authors,
+         author_id = `Author(s) ID`,
+         title = Title,
+         journal = `Abbreviated Source Title`,
+         year = Year,
+         affiliation = Affiliations,
+         keywords = `Author Keywords`,
+         citations = `Cited by`,
+         Abstract = Abstract,
+         references = References)
 ```
+
+
+```{r}
+data[2, 'author']
+```
+
+```{r}
+data[2, 'author_id']
+```
+
+```{r}
+data[2, 'affiliation']
+```
+
+```{r}
+data[2, "keywords"]
+```
+
+```{r}
+data[2, "references"]
+```
+
+```{r}
+data %<>% 
+  mutate(author = author %>% str_split(', '),
+         author_id = author_id %>% str_split(';'),
+         affiliation = affiliation %>% str_split(';'),
+         keywords = keywords %>% str_split('; '),
+         references = references %>% str_split('; '))
+```
+
+
+```{r}
+data %>% select(title, author, citations) %>% 
+  unnest(author) %>%
+  head()
+```
+
+```{r}
+data %>% select(title, author, citations) %>% 
+  unnest(author) %>%
+  group_by(author) %>%
+  summarise(n = n(),
+            citations = citations %>% sum(na.rm = TRUE)) %>%
+  arrange(desc(citations)) %>%
+  head(10)
+```
+## Bipartite Network Generation
+
+I will now transfer them to an article $\rightarrow$ reference edgelist.
+
+```{r}
+el_2m <- data %>% select(EID, references) %>% unnest(references) 
+```
+
+```{r}
+el_2m %>% head()
+```
+
+## Bibliographic Coupling
+
+* We now need to create a projection of the 2-mode matrix to one of the modes.
+* We could do that more efficiently via using the sparse matrix calculation I did before, but for maximum clarity lets do it via a join.
+* We will first create the article to article network.
+
+```{r}
+el_bib <- el_2m %>% left_join(el_2m, by = 'references') %>%
+  rename(from = EID.x, 
+         to = EID.y) %>%
+  select(from, to) %>%
+  filter(from != to) %>%
+  count(from, to, name = 'weight')
+```
+
+```{r}
+el_bib %>% head()
+```
+
+```{r}
+el_bib %>% 
+  ggplot(aes(x = weight)) +
+  geom_histogram()
+```
+```{r}
+el_bib %<>%
+  filter(weight >=3)
+```
+
+```{r}
+el_bib %>% 
+  ggplot(aes(x = weight)) +
+  geom_histogram()
+```
+* Ok, great, we now can create a graph
+
+```{r}
+
+```
+
 
 
 
