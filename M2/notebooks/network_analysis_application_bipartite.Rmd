@@ -59,13 +59,13 @@ However, network analysis and modelling is also fully consistent with other stru
 
 ## Similarity networks
 
-Since similarity is a relational property between entities, similarity matrices obviously can be modeled as a network. Lets illustrate that at the classican `mtcars` example.
+* Since similarity is a relational property between entities, similarity matrices obviously can be modeled as a network. Lets illustrate that at the classican `mtcars` example.
 
 ```{r}
 mtcars %>% head() 
 ```
 
-Whe could first run a PCA to reduce the dimensionality of the numerical data.
+* We could first run a PCA to reduce the dimensionality of the numerical data.
 
 ```{r}
 cars_pca <- mtcars[,c(1:7,10,11)] %>% 
@@ -73,7 +73,7 @@ cars_pca <- mtcars[,c(1:7,10,11)] %>%
   prcomp(center = TRUE , scale = TRUE)
 ```
 
-Next, we could create a distance matrice (using the `dist()`) function.
+* Next, we could create a distance matrix (using the `dist()`) function.
 
 ```{r}
 cars_dist <- cars_pca$x %>% dist(method = "euclidean") 
@@ -95,8 +95,8 @@ g <- g %>% simplify() %>% as_tbl_graph()
 g
 ```
 
-
-Since the network is based on a distance matrix, we would like to reverse that to get edges representing similarity. Since similarity structures are usually fully connected networks, we probably also want to create some sparsity by deleting lower quantile edge weights.
+* Since the network is based on a distance matrix, we would like to reverse that to get edges representing similarity. 
+* Since similarity structures are usually fully connected networks, we probably also want to create some sparsity by deleting lower quantile edge weights.
 
 ```{r}
 g <- g %E>%
@@ -159,23 +159,26 @@ g %>% ggraph(layout = 'dendrogram') +
   geom_node_point(aes(col =height)) +
   geom_node_text(aes(filter = leaf, label = label), angle=90, hjust=1, nudge_y=-0.1) + 
   theme_graph() + 
+  theme(legend.position = 'none')
   ylim(-0.6, NA) 
 ```
-
-
 
 
 # Multi-Modal Networks
 
 ## Intuition
 
-Now its time to talk about an interesting type of networks, multi-modal. This means, a network has several "modes", meaning connects entities on different conceptual levels. The most common one is a **2-mode** (or **bipartite**) network. Examples could be an Author $\rightarrow$ Paper, Inventor $\rightarrow$ Patent, Member $\rightarrow$ Club network. Here, the elements in the different modes represent different things. 
-
-We can alalyse them in seperation (and sometimes we should), but often its helpful to "project"" them onto one mode. Here, we create a node in one mode by joint association with another mode.
+* Now its time to talk about an interesting type of networks, multi-modal. This means, a network has several "modes", meaning connects entities on different conceptual levels. T
+* he most common one is a **2-mode** (or **bipartite**) network. 
+* Examples could be an Author $\rightarrow$ Paper, Inventor $\rightarrow$ Patent, Member $\rightarrow$ Club network. 
+* Here, the elements in the different modes represent different things. 
+* We can alalyse them in seperation (and sometimes we should), but often its helpful to "project"" them onto one mode. 
+* Here, we create a node in one mode by joint association with another mode.
 
 ![](https://sds-aau.github.io/SDS-master/00_media/networks_2mode.png){width=500px}
+## Demonstartion
 
-While that sounds simple, it can be a very powerful technique, as I will demonstrate now.
+* While that sounds simple, it can be a very powerful technique, as I will demonstrate now.
 
 ```{r}
 set.seed(1337)
@@ -193,20 +196,146 @@ g <- g %N>%
   mutate(name = c(places, people))
 ```
 
+```{r}
+g
+```
+
 
 ```{r}
-g %>% ggraph("bipartite") + 
+set.seed(1337)
+p0 <- g %>% ggraph("bipartite") + 
   geom_edge_link(alpha = 0.25) + 
   geom_node_point(aes(col = type, size = centrality_degree(mode = 'all'))) + 
   geom_node_text(aes(label = name), repel = TRUE) + 
   theme_graph() +
-  theme(legend.position = 'none')
+  theme(legend.position = 'none') + 
+  labs(title = '2-mode network places-people')
+
+p0
 ```
-TODO: A bit more
+
+## Creating bipartite projections
+
+### Within the fraph object 
+
+* Having a 2-mode network, we can use the `igraph` function `bipartite_projection` to create a 2x 1-mode network out of it.
+
+```{r}
+g_projected <- g %>% bipartite_projection()
+```
+
+* We now will have a 1-mode network between people as well as one between places.
+
+```{r}
+g_projected
+```
+
+```{r}
+g_places <- g_projected[['proj1']] %>% as_tbl_graph(directed = FALSE)
+g_people <- g_projected[['proj2']] %>% as_tbl_graph(directed = FALSE)
+```
+
+* Lets take a look:
+
+```{r, fig.width=10, fig.height=10}
+set.seed(1337)
+library(patchwork)
+
+p1 <- g_places %>% ggraph(layout = "nicely") + 
+  geom_node_point(aes(size = centrality_degree(weights = weight)), col = 'red') + 
+  geom_edge_link(aes(width = weight), alpha = 0.25) +
+  scale_edge_width(range = c(0.1, 2)) + 
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_graph() + 
+  theme(legend.position = 'none') + 
+  labs(title = '1-mode network places')
+
+p2 <- g_people %>% ggraph(layout = "nicely") + 
+  geom_node_point(aes(size = centrality_degree(weights = weight)), col = 'skyblue2') + 
+  geom_edge_link(aes(width = weight), alpha = 0.25) +
+  scale_edge_width(range = c(0.1, 2)) + 
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_graph() + 
+  theme(legend.position = 'none') + 
+  labs(title = '1-mode network people')
+
+p0 / (p1 + p2)
+```
+
+* Alright, but lets assume we have a 2-mode edgelist to start with... what possibilities do we have then?
+
+```{r}
+el_2m <- g %E>% 
+  mutate(from_name = .N()$name[from],
+         to_name = .N()$name[to]) %>%
+  as.tibble() %>%
+  select(to_name, from_name) %>%
+  rename(from = to_name, to = from_name)
+```
+
+```{r}
+el_2m
+```
+
+* Such an edgelist could obviously be loaded into a graph object the usual way.
+* We just have to assign types then
+
+```{r}
+g_2m <- el_2m %>% as_tbl_graph(directed = TRUE)  %N>%
+  mutate(type = name %in% (el_2m %>% pull(from)))
+```
 
 
+### Via matrix nultiplication
+
+* We can also do the projection outside of the graph and first create a 2-mode matrix. 
+* This can easily be done by crosstabulating the edgelist.
+
+```{r }
+mat_2m <- el_2m %>%
+  table() %>% 
+  as.matrix()
+```
+
+```{r}
+mat_2m
+```
+
+* Again, sparse matrices are usually more efficient.
+
+```{r}
+library(Matrix)
+mat_2m %<>% Matrix(sparse = TRUE)
+
+mat_2m
+```
 
 
+* Matrix algebra can help to do the 1-mode projection directly in the matrix
+* Taking the dotproduct of the matrix and its transposed form will result in the 1-mode projection of mode 1 (`m %*% t(m)`)
+
+```{r}
+mat_people <- mat_2m %*% t(mat_2m)
+```
+
+```{r}
+mat_people
+```
+
+* Taking the dotproduct of the transposed matrix and its original form will result in the 1-mode projection of mode 1 (`t(m) %*% m`)
+
+```{r}
+mat_places <- t(mat_2m) %*% mat_2m
+```
+
+```{r}
+mat_places
+```
+
+* Note this is still very inefficient, since the matrix is first created in full, and then transformed to a sparse one.
+* Directly starting with a sparse matrix makes the process much more efficient
+* That makes a huge difference for large graphs
+* I here provide you an efficient function to use
 
 ```{r}
 ## Helper function
@@ -238,9 +367,46 @@ el_to_sparse_matrix <- function(data, # the edgelist
 }
 ```
 
+```{r}
+mat_people <- el_2m %>% el_to_sparse_matrix(from, to, projection = 'mode1')
+mat_places <- el_2m %>% el_to_sparse_matrix(from, to, projection = 'mode2')
+```
+
+```{r}
+mat_people
+mat_places
+```
 
 
-* creating 2-mode networks
+### Via Joins
+
+* FInally, the easiest way 
+
+```{r}
+el_people <- el_2m %>% left_join(el_2m, by = 'to') %>%
+  select(-to) %>%
+  rename(from = from.x, to = from.y) %>%
+  filter(from != to) %>%
+  count(from, to, name = 'weight')
+```
+
+```{r}
+el_people
+```
+
+
+```{r}
+el_places <- el_2m %>% left_join(el_2m, by = 'from') %>%
+  select(-from) %>%
+  rename(from = to.x, to = to.y) %>%
+  filter(from != to) %>%
+  count(from, to, name = 'weight')
+```
+
+```{r}
+el_places
+```
+
 
 # Case study: Bibliographic networks
 
@@ -262,6 +428,8 @@ I will illustrate more in detail in the following. The example is based on some 
 ## The DATA
 
 Lets imagine we do it the hard way. We download some bibliographic data, and have to do all the munging on our own, till we end up with a nice network representation. Lets go through some of these steps together.
+
+
 
 `TITLE-ABS-KEY ( "network analysis" )  AND  ( LIMIT-TO ( DOCTYPE ,  "ar" )  OR  LIMIT-TO ( DOCTYPE ,  "cp" ) )  AND  ( LIMIT-TO ( LANGUAGE ,  "English" ) )  AND  ( LIMIT-TO ( SRCTYPE ,  "j" )  OR  LIMIT-TO ( SRCTYPE ,  "p" ) )  AND  ( LIMIT-TO ( PUBYEAR ,  2021 )  OR  LIMIT-TO ( PUBYEAR ,  2020 )  OR  LIMIT-TO ( PUBYEAR ,  2019 )  OR  LIMIT-TO ( PUBYEAR ,  2018 )  OR  LIMIT-TO ( PUBYEAR ,  2017 )  OR  LIMIT-TO ( PUBYEAR ,  2016 )  OR  LIMIT-TO ( PUBYEAR ,  2015 ) ) `
 
@@ -313,6 +481,7 @@ data[2, "keywords"]
 data[2, "references"]
 ```
 
+
 ```{r}
 data %<>% 
   mutate(author = author %>% str_split(', '),
@@ -350,7 +519,9 @@ el_2m <- data %>% select(EID, references) %>% unnest(references)
 el_2m %>% head()
 ```
 
-## Bibliographic Coupling
+### Bibliographic Coupling
+
+#### Create the graph
 
 * We now need to create a projection of the 2-mode matrix to one of the modes.
 * We could do that more efficiently via using the sparse matrix calculation I did before, but for maximum clarity lets do it via a join.
@@ -376,7 +547,7 @@ el_bib %>%
 ```
 ```{r}
 el_bib %<>%
-  filter(weight >=3)
+  filter(weight >=2)
 ```
 
 ```{r}
@@ -387,10 +558,268 @@ el_bib %>%
 * Ok, great, we now can create a graph
 
 ```{r}
+g_bib <- el_bib %>% as_tbl_graph(directed = FALSE) %>% 
+  igraph::simplify() %>%
+  as_tbl_graph(directed = FALSE) 
+```
 
+```{r}
+g_bib
 ```
 
 
+```{r}
+g_bib <- g_bib %N>% 
+  filter(!node_is_isolated()) %N>% 
+  filter(percent_rank(centrality_degree(weights = weight)) >= 0.5)
+```
+
+#### Community detection
+
+* A first obvious thing to do would be a community detection
+
+```{r}
+g_bib <- g_bib %N>%
+  mutate(com = group_louvain(weights = weight)) 
+```
+
+* Now, we can also create community internal statistics, such as the within-community degree.
+* To do so, we use the powerful `morph()` functions of `tidygraph`, which basically let you apply `group_by` style operations on graph structures, where graph calculations are execited on subgraphs.
+* That let you e.g. contract nodes, work on the linegraph representation, split communities to separate graphs etc. 
+
+```{r}
+g_bib <- g_bib %N>%
+  morph(to_split, com) %>% 
+  mutate(cent_dgr_int = centrality_degree(weights = weight)) %>%
+  mutate(com_center = cent_dgr_int == max(cent_dgr_int)) %>%
+  unmorph() 
+```
+
+
+```{r}
+g_bib %N>%
+  as_tibble() %>%
+  count(com, sort = TRUE)
+```
+
+* Ok, seems like there are too many communities to do something meaningful. 
+* Lets restrict it to only only communities with more than 20 members.
+
+```{r}
+g_bib <- g_bib %N>%
+  add_count(com, name = 'com_n') %>%
+  mutate(com = ifelse(com_n >= 20, com, NA) ) %>%
+  select(-com_n)  
+```
+
+```{r}
+g_bib <- g_bib %N>%
+  left_join(data %>% select(EID, title, journal, year, citations), by = c('name' = 'EID')) %>%
+  mutate(title = title %>% str_trunc(30))
+```
+
+
+
+Lets take a look at the network.
+
+
+
+
+```{r, fig.height=7.5, fig.width=7.5}
+set.seed(1337)
+g_bib %>%
+  ggraph(layout = 'graphopt') + 
+  geom_edge_link(aes(width = weight,
+                     color = .N()$com[from] %>% as.factor()), # Notice that
+                alpha = 0.5, 
+                show.legend = FALSE) +
+      scale_edge_width(range = c(0.5, 2)) + 
+  geom_node_point(aes(color = com %>% as.factor(),
+                      size = centrality_degree(weight = weight), 
+                      alpha = citations)) +
+  geom_node_text(aes(label = title, filter = com_center == TRUE), repel = TRUE) +
+  theme_graph()   + 
+  theme(legend.position = 'bottom') + 
+  labs(title = 'Bibliographic Coupling Network',
+       subtitle = 'Network Analysis 2015-2020',
+       color = 'Community',
+       size = 'Degree',
+       alpha = 'Citations') 
+```
+
+
+
+```{r}
+data %>%
+  select(EID, author, year, title, journal, citations) %>%
+  inner_join(g_bib %N>% as_tibble() %>% select(name, com, cent_dgr_int), by = c('EID' = 'name')) %>%
+  group_by(com) %>%
+    arrange(desc(cent_dgr_int)) %>%
+    slice(1:10) %>%
+  ungroup() %>%
+  select(com, title, cent_dgr_int, citations) %>%
+  mutate(title = title %>% str_trunc(75))
+```
+
+## Co-Citation Analysis
+
+* We can now do exactly the same for the reference (=co-citation) network
+
+#### Create the graph
+
+```{r}
+el_cit <- el_2m %>% left_join(el_2m, by = 'EID') %>%
+  rename(from = references.x, 
+         to = references.y) %>%
+  select(from, to) %>%
+  filter(from != to) %>%
+  count(from, to, name = 'weight')
+```
+
+```{r}
+el_cit %<>%
+  filter(weight >=3,
+         !str_detect(from, '\\:\\, '),
+         !str_detect(to, '\\:\\, '),
+         str_length(from) > 50,
+         str_length(to) > 50
+         )
+```
+
+```{r}
+el_cit %>% 
+  ggplot(aes(x = weight)) +
+  geom_histogram()
+```
+```{r}
+g_cit <- el_cit %>% as_tbl_graph(directed = FALSE) %>% 
+  igraph::simplify() %>%
+  as_tbl_graph(directed = FALSE)  %N>% 
+  filter(!node_is_isolated()) %N>% 
+  filter(percent_rank(centrality_degree(weights = weight)) >= 0.5) %N>%
+  mutate(com = group_louvain(weights = weight)) %N>%
+  morph(to_split, com) %>% 
+    mutate(cent_dgr_int = centrality_degree(weights = weight)) %>%
+    mutate(com_center = cent_dgr_int == max(cent_dgr_int)) %>%
+  unmorph() 
+```
+
+
+```{r}
+g_cit %N>%
+  as_tibble() %>%
+  count(com, sort = TRUE)
+```
+
+* Ok, seems like there are too many communities to do something meaningful. 
+* Lets restrict it to only only communities with more than 20 members.
+
+```{r}
+g_cit <- g_cit %N>%
+  add_count(com, name = 'com_n') %>%
+  mutate(com = ifelse(com_n >= 10, com, NA) ) %>%
+  select(-com_n)  
+```
+
+Lets take a look at the network.
+
+```{r, fig.height=7.5, fig.width=7.5}
+set.seed(1337)
+g_cit %>%
+  ggraph(layout = 'graphopt') + 
+  geom_edge_link(aes(width = weight,
+                     color = .N()$com[from] %>% as.factor()), # Notice that
+                alpha = 0.5, 
+                show.legend = FALSE) +
+      scale_edge_width(range = c(0.5, 2)) + 
+  geom_node_point(aes(color = com %>% as.factor(),
+                      size = centrality_degree(weight = weight), 
+                      alpha = cent_dgr_int)) +
+#  geom_node_text(aes(label = name, filter = com_center == TRUE), repel = TRUE) +
+  theme_graph()   + 
+  theme(legend.position = 'bottom') + 
+  labs(title = 'Bibliographic Coupling Network',
+       subtitle = 'Network Analysis 2015-2020',
+       color = 'Community',
+       size = 'Degree',
+       alpha = 'Citations') 
+```
+
+```{r}
+g_cit %N>%
+  as_tibble() %>%
+  group_by(com) %>%
+    arrange(desc(cent_dgr_int)) %>%
+    slice(1:10) %>%
+  ungroup() %>%
+  mutate(name = name %>% str_trunc(75)) %>%
+  select(com, name, cent_dgr_int)
+```
+
+
+## Joint analysis
+
+```{r}
+el_joint <- el_2m %>%
+  inner_join(g_bib %N>% as_tibble() %>% select(name, com) %>% drop_na(), by = c('EID' = 'name')) %>%
+  inner_join(g_cit %N>% as_tibble() %>% select(name, com) %>% drop_na(), by = c('references' = 'name')) %>%
+  rename(from = com.x, to = com.y) %>%
+  count(from, to, name = 'weight')
+```
+
+```{r}
+el_joint
+```
+
+```{r}
+el_joint %<>%
+  mutate(from = paste('bib', from, sep = '_'),
+         to = paste('cit', to, sep = '_'))
+```
+
+```{r}
+g_joint <- el_joint %>% as_tbl_graph(directed = TRUE) 
+```
+
+```{r}
+g_joint <- g_joint %N>%
+  mutate(type = name %>% str_detect('bib'))
+```
+
+
+```{r}
+g_joint %>% ggraph("bipartite") + 
+  geom_edge_link(alpha = 0.25) + 
+  geom_node_point(aes(col = type, size = centrality_degree(mode = 'all'))) + 
+  geom_node_text(aes(label = name), repel = TRUE) + 
+  theme_graph() +
+  theme(legend.position = 'none')
+```
+
+
+# Endnotes
+
+### Complementary exercises
+
+Please do **Exercise 1** in the corresponding section on `Github`. This time you are about to do your own bibliographic analysis!
+
+### References
+
+* Rakas, M., & Hain, D. S. (2019). The state of innovation system research: What happens beneath the surface?. Research Policy, 45 (9). DOI: https://doi.org/10.1016/j.respol.2019.04.011
+
+
+### More info
+You can find more info about:
+
+* `tidygraph` [here](https://tidygraph.data-imaginist.com/)
+* `ggraph` [here](https://ggraph.data-imaginist.com/)
+* `bibliometrix` [here](http://www.bibliometrix.org/)
+
+
+### Session info
+```{r}
+sessionInfo()
+```
 
 
 
