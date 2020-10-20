@@ -547,6 +547,7 @@ el_bib %>%
   ggplot(aes(x = weight)) +
   geom_histogram()
 ```
+
 ```{r}
 el_bib %<>%
   filter(weight >=2)
@@ -591,8 +592,8 @@ g_bib <- g_bib %N>%
 ```{r}
 g_bib <- g_bib %N>%
   morph(to_split, com) %>% 
-  mutate(cent_dgr_int = centrality_degree(weights = weight)) %>%
-  mutate(com_center = cent_dgr_int == max(cent_dgr_int)) %>%
+    mutate(cent_dgr_int = centrality_degree(weights = weight)) %>%
+    mutate(com_center = cent_dgr_int == max(cent_dgr_int)) %>%
   unmorph() 
 ```
 
@@ -622,7 +623,7 @@ g_bib <- g_bib %N>%
 
 * Lets take a look at the network.
 
-```{r, fig.height=7.5, fig.width=7.5}
+```{r, fig.height=12.5, fig.width=12.5}
 set.seed(1337)
 g_bib %>%
   ggraph(layout = 'graphopt') + 
@@ -688,6 +689,7 @@ el_cit %>%
   ggplot(aes(x = weight)) +
   geom_histogram()
 ```
+
 ```{r}
 g_cit <- el_cit %>% as_tbl_graph(directed = FALSE) %>% 
   igraph::simplify() %>%
@@ -720,7 +722,7 @@ g_cit <- g_cit %N>%
 
 Lets take a look at the network.
 
-```{r, fig.height=7.5, fig.width=7.5}
+```{r, fig.height=12.5, fig.width=12.5}
 set.seed(1337)
 g_cit %N>%
   mutate(name = name %>% str_trunc(75)) %>%
