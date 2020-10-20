@@ -17,7 +17,7 @@
 
 
 * Application: Bipartite (2-mode) Networks
-   * R: Video [1: Bipartite NW structures](https://www.loom.com/share/7668a71c95f941a1a17148e45ba83689) [1: BApplication Bibliometri Networks]() [Html](https://sds-aau.github.io/SDS-master/M2/notebooks/network_analysis_application_bipartite.nb.html) [Colab comming soon](network_analysis_application_bipartite.ipynb)
+   * R: Video [1: Bipartite NW structures](https://www.loom.com/share/7668a71c95f941a1a17148e45ba83689) [2: Application Bibliometric Networks]() [Html](https://www.loom.com/share/2fdf16a87a9d4eac81d50cef0b55ae3b?from_recorder=1) [Colab comming soon](network_analysis_application_bipartite.ipynb)
       * Exercise R: [Bibliometric Networks](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/exercises/network_analysis_application_bipartit_ex1.ipynb)
 
 
