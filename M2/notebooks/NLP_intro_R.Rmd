@@ -1,0 +1,191 @@
+---
+title: 'Introduction to Natural-language-Processing (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+```
+
+### This session
+
+In this applied session, you will:
+
+1. xxx
+2. xxx
+3. xxx
+
+
+# Refresher: Basics of String Manupilation
+
+We start by taking a piece of text and turning it into something that carries the meaning of the initial text but is less noisy and thus perhaps easier to "understand" by a computer.
+
+```{r}
+text <- "The Eton-educated, non-binary British Iraqi had always struggled with their identity, until they discovered drag. Yet the 29 year old says the performances come at a high price"
+```
+
+```{r}
+# Transforming to lower case
+text %>% str_to_lower()
+
+```
+
+```{r}
+# Split by '.' (=sentence)
+text %>% str_split('\\.')
+```
+
+```{r}
+text %>% str_replace_all('o', 'O')
+```
+
+```{r}
+# Split by ' ' (=word)
+text %>% str_remove_all('[[:punct:]]') %>% str_split(' ') %>% unlist()
+```
+
+```{r}
+text %>% str_to_lower() %>% str_remove_all('[[:punct:]]') %>% str_split(' ') 
+```
+
+# The R NLP ecosystem 
+
+* Most language analysis approaches are based on the analysis of texts word-by-word. 
+* Here, their order might matter (word sequence models) or not (bag-of-words models), but the smallest unit of analysis is usually the word. 
+* This is usually done in context of the document the word appeared in. Therefore, on first glance three types datastructures make sense:
+
+1. **Tidy:**  Approach, where data is served in a 2-column document-word format (e.g., `tidytext`)
+2. **Token lists:** Creation of special objects, saved as document-token lists or corpus (e.g., `tm`, `quanteda`)
+3. **Matrix:** Long approach, where data is served as document-term matrix, term-frequency matrix, etc.
+
+* Different forms of analysis (and the packages used therefore) favor different structures, so we need to be fluent in transfering original raw-text in * These formats, as well as switching between them. (for more infos, check [here](https://www.tidytextmining.com/dtm.html)).
+
+![](https://sds-aau.github.io/SDS-master/00_media/nlp_tidyworkflow.png)
+
+## Tidy Text Formats
+
+* While we will for later applications 
+
+```{r}
+library(tidytext)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+* Overall, in NLP we are trying to represent meaning structure. 
+* That means that we want to focus on the most important and "meaning-bearing elements" in text, while reducing noise. 
+* Words such as "and", "have", "the" may have central syntactic functions but are not particularly important from a semantic perspective.
+
+```{r}
+# Defining stopwords
+
+stopwords_en <- c('i', 'me', 'my', 'myself', 'we', 'our', 'ours', 
+                'ourselves', 'you', "you're", "you've", "you'll", 
+                "you'd", 'your', 'yours', 'yourself', 'yourselves', 
+                'he', 'him', 'his', 'himself', 'she', "she's", 'her', 
+                'hers', 'herself', 'it', "it's", 'its', 'itself', 
+                'they', 'them', 'their', 'theirs', 'themselves', 'what', 
+                'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 
+                'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 
+                'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 
+                'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 
+                'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 
+                'between', 'into', 'through', 'during', 'before', 'after', 'above', 
+                'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 
+                'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 
+                'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 
+                'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 
+                'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 
+                'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 
+                'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', 
+                "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', 
+                "isn't", 'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 
+                'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 
+                'won', "won't", 'wouldn', "wouldn't")
+```
+
+
+
+
+![](https://sds-aau.github.io/SDS-master/00_media/xxx.jpg)
+
+```{r}
+data <- read_csv('https://sds-aau.github.io/SDS-master/00_data/xxx.csv') 
+```
+
+
+
+
+# Endnotes
+
+## Your turn
+Please do **Exercise 1** in the corresponding section on `Github`.
+
+### Packages & Ecosystem
+
+* tidygraph [here](https://tidygraph.data-imaginist.com/)
+* ggraph [here](https://www.data-imaginist.com/2017/announcing-ggraph/)
+
+### Suggestions for further study
+
+* DataCamp (!All courses have somewhat outdated ecosystems)
+   * [Network Analysis in R](https://learn.datacamp.com/courses/network-analysis-in-r): Good for some of the basics                   
+
+  
+### Session Info
+
+```{r}
+sessionInfo()
+```
+
+
+
+
+
