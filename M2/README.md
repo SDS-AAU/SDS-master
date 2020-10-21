@@ -15,9 +15,20 @@
    * R: Video [1: Node & Edge Visualization](https://www.loom.com/share/a76f6ef6a09e4c8280e306c5458ca1bd) [2: Graph Layouts](https://www.loom.com/share/91375f4f85df4ce2b6f199f6b52390c2) [Html](https://sds-aau.github.io/SDS-master/M2/notebooks/network_analysis_application_visualization.nb.html) [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/notebooks/network_analysis_application_visualization.ipynb)
       * Exercises R: [1: Directed NWs](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/exercises/network_analysis_application_directed_ex1.ipynb)
 
-
 * Application: Bipartite (2-mode) Networks
-   * R: Video [comming soon]() [Html](https://sds-aau.github.io/SDS-master/M2/notebooks/network_analysis_application_bipartite.nb.html) [Colab comming soon](network_analysis_application_bipartite.ipynb)
+   * R: Video [1: Bipartite NW structures](https://www.loom.com/share/7668a71c95f941a1a17148e45ba83689) [2: Application Bibliometric Networks]() [Html](https://www.loom.com/share/2fdf16a87a9d4eac81d50cef0b55ae3b?from_recorder=1) [Colab](network_analysis_application_bipartite.ipynb)
       * Exercise R: [Bibliometric Networks](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/exercises/network_analysis_application_bipartit_ex1.ipynb)
+
+## Part II: Natural Language Processing
+
+* Theory: 
+   * [M2: NLP intro - level of analysis](https://www.loom.com/share/289e4e0e91c24e759ae84a11cb06f78c?sharedAppSource=personal_library)
+   * [M2: NLP intro - Text representation](https://www.loom.com/share/d97ba6e1e1a344899c83616b290cd888?sharedAppSource=personal_library)
+   * [M2: NLP intro - From BoW to Topic Modeling and Embeddings](https://www.loom.com/share/2a7b0791c906457cab0c57e0618dc68b?sharedAppSource=personal_library)
+   * [History of NLP in Industry - Yoav Goldberg: The missing elements in NLP (spaCy IRL 2019) - YouTube](https://youtu.be/e12danHhlic)
+
+
+* Application: String Manipulation
+   * Python: [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/notebooks/NLP_intro_py.ipynb) [Video 1](https://www.loom.com/share/44d9ad8917fb4b9585110c507640ff3c?sharedAppSource=personal_library) [Video 2](https://www.loom.com/share/109433b5063d445aa2dd1b19d263afee?sharedAppSource=personal_library)
 
 
