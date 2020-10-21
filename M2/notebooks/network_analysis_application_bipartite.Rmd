@@ -422,16 +422,18 @@ Interestingly, different projections of this 2-mode network give the whole resul
 
 ![](https://sds-aau.github.io/SDS-master/00_media/networks_biblio.png){width=500px}
 
+* We will here do a brief bibliometric network analysis.
+* While there exist specialized packages to do it more conveniently (eg. [bibliometrix](https://www.bibliometrix.org/)), we will for mximum clarity construct everything somewhat by hand.
 
-I will illustrate more in detail in the following. The example is based on some own work.[^1]
-
-## The DATA
-
-Lets imagine we do it the hard way. We download some bibliographic data, and have to do all the munging on our own, till we end up with a nice network representation. Lets go through some of these steps together.
-
+* I will illustrate more in detail in the following. The example is based on some own work, where i here in  very simple way recreate some parts of the analysis. 
+* Rakas, M., & Hain, D. S. (2019). The state of innovation system research: What happens beneath the surface?. Research Policy, 45 (9). DOI: https://doi.org/10.1016/j.respol.2019.04.011
 
 
-`TITLE-ABS-KEY ( "network analysis" )  AND  ( LIMIT-TO ( DOCTYPE ,  "ar" )  OR  LIMIT-TO ( DOCTYPE ,  "cp" ) )  AND  ( LIMIT-TO ( LANGUAGE ,  "English" ) )  AND  ( LIMIT-TO ( SRCTYPE ,  "j" )  OR  LIMIT-TO ( SRCTYPE ,  "p" ) )  AND  ( LIMIT-TO ( PUBYEAR ,  2021 )  OR  LIMIT-TO ( PUBYEAR ,  2020 )  OR  LIMIT-TO ( PUBYEAR ,  2019 )  OR  LIMIT-TO ( PUBYEAR ,  2018 )  OR  LIMIT-TO ( PUBYEAR ,  2017 )  OR  LIMIT-TO ( PUBYEAR ,  2016 )  OR  LIMIT-TO ( PUBYEAR ,  2015 ) ) `
+## The Data
+
+* We will use bibliometrix data on articles from Scopus on recent publications containing the term `network analysis` in their title, abstract, or keywords. 
+* To do so, we first use the following search string: `TITLE-ABS-KEY ( "network analysis" )  AND  ( LIMIT-TO ( DOCTYPE ,  "ar" )  OR  LIMIT-TO ( DOCTYPE ,  "cp" ) )  AND  ( LIMIT-TO ( LANGUAGE ,  "English" ) )  AND  ( LIMIT-TO ( SRCTYPE ,  "j" )  OR  LIMIT-TO ( SRCTYPE ,  "p" ) )  AND  ( LIMIT-TO ( PUBYEAR ,  2021 )  OR  LIMIT-TO ( PUBYEAR ,  2020 )  OR  LIMIT-TO ( PUBYEAR ,  2019 )  OR  LIMIT-TO ( PUBYEAR ,  2018 )  OR  LIMIT-TO ( PUBYEAR ,  2017 )  OR  LIMIT-TO ( PUBYEAR ,  2016 )  OR  LIMIT-TO ( PUBYEAR ,  2015 ) ) `
+* We sort the results by citations, and download the 2k most cited ones as `csv`. We select al possible fields to download.
 
 ```{r}
 rm(list=ls())
@@ -545,6 +547,7 @@ el_bib %>%
   ggplot(aes(x = weight)) +
   geom_histogram()
 ```
+
 ```{r}
 el_bib %<>%
   filter(weight >=2)
@@ -574,7 +577,6 @@ g_bib <- g_bib %N>%
   filter(percent_rank(centrality_degree(weights = weight)) >= 0.5)
 ```
 
-#### Community detection
 
 * A first obvious thing to do would be a community detection
 
@@ -590,8 +592,8 @@ g_bib <- g_bib %N>%
 ```{r}
 g_bib <- g_bib %N>%
   morph(to_split, com) %>% 
-  mutate(cent_dgr_int = centrality_degree(weights = weight)) %>%
-  mutate(com_center = cent_dgr_int == max(cent_dgr_int)) %>%
+    mutate(cent_dgr_int = centrality_degree(weights = weight)) %>%
+    mutate(com_center = cent_dgr_int == max(cent_dgr_int)) %>%
   unmorph() 
 ```
 
@@ -619,13 +621,9 @@ g_bib <- g_bib %N>%
 ```
 
 
+* Lets take a look at the network.
 
-Lets take a look at the network.
-
-
-
-
-```{r, fig.height=7.5, fig.width=7.5}
+```{r, fig.height=12.5, fig.width=12.5}
 set.seed(1337)
 g_bib %>%
   ggraph(layout = 'graphopt') + 
@@ -691,6 +689,7 @@ el_cit %>%
   ggplot(aes(x = weight)) +
   geom_histogram()
 ```
+
 ```{r}
 g_cit <- el_cit %>% as_tbl_graph(directed = FALSE) %>% 
   igraph::simplify() %>%
@@ -723,9 +722,10 @@ g_cit <- g_cit %N>%
 
 Lets take a look at the network.
 
-```{r, fig.height=7.5, fig.width=7.5}
+```{r, fig.height=12.5, fig.width=12.5}
 set.seed(1337)
-g_cit %>%
+g_cit %N>%
+  mutate(name = name %>% str_trunc(75)) %>%
   ggraph(layout = 'graphopt') + 
   geom_edge_link(aes(width = weight,
                      color = .N()$com[from] %>% as.factor()), # Notice that
@@ -735,7 +735,7 @@ g_cit %>%
   geom_node_point(aes(color = com %>% as.factor(),
                       size = centrality_degree(weight = weight), 
                       alpha = cent_dgr_int)) +
-#  geom_node_text(aes(label = name, filter = com_center == TRUE), repel = TRUE) +
+  geom_node_text(aes(label = name, filter = com_center == TRUE & percent_rank(cent_dgr_int) > 0.80 ), repel = TRUE) +
   theme_graph()   + 
   theme(legend.position = 'bottom') + 
   labs(title = 'Bibliographic Coupling Network',
@@ -805,15 +805,27 @@ Please do **Exercise 1** in the corresponding section on `Github`. This time you
 
 ### References
 
+Paper mentioned in the text
+
 * Rakas, M., & Hain, D. S. (2019). The state of innovation system research: What happens beneath the surface?. Research Policy, 45 (9). DOI: https://doi.org/10.1016/j.respol.2019.04.011
 
+Other own work dealing with 2-mode networks
 
-### More info
+* Hain, Daniel S., and Roman Jurowetzki. "Incremental by Design? On the Role of Incumbents in Technology Niches." In Foundations of Economic Change, pp. 299-332. Springer, Cham, 2017.
+* Hain, D., Buchmann, T., Kudic, M., & Müller, M. (2018). Endogenous dynamics of innovation networks in the German automotive industry: analysing structural network evolution using a stochastic actor-oriented approach. International Journal of Computational Economics and Econometrics, 8(3-4), 325-344.
+* Jurowetzki, Roman, and Daniel S. Hain. "Mapping the (r-) evolution of technological fields–a semantic network approach." Social Informatics, pp. 359-383. Springer, Cham, 2014.
+
+### Packages & Ecosystem
+
 You can find more info about:
 
 * `tidygraph` [here](https://tidygraph.data-imaginist.com/)
 * `ggraph` [here](https://ggraph.data-imaginist.com/)
 * `bibliometrix` [here](http://www.bibliometrix.org/)
+
+### Other Sources
+
+* An example notebook where I use the ideas presented hee for a simple analysis of technological relatedness can be found [here](https://rawcdn.githack.com/daniel-hain/SDC_IM/9bf8683ffeea703e50e5506ac0eb3dd7544621c3/S3_2_Economic_complexity.html)
 
 
 ### Session info
