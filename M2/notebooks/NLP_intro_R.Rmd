@@ -91,65 +91,66 @@ text %>% str_to_lower() %>% str_remove_all('[[:punct:]]') %>% str_split(' ')
 
 ## Tidy Text Formats
 
-* While we will for later applications 
+* While there exist other ecosystems to do txt analysis (e.g., `tm`, `quanteda`), I will here almost exclusively use `tidytext`, which is very simple yet powerful, very well documented, and works very neathly with `tidymodels` and the rest of the `tidyverse` ecosystem.
+
 
 ```{r}
 library(tidytext)
 ```
 
+* While we will for later applications we will use different formats, we here will limit ourselves to word token, which can do most of the simple jobs.
+* Here, we apply tidy principles to text, make word-token per document our unit of analysis.
+* Therefore, every row repreesents a word per document.
+This sounds like a lot of redundancy, but makes it very easy to work with compared to more complez matrix and list formats. Here, we can do our usual sumarries and visualizations pretty much out-of-the-box.
 
+```{r}
+# Tidytext wants a tibble as point of departure
+text_tbl <- tibble(id = 1, text = text)
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```{r}
+# We now unnest the tokens. Notice it is by default deleting all punctuation and transforming the text to lower chars.
+text_tidy <- text_tbl %>% unnest_tokens(word, text, token = 'words')
+```
 
 * Overall, in NLP we are trying to represent meaning structure. 
 * That means that we want to focus on the most important and "meaning-bearing elements" in text, while reducing noise. 
 * Words such as "and", "have", "the" may have central syntactic functions but are not particularly important from a semantic perspective.
 
 ```{r}
-# Defining stopwords
-
-stopwords_en <- c('i', 'me', 'my', 'myself', 'we', 'our', 'ours', 
-                'ourselves', 'you', "you're", "you've", "you'll", 
-                "you'd", 'your', 'yours', 'yourself', 'yourselves', 
-                'he', 'him', 'his', 'himself', 'she', "she's", 'her', 
-                'hers', 'herself', 'it', "it's", 'its', 'itself', 
-                'they', 'them', 'their', 'theirs', 'themselves', 'what', 
-                'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 
-                'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 
-                'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 
-                'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 
-                'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 
-                'between', 'into', 'through', 'during', 'before', 'after', 'above', 
-                'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 
-                'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 
-                'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 
-                'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 
-                'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 
-                'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 
-                'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', 
-                "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', 
-                "isn't", 'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 
-                'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 
-                'won', "won't", 'wouldn', "wouldn't")
+# Tidytext comes with a stopword lexicon
+stop_words
 ```
+
+```{r}
+text_tidy %<>%
+  anti_join(stop_words, by = 'word')
+```
+
+```{r}
+text_tidy
+```
+
+
+```{r}
+# We now unnest the tokens. Notice it is by default deleting all punctuation and transforming the text to lower chars.
+sentences_tidy <- text_tbl %>% unnest_tokens(word, text, token = 'sentences')
+```
+
+```{r}
+sentences_tidy
+```
+
+## Your turn!
+
+![](https://media.giphy.com/media/9rwFfmB2qJ0mEsmkfj/giphy.gif)
+
+Take the following text and transform it into a list of lists with with each element being a tokenized sentence. Remove stopwords, lower all tokens and keep only alpha-numeric tokens.
+
+`I’ve been called many things in my life, but never an optimist. That was fine by me. I believed pessimists lived in a constant state of pleasant surprise: if you always expected the worst, things generally turned out better than you imagined. The only real problem with pessimism, I figured, was that too much of it could accidentally turn you into an optimist.`
+
+source: https://www.theguardian.com/global/2019/nov/21/glass-half-full-how-i-learned-to-be-an-optimist-in-a-week
+
 
 
 
