@@ -30,5 +30,5 @@
 
 * Application: String Manipulation
    * Python: [Colab](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/notebooks/NLP_intro_py.ipynb) [Video 1](https://www.loom.com/share/44d9ad8917fb4b9585110c507640ff3c?sharedAppSource=personal_library) [Video 2](https://www.loom.com/share/109433b5063d445aa2dd1b19d263afee?sharedAppSource=personal_library)
-   * R: Video [Coming soon] [Html](https://sds-aau.github.io/SDS-master/M2/notebooks/NLP_intro_R.nb.html) [Colab comming soon](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/notebooks/NLP_intro_R.ipynb)
+   * R: Video [1: Introduction to text analysis in R](https://www.loom.com/share/5648ecba2c26429aaebcda7ba8ffb83a?from_recorder=1) [Html](https://sds-aau.github.io/SDS-master/M2/notebooks/NLP_intro_R.nb.html) [Colab comming soon](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/notebooks/NLP_intro_R.ipynb)
 
