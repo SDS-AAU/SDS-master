@@ -2949,8 +2949,81 @@ library(magrittr) # For extra-piping operators (eg. %&lt;&gt;%)</code></pre>
 <pre class="r"><code>library(tidytext)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<div id="download-the-data" class="section level1">
+<h1>Download the data</h1>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBkb3dubG9hZCBhbmQgb3BlbiBzb21lIFRydW1wIHR3ZWV0cyBmcm9tIHRydW1wX3R3ZWV0X2RhdGFfYXJjaGl2ZVxubGlicmFyeShqc29ubGl0ZSlcbnRtcCA8LSB0ZW1wZmlsZSgpXG5kb3dubG9hZC5maWxlKFwiaHR0cHM6Ly9naXRodWIuY29tL1NEUy1BQVUvU0RTLW1hc3Rlci9yYXcvbWFzdGVyL00yL2RhdGEvcG9sX3R3ZWV0cy5nelwiLCB0bXApXG5gYGAifQ== -->
+<pre class="r"><code># download and open some Trump tweets from trump_tweet_data_archive
+library(jsonlite)
+tmp &lt;- tempfile()
+download.file(&quot;https://github.com/SDS-AAU/SDS-master/raw/master/M2/data/pol_tweets.gz&quot;, tmp)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoidHJ5aW5nIFVSTCAnaHR0cHM6Ly9naXRodWIuY29tL1NEUy1BQVUvU0RTLW1hc3Rlci9yYXcvbWFzdGVyL00yL2RhdGEvcG9sX3R3ZWV0cy5neidcbkNvbnRlbnQgdHlwZSAnYXBwbGljYXRpb24vb2N0ZXQtc3RyZWFtJyBsZW5ndGggNzM0MjA4NSBieXRlcyAoNy4wIE1CKVxuPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT1cbmRvd25sb2FkZWQgNy4wIE1CXG4ifQ== -->
+<pre><code>trying URL &#39;https://github.com/SDS-AAU/SDS-master/raw/master/M2/data/pol_tweets.gz&#39;
+Content type &#39;application/octet-stream&#39; length 7342085 bytes (7.0 MB)
+==================================================
+downloaded 7.0 MB</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudHdlZXRzX3JhdyA8LSBzdHJlYW1faW4oZ3pmaWxlKHRtcCwgXCJwb2xfdHdlZXRzXCIpKVxuYGBgIn0= -->
+<pre class="r"><code>tweets_raw &lt;- stream_in(gzfile(tmp, &quot;pol_tweets&quot;))</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiXG4gRm91bmQgMSByZWNvcmRzLi4uXG4gSW1wb3J0ZWQgMSByZWNvcmRzLiBTaW1wbGlmeWluZy4uLlxuIn0= -->
+<pre><code>
+ Found 1 records...
+ Imported 1 records. Simplifying...</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudHdlZXRzX3JhdyAlPiUgZ2xpbXBzZSgpXG5gYGAifQ== -->
+<pre class="r"><code>tweets_raw %&gt;% glimpse()</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiUm93czogMVxuQ29sdW1uczogMlxuJCB0ZXh0ICAgPGRmWyw1MDAwMF0+IDxkYXRhLmZyYW1lWzEgeCA1MDAwMF0+XG4kIGxhYmVscyA8ZGZbLDUwMDAwXT4gPGRhdGEuZnJhbWVbMSB4IDUwMDAwXT5cbiJ9 -->
+<pre><code>Rows: 1
+Columns: 2
+$ text   &lt;df[,50000]&gt; &lt;data.frame[1 x 50000]&gt;
+$ labels &lt;df[,50000]&gt; &lt;data.frame[1 x 50000]&gt;</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudHdlZXRzIDwtIHRpYmJsZShJRCA9IGNvbG5hbWVzKHR3ZWV0c19yYXdbWzFdXSksIFxuICAgICAgICAgICAgICAgICB0ZXh0ID0gdHdlZXRzX3Jhd1tbMV1dICU+JSBhcy5jaGFyYWN0ZXIoKSwgXG4gICAgICAgICAgICAgICAgIGxhYmVscyA9IHR3ZWV0c19yYXdbWzJdXSAlPiUgYXMubG9naWNhbCgpKVxuYGBgIn0= -->
+<pre class="r"><code>tweets &lt;- tibble(ID = colnames(tweets_raw[[1]]), 
+                 text = tweets_raw[[1]] %&gt;% as.character(), 
+                 labels = tweets_raw[[2]] %&gt;% as.logical())</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudHdlZXRzICU+JSBnbGltcHNlKClcbmBgYCJ9 -->
+<pre class="r"><code>tweets %&gt;% glimpse()</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiUm93czogNTAsMDAwXG5Db2x1bW5zOiAzXG4kIElEICAgICA8Y2hyPiBcIjM0MDY3NVwiLCBcIjI4OTQ5MlwiLCBcIjM3MTA4OFwiLCBcIjgyMjEyXCIsIFwiNDc2MDQ3XCIsIFwiMjIwNzQxXCIsIFwiMzc5MDc0XCIsIFwiNjMzNzMxXCIsIFwiMTAzODA1XCIsIFwiNDAxMjc3XCIsIFwiNDkzNDMzXCIsIFwiNTc4ODE0XCIsIFwiNTcwNDI1XCIsIFwiM+KAplxuJCB0ZXh0ICAgPGNocj4gXCJSVCBAR3JlZW5CZXJldEZvdW5kIFRvZGF5IHdlIHJlbWVtYmVyIFNndC4gMXN0IENsYXNzIFJ5YW4gSi4gU2F2YXJkIGtpbGxlZCBpbiBhY3Rpb24gb24gdGhpcyBkYXkgZWlnaHQgeWVhcnMgYWdvLiBTRkMgU2F2YXJkIHdhcyBh4oCmXG4kIGxhYmVscyA8bGdsPiBGQUxTRSwgVFJVRSwgVFJVRSwgRkFMU0UsIEZBTFNFLCBUUlVFLCBUUlVFLCBUUlVFLCBUUlVFLCBGQUxTRSwgVFJVRSwgRkFMU0UsIEZBTFNFLCBGQUxTRSwgVFJVRSwgVFJVRSwgVFJVRSwgRkFMU0UsIFRSVUUsIFRSVUUsIFRSVeKAplxuIn0= -->
+<pre><code>Rows: 50,000
+Columns: 3
+$ ID     &lt;chr&gt; &quot;340675&quot;, &quot;289492&quot;, &quot;371088&quot;, &quot;82212&quot;, &quot;476047&quot;, &quot;220741&quot;, &quot;379074&quot;, &quot;633731&quot;, &quot;103805&quot;, &quot;401277&quot;, &quot;493433&quot;, &quot;578814&quot;, &quot;570425&quot;, &quot;3…
+$ text   &lt;chr&gt; &quot;RT @GreenBeretFound Today we remember Sgt. 1st Class Ryan J. Savard killed in action on this day eight years ago. SFC Savard was a…
+$ labels &lt;lgl&gt; FALSE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRU…</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudHdlZXRzICU8PiVcbiAgZmlsdGVyKCEodGV4dCAlPiUgc3RyX2RldGVjdCgnXlJUJykpKVxuYGBgIn0= -->
+<pre class="r"><code>tweets %&lt;&gt;%
+  filter(!(text %&gt;% str_detect(&#39;^RT&#39;)))</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+</div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAnTkxQIHdvcmtzaG9wIC0gRXhwbG9yaW5nIFByZXNpZGVudGlhbCBEZWJhdGUgb24gdHdpdHRlcicKYXV0aG9yOiAiRGFuaWVsIFMuIEhhaW4gKGRzaEBidXNpbmVzcy5hYXUuZGspIgpkYXRlOiAiVXBkYXRlZCBgciBmb3JtYXQoU3lzLnRpbWUoKSwgJyVCICVkLCAlWScpYCIKb3V0cHV0OgogIGh0bWxfbm90ZWJvb2s6CiAgICBjb2RlX2ZvbGRpbmc6IHNob3cKICAgIGRmX3ByaW50OiBwYWdlZAogICAgdG9jOiB0cnVlCiAgICB0b2NfZGVwdGg6IDIKICAgIHRvY19mbG9hdDoKICAgICAgY29sbGFwc2VkOiBmYWxzZQogICAgdGhlbWU6IGZsYXRseQotLS0KCmBgYHtyIHNldHVwLCBpbmNsdWRlPUZBTFNFfQojIyMgR2VuZXJpYyBwcmVhbWJsZQpybShsaXN0PWxzKCkpClN5cy5zZXRlbnYoTEFORyA9ICJlbiIpICMgRm9yIGVuZ2xpc2ggbGFuZ3VhZ2UKb3B0aW9ucyhzY2lwZW4gPSA1KSAjIFRvIGRlYWN0aXZhdGUgYW5ub3lpbmcgc2NpZW50aWZpYyBudW1iZXIgbm90YXRpb24KCiMjIyBLbml0ciBvcHRpb25zCmxpYnJhcnkoa25pdHIpICMgRm9yIGRpc3BsYXkgb2YgdGhlIG1hcmtkb3duCmtuaXRyOjpvcHRzX2NodW5rJHNldCh3YXJuaW5nPUZBTFNFLAogICAgICAgICAgICAgICAgICAgICBtZXNzYWdlPUZBTFNFLAogICAgICAgICAgICAgICAgICAgICBjb21tZW50PUZBTFNFLCAKICAgICAgICAgICAgICAgICAgICAgZmlnLmFsaWduPSJjZW50ZXIiCiAgICAgICAgICAgICAgICAgICAgICkKYGBgCgpgYGB7cn0KIyMjIExvYWQgc3RhbmRhcmRwYWNrYWdlcwpsaWJyYXJ5KHRpZHl2ZXJzZSkgIyBDb2xsZWN0aW9uIG9mIGFsbCB0aGUgZ29vZCBzdHVmZiBsaWtlIGRwbHlyLCBnZ3Bsb3QyIGVjdC4KbGlicmFyeShtYWdyaXR0cikgIyBGb3IgZXh0cmEtcGlwaW5nIG9wZXJhdG9ycyAoZWcuICU8PiUpCmBgYAoKYGBge3J9CmxpYnJhcnkodGlkeXRleHQpCmBgYA==</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAnTkxQIHdvcmtzaG9wIC0gRXhwbG9yaW5nIFByZXNpZGVudGlhbCBEZWJhdGUgb24gdHdpdHRlcicKYXV0aG9yOiAiRGFuaWVsIFMuIEhhaW4gKGRzaEBidXNpbmVzcy5hYXUuZGspIgpkYXRlOiAiVXBkYXRlZCBgciBmb3JtYXQoU3lzLnRpbWUoKSwgJyVCICVkLCAlWScpYCIKb3V0cHV0OgogIGh0bWxfbm90ZWJvb2s6CiAgICBjb2RlX2ZvbGRpbmc6IHNob3cKICAgIGRmX3ByaW50OiBwYWdlZAogICAgdG9jOiB0cnVlCiAgICB0b2NfZGVwdGg6IDIKICAgIHRvY19mbG9hdDoKICAgICAgY29sbGFwc2VkOiBmYWxzZQogICAgdGhlbWU6IGZsYXRseQotLS0KCmBgYHtyIHNldHVwLCBpbmNsdWRlPUZBTFNFfQojIyMgR2VuZXJpYyBwcmVhbWJsZQpybShsaXN0PWxzKCkpClN5cy5zZXRlbnYoTEFORyA9ICJlbiIpICMgRm9yIGVuZ2xpc2ggbGFuZ3VhZ2UKb3B0aW9ucyhzY2lwZW4gPSA1KSAjIFRvIGRlYWN0aXZhdGUgYW5ub3lpbmcgc2NpZW50aWZpYyBudW1iZXIgbm90YXRpb24KCiMjIyBLbml0ciBvcHRpb25zCmxpYnJhcnkoa25pdHIpICMgRm9yIGRpc3BsYXkgb2YgdGhlIG1hcmtkb3duCmtuaXRyOjpvcHRzX2NodW5rJHNldCh3YXJuaW5nPUZBTFNFLAogICAgICAgICAgICAgICAgICAgICBtZXNzYWdlPUZBTFNFLAogICAgICAgICAgICAgICAgICAgICBjb21tZW50PUZBTFNFLCAKICAgICAgICAgICAgICAgICAgICAgZmlnLmFsaWduPSJjZW50ZXIiCiAgICAgICAgICAgICAgICAgICAgICkKYGBgCgpgYGB7cn0KIyMjIExvYWQgc3RhbmRhcmRwYWNrYWdlcwpsaWJyYXJ5KHRpZHl2ZXJzZSkgIyBDb2xsZWN0aW9uIG9mIGFsbCB0aGUgZ29vZCBzdHVmZiBsaWtlIGRwbHlyLCBnZ3Bsb3QyIGVjdC4KbGlicmFyeShtYWdyaXR0cikgIyBGb3IgZXh0cmEtcGlwaW5nIG9wZXJhdG9ycyAoZWcuICU8PiUpCmBgYAoKYGBge3J9CmxpYnJhcnkodGlkeXRleHQpCmBgYAoKCiMgRG93bmxvYWQgdGhlIGRhdGEKCmBgYHtyfQojIGRvd25sb2FkIGFuZCBvcGVuIHNvbWUgVHJ1bXAgdHdlZXRzIGZyb20gdHJ1bXBfdHdlZXRfZGF0YV9hcmNoaXZlCmxpYnJhcnkoanNvbmxpdGUpCnRtcCA8LSB0ZW1wZmlsZSgpCmRvd25sb2FkLmZpbGUoImh0dHBzOi8vZ2l0aHViLmNvbS9TRFMtQUFVL1NEUy1tYXN0ZXIvcmF3L21hc3Rlci9NMi9kYXRhL3BvbF90d2VldHMuZ3oiLCB0bXApCgp0d2VldHNfcmF3IDwtIHN0cmVhbV9pbihnemZpbGUodG1wLCAicG9sX3R3ZWV0cyIpKQpgYGAKCmBgYHtyfQp0d2VldHNfcmF3ICU+JSBnbGltcHNlKCkKYGBgCgpgYGB7cn0KdHdlZXRzIDwtIHRpYmJsZShJRCA9IGNvbG5hbWVzKHR3ZWV0c19yYXdbWzFdXSksIAogICAgICAgICAgICAgICAgIHRleHQgPSB0d2VldHNfcmF3W1sxXV0gJT4lIGFzLmNoYXJhY3RlcigpLCAKICAgICAgICAgICAgICAgICBsYWJlbHMgPSB0d2VldHNfcmF3W1syXV0gJT4lIGFzLmxvZ2ljYWwoKSkKcm0odHdlZXRzX3JhdykKYGBgCgpgYGB7cn0KdHdlZXRzICU+JSBnbGltcHNlKCkKYGBgCgpgYGB7cn0KdHdlZXRzICU8PiUKICBmaWx0ZXIoISh0ZXh0ICU+JSBzdHJfZGV0ZWN0KCdeUlQnKSkpCmBgYAoKCgo=</div>
 
 
 </div>

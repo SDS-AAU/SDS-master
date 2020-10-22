@@ -37,3 +37,38 @@ library(magrittr) # For extra-piping operators (eg. %<>%)
 ```{r}
 library(tidytext)
 ```
+
+
+# Download the data
+
+```{r}
+# download and open some Trump tweets from trump_tweet_data_archive
+library(jsonlite)
+tmp <- tempfile()
+download.file("https://github.com/SDS-AAU/SDS-master/raw/master/M2/data/pol_tweets.gz", tmp)
+
+tweets_raw <- stream_in(gzfile(tmp, "pol_tweets"))
+```
+
+```{r}
+tweets_raw %>% glimpse()
+```
+
+```{r}
+tweets <- tibble(ID = colnames(tweets_raw[[1]]), 
+                 text = tweets_raw[[1]] %>% as.character(), 
+                 labels = tweets_raw[[2]] %>% as.logical())
+rm(tweets_raw)
+```
+
+```{r}
+tweets %>% glimpse()
+```
+
+```{r}
+tweets %<>%
+  filter(!(text %>% str_detect('^RT')))
+```
+
+
+
