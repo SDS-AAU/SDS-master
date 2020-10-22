@@ -38,9 +38,9 @@ library(magrittr) # For extra-piping operators (eg. %<>%)
 
 In this applied session, you will:
 
-1. xxx
-2. xxx
-3. xxx
+1. Refresh basic string manipulation skills
+2. Learn how to tokenize texts and analyze these tokens
+3. Apply these skills on twitter data
 
 
 # Refresher: Basics of String Manupilation
@@ -54,7 +54,6 @@ text <- "The Eton-educated, non-binary British Iraqi had always struggled with t
 ```{r}
 # Transforming to lower case
 text %>% str_to_lower()
-
 ```
 
 ```{r}
@@ -145,7 +144,7 @@ sentences_tidy
 
 ![](https://media.giphy.com/media/9rwFfmB2qJ0mEsmkfj/giphy.gif)
 
-Take the following text and transform it into a list of lists with with each element being a tokenized sentence. Remove stopwords, lower all tokens and keep only alpha-numeric tokens.
+Take the following text and transform it into a list of lists with with each element being a tokenized sentence. Remove stopwords, lower all tokens and keep only (1) alpha-numeric word tokens, (2) charactewr tokens.
 
 `I’ve been called many things in my life, but never an optimist. That was fine by me. I believed pessimists lived in a constant state of pleasant surprise: if you always expected the worst, things generally turned out better than you imagined. The only real problem with pessimism, I figured, was that too much of it could accidentally turn you into an optimist.`
 

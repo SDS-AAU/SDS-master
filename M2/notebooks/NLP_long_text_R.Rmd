@@ -1,5 +1,5 @@
 ---
-title: 'Introduction to Natural-language-Processing (R)'
+title: 'Natural-language-Processing (R)'
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
@@ -38,17 +38,72 @@ library(magrittr) # For extra-piping operators (eg. %<>%)
 
 In this applied session, you will:
 
-1. xxx
-2. xxx
+1. Refresh basic string manipulation skills
+2. Learn how to tokenize texts and analyze these tokens
 3. xxx
 
-
- Long texts and extracting some linguistic features
 
 * Now, that we have some experience with short texts, let's try out to work with longer texts. 
 * We will be analysing a newspaper article as well as a whole (very long) book. 
 * We will continue using more of the `tidytext` functionality.
 * However, we will also introduce `Spacy`, a high-level DeepLearning based NLP library that will help us to do complex stuff with not too much code 
+
+# Exploring 'Crime and Punishment'
+
+Let's raise the bar with some **Fyodor Dostoevsky**
+
+![](https://i.pinimg.com/564x/bc/eb/9c/bceb9cef99abbed52b940767c9530bbc.jpg)
+
+```{r}
+library(tidytext)
+```
+
+```{r}
+# We first need to get the book text. It can be conveniently retrieved via the gutenbergr library, linking r to the Gutenberg project
+library(gutenbergr)
+```
+
+```{r}
+# check the id of crime and punishment
+gutenberg_metadata %>%
+  filter(title == "Crime and Punishment")
+```
+
+```{r}
+text <- gutenberg_download(2554)
+```
+
+```{r}
+text %>% head()
+```
+```{r}
+text_tidy <- text %>%
+  slice(-c(1:102)) %>%
+  mutate(line_num = row_number(),# create new variable line_num
+         part = cumsum(str_detect(text, regex("^PART [\\divxlc]",
+                                                  ignore_case = TRUE)))) %>% # create variable part: Crime and Punishment has 7 parts %>%
+         group_by(part) %>%
+         mutate(chapter = cumsum(str_detect(text, regex("^CHAPTER [\\divxlc]",
+                                                          ignore_case = TRUE)))) %>% # create new variable number of Chapter per part %>%
+         ungroup()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Entity extraction with `RSpacy`
 
 ![](https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/SpaCy_logo.svg/1200px-SpaCy_logo.svg.png){width=600}
 
@@ -58,11 +113,6 @@ Here a nice [cheat-sheet
 Spacy is today one of the leading solutions for NLP in industry which goes as far as them hosting a [whole conference](https://www.youtube.com/watch?v=hNPwRPg9BrQ&list=PLBmcuObd5An4UC6jvK_-eSl6jCvP1gwXc) with the leading NLP experts worldwide in Berlin last summer
 
 I will introduce you to some functionality but not all. There is an advanced course on SpaCy that can be found on DC.
-
-
-
-
-
 
 
 
