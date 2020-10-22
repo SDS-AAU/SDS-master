@@ -34,4 +34,10 @@
 
 * Application: Working with long text and extracting text elements
     * R: Video [comming soon]() [Html (work in progress)](https://sds-aau.github.io/SDS-master/M2/notebooks/NLP_long_text_R.nb.html) [Colab comming soon](https://colab.research.google.com/github/SDS-AAU/SDS-master/blob/master/M2/notebooks/NLP_long_text_R.ipynb)
+    
+
+### Workshop NLP
+
+* R: [Html (work in progress)](https://sds-aau.github.io/SDS-master/M2/exercises/NLP_workshop_1_debate_tweets.nb.html) 
+
 
