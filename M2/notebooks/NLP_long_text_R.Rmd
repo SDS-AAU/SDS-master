@@ -1,0 +1,101 @@
+---
+title: 'Introduction to Natural-language-Processing (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+```
+
+### This session
+
+In this applied session, you will:
+
+1. xxx
+2. xxx
+3. xxx
+
+
+ Long texts and extracting some linguistic features
+
+* Now, that we have some experience with short texts, let's try out to work with longer texts. 
+* We will be analysing a newspaper article as well as a whole (very long) book. 
+* We will continue using more of the `tidytext` functionality.
+* However, we will also introduce `Spacy`, a high-level DeepLearning based NLP library that will help us to do complex stuff with not too much code 
+
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/SpaCy_logo.svg/1200px-SpaCy_logo.svg.png){width=600}
+
+
+Here a nice [cheat-sheet
+](https://www.datacamp.com/community/blog/spacy-cheatsheet)
+Spacy is today one of the leading solutions for NLP in industry which goes as far as them hosting a [whole conference](https://www.youtube.com/watch?v=hNPwRPg9BrQ&list=PLBmcuObd5An4UC6jvK_-eSl6jCvP1gwXc) with the leading NLP experts worldwide in Berlin last summer
+
+I will introduce you to some functionality but not all. There is an advanced course on SpaCy that can be found on DC.
+
+
+
+
+
+
+
+
+
+# Endnotes
+
+### Main reference
+
+* R for Data Science (Grolemund & Wickham)
+   * [Chapter 14](https://r4ds.had.co.nz/strings.html): To refresh simple string manipulations
+* Julia Silge and David Robinson (2020). Text Mining with R: A Tidy Approach, O’Reilly. Online available [here](https://www.tidytextmining.com/)
+   * [Chapter 1](https://www.tidytextmining.com/tidytext.html): Introduction to the tidy text format
+
+### Packages & Ecosystem
+
+* [`tidytext`](https://github.com/juliasilge/tidytext)
+
+further: 
+* [`rtweet`](https://github.com/ropensci/rtweet): R interface to the twitter API.
+
+### Suggestions for further study
+
+* DataCamp (!Most courses have somewhat outdated ecosystems)
+   * [Introduction to Text Analysis in R](https://learn.datacamp.com/courses/introduction-to-text-analysis-in-r): The basics of text analysis in R      
+   * [Introduction to Natural Language Processing in R](https://learn.datacamp.com/courses/introduction-to-natural-language-processing-in-r): Some refresher plus more advanced applications in the end.         
+  
+### Session Info
+
+```{r}
+sessionInfo()
+```
+
+
+
+
+
