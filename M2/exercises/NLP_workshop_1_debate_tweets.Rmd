@@ -294,4 +294,154 @@ pred_own = tibble(text = 'USA USA WE NEED A WALL TO KEEP THE MEXICANS AND ALL SH
 fit_en %>% predict(new_data = data_recipe %>% bake(pred_own))
 ```
 
+# Topic models
+
+```{r}
+# for LDA analysis
+library(topicmodels)
+```
+
+### Preparing the Data
+
+```{r}
+tweets_dtm <- tweets_tidy %>%
+  cast_dtm(document = ID, term = word, value = n)
+```
+
+Lets take a look:
+
+```{r}
+tweets_dtm
+```
+
+We see again hat the matrix is still rather sparse, which is an artefact of text data generally, but even more so when using twitter data. Lets try to see if we could reduce that somewhat by deleting less often used terms.
+
+```{r}
+library(tm)
+tweets_dtm %>% removeSparseTerms(sparse = .99)
+```
+
+```{r}
+tweets_dtm %>% removeSparseTerms(sparse = .999)
+```
+
+```{r}
+tweets_dtm %>% removeSparseTerms(sparse = .9999)
+```
+
+Ok, we might have to accept a high level of sparsity in order to still have a meaningful number of unique words.
+
+Now we can perform a LDA, using the more accurate Gibbs sampling as `method`.
+
+```{r}
+tweets_lda <- tweets_dtm %>% 
+  LDA(k = 6, method = "Gibbs",
+      control = list(seed = 1337))
+```
+
+### $\beta$: Word-Topic Association
+
+$\beta$ is an output of the LDA model, indicating the propability that a word occurs in a certain topic. Therefore, loking at the top probability words of a topic often gives us a good intuition regarding its properties.
+
+```{r}
+# LDA output is defined for tidy(), so we can easily extract it
+lda_beta <- tweets_lda %>% 
+  tidy(matrix = "beta") %>%
+  group_by(topic) %>%
+  arrange(topic, desc(beta)) %>%
+  slice(1:10) %>%
+  ungroup() 
+```
+
+```{r}
+lda_beta %>% head()
+```
+
+
+
+```{r}
+# Notice the "reorder_within()"
+lda_beta %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  group_by(topic, term) %>%    
+  arrange(desc(beta)) %>%  
+  ungroup() %>%
+  ggplot(aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  scale_x_reordered() +
+  labs(title = "Top 10 terms in each LDA topic",
+       x = NULL, y = expression(beta)) +
+  facet_wrap(~ topic, ncol = 2, scales = "free")
+```
+
+### $\gamma$: Document-Topic Association
+
+In LDA, documents are represented as a mix of topics. This association of a document to a topic is captured by $\gamma$
+
+```{r}
+lda_gamma <- tweets_lda %>% 
+  tidy(matrix = "gamma")
+```
+
+```{r}
+lda_gamma %>% head()
+```
+
+```{r}
+lda_gamma %>%
+  ggplot(aes(gamma)) +
+  geom_histogram() +
+  scale_y_log10() +
+  labs(title = "Distribution of probabilities for all topics",
+       y = "Number of documents", x = expression(gamma))
+```
+
+```{r}
+lda_gamma %>% 
+  group_by(topic) %>%
+  arrange(desc(gamma)) %>%
+  slice(1:3) %>%
+  ungroup() %>%
+  left_join(tweets %>% select(ID, text), by = c('document' = 'ID'))
+```
+
+
+```{r}
+lda_gamma %>%
+  ggplot(aes(gamma, fill = as.factor(topic))) +
+  geom_histogram(show.legend = FALSE) +
+  facet_wrap(~ topic, ncol = 2) +
+  scale_y_log10() +
+  labs(title = "Distribution of probability for each topic",
+       y = "Number of documents", x = expression(gamma))
+```
+
+```{r}
+top_topics <- tweets_lda %>% 
+  tidy(matrix = "gamma")  %>%
+  group_by(document) %>%
+  top_n(1, wt = gamma) %>%
+  ungroup()
+```
+
+```{r}
+top_topics %>%
+  count(topic)
+```
+
+```{r}
+x <- lda_gamma %>%
+  left_join(tweets %>% select(ID, labels), by = c('document' = 'ID'))
+```
+
+```{r}
+x %>%
+  group_by(labels, topic) %>%
+  summarise(n = sum(gamma) ) %>%
+  group_by(labels) %>%
+  mutate(n = n / sum(n)) %>%
+  ungroup()
+```
+
 
