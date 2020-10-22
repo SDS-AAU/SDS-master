@@ -132,10 +132,166 @@ tweets_tidy %>%
 ```{r}
 # TFIDF topwords
 tweets_tidy %>%
-  count(word, wt = tf_idf) %>%
-  top_n(n, 20)
+  count(word, wt = tf_idf, sort = TRUE) %>%
+  head(20)
+```
+
+# Inspecting
+
+```{r}
+labels_words <- tweets_tidy %>%
+  group_by(labels) %>%
+  count(word, wt = tf_idf, sort = TRUE, name = "tf_idf") %>%
+  slice(1:20) %>%
+  ungroup() %>%
+  mutate(word = reorder_within(word, by = tf_idf, within = labels)) 
+```
+
+```{r}
+labels_words %>%
+  ggplot(aes(x = word, y = tf_idf, fill = labels)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~labels, ncol = 2, scales = "free") +
+  coord_flip() +
+  scale_x_reordered()
 ```
 
 
+# Predictive model
+
+```{r}
+library(tidymodels)
+```
+
+
+```{r}
+data <- tweets %>%
+  select(labels, text) %>%
+  rename(y = labels) %>%
+  mutate(y = y  %>% as.factor()) 
+```
+
+
+## Training & Test split
+
+```{r}
+data_split <- initial_split(data, prop = 0.75, strata = y)
+
+data_train <- data_split  %>%  training()
+data_test <- data_split %>% testing()
+```
+
+## Preprocessing pipeline
+
+```{r}
+library(textrecipes)
+```
+
+```{r}
+data_recipe <- data_train %>%
+  recipe(y ~.) %>%
+  themis::step_downsample(y) %>%
+  step_filter(!(text %>% str_detect('^RT'))) %>%
+  step_filter(text != "") %>%
+  step_tokenize(text, token = "tweets") %>%
+  step_tokenfilter(text, min_times = 100) %>%  
+  step_stopwords(text, keep = FALSE) %>%
+  step_tfidf(text) %>%
+  prep() # NOTE: Only prep the recipe when not using in a workflow
+```
+
+```{r}
+data_recipe
+```
+
+
+```{r}
+data_recipe_reduced <- data_train %>%
+  recipe(y ~.) %>%
+  themis::step_downsample(y) %>%
+  step_filter(!(text %>% str_detect('^RT'))) %>%
+  step_filter(text != "") %>%
+  step_tokenize(text, token = "tweets") %>%
+  step_tokenfilter(text, min_times = 100) %>%  
+  step_stopwords(text, keep = FALSE) %>%
+  step_tfidf(text) %>%
+  step_pca(all_predictors()) %>%
+  prep() # NOTE: Only prep the recipe when not using in a workflow
+```
+
+Since we will not do hyperparameter tuning, we directly bake/juice the recipe
+
+```{r}
+data_train_prep <- data_recipe %>% juice()
+data_test_prep <- data_recipe %>% bake(data_test)
+```
+
+
+## Defining the models
+
+```{r, warning=FALSE}
+all_cores <- parallel::detectCores(logical = FALSE)
+
+library(doParallel)
+cl <- makePSOCKcluster(all_cores)
+registerDoParallel(cl)
+```
+
+
+```{r}
+model_en <- logistic_reg(mode = 'classification', 
+                         mixture = 0.5, 
+                         penalty = 0.5) %>%
+  set_engine('glm', family = binomial) 
+```
+
+```{r}
+model_xg <- boost_tree(mode = 'classification') %>%
+  set_engine('ranger') 
+```
+
+
+## Define the workflow
+
+We will skip the workflow step this time, since we do not evaluate different models against each others.
+
+## fit the model
+
+```{r}
+fit_en <- model_en %>% fit(formula = y ~., data = data_train_prep)
+```
+
+
+```{r}
+pred_collected <- tibble(
+  truth = data_train_prep %>% pull(y),
+  pred = fit_en %>% predict(new_data = data_train_prep) %>% pull(.pred_class),
+  pred_prob = fit_en %>% predict(new_data = data_train_prep, type = "prob") %>% pull(.pred_TRUE),
+  ) 
+```
+
+```{r}
+pred_collected %>% conf_mat(truth, pred)
+```
+
+```{r}
+pred_collected %>% conf_mat(truth, pred) %>% summary()
+```
+
+Well... soso
+
+# Using the model for new prediction
+
+## Simple test
+
+```{r}
+pred_own = tibble(text = 'USA USA WE NEED A WALL TO KEEP THE MEXICANS AND ALL SHITHOLE COUNTRIES OUT!')
+```
+
+
+```{r}
+fit_en %>% predict(new_data = data_recipe %>% bake(pred_own))
+```
 
 
