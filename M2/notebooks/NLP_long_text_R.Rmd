@@ -290,12 +290,13 @@ g %N>%
   
 ```
 
+##  Bigrams
 
+TO COME
 
+## NAmed Entity recognition
 
-
-
-
+TO COME
 
 # Endnotes
 
