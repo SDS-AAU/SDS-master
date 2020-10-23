@@ -294,6 +294,37 @@ pred_own = tibble(text = 'USA USA WE NEED A WALL TO KEEP THE MEXICANS AND ALL SH
 fit_en %>% predict(new_data = data_recipe %>% bake(pred_own))
 ```
 
+
+## New data
+
+
+```{r}
+# download and open some Trump tweets from trump_tweet_data_archive
+library(jsonlite)
+tmp <- tempfile()
+download.file("https://github.com/SDS-AAU/SDS-master/raw/master/M2/data/pres_debate_2020.gz", tmp)
+
+tweets_raw <- stream_in(gzfile(tmp, "pres_debate_2020"))
+```
+
+```{r}
+tweets_raw %>% glimpse()
+```
+
+
+```{r}
+tweets_new <- tibble(ID = tweets_raw[[1]]$id, 
+                     text = tweets_raw[[1]]$tweet)
+rm(tweets_raw)
+```
+
+```{r}
+pred_new <- fit_en %>% predict(new_data = data_recipe %>% bake(tweets_new))
+```
+
+To be continued by you :)
+
+
 # Topic models
 
 ```{r}
@@ -444,4 +475,31 @@ x %>%
   ungroup()
 ```
 
+# Endnotes
 
+### Packages & Ecosystem
+
+* [`tidytext`](https://github.com/juliasilge/tidytext)
+* [`textrecipes`](https://textrecipes.tidymodels.org/)
+* [`topicmodels`](https://cran.r-project.org/web/packages/topicmodels/vignettes/topicmodels.pdf)
+
+Further NLP packages ecosystem
+
+* `tm` [here](https://cran.r-project.org/web/packages/tm/)
+* `quanteda` [here](https://quanteda.io/), and many many great tutorials [here](https://tutorials.quanteda.io/)
+
+
+### References 
+
+* ulia Silge and David Robinson (2020). Text Mining with R: A Tidy Approach, O’Reilly. Online available [here](https://www.tidytextmining.com/)
+   * [Chapter 6](https://www.tidytextmining.com/topicmodeling.html): Introduction topic models
+
+### Further sources
+
+* [Julia Silge's Blog](https://juliasilge.com/): Full of great examples of predictive modeling, NLP, and the combination fo both, using tidy ecosystems
+
+### Session Info
+
+```{r}
+sessionInfo()
+```
