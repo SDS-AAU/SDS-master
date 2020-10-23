@@ -491,10 +491,16 @@ Further NLP packages ecosystem
 
 ### References 
 
-* ulia Silge and David Robinson (2020). Text Mining with R: A Tidy Approach, O’Reilly. Online available [here](https://www.tidytextmining.com/)
+* Julia Silge and David Robinson (2020). Text Mining with R: A Tidy Approach, O’Reilly. Online available [here](https://www.tidytextmining.com/)
    * [Chapter 6](https://www.tidytextmining.com/topicmodeling.html): Introduction topic models
 
 ### Further sources
+
+Datacamp
+
+*  [Topic Modeling in R](https://learn.datacamp.com/courses/topic-modeling-in-r) 
+
+Other online
 
 * [Julia Silge's Blog](https://juliasilge.com/): Full of great examples of predictive modeling, NLP, and the combination fo both, using tidy ecosystems
 
