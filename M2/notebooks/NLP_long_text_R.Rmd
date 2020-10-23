@@ -104,7 +104,9 @@ text <- text_raw %>%
          mutate(chapter = cumsum(str_detect(text, regex("^CHAPTER [\\divxlc]",
                                                           ignore_case = TRUE)))) %>% # create new variable number of Chapter per part %>%
          ungroup() %>%
-  filter(text != "" & !str_detect(text, regex("^[PART|CHAPTER]")))
+  filter(text != "" & !str_detect(text, regex("^[PART|CHAPTER]"))) %>%
+  mutate(index = 1:n()) %>%
+  relocate(index, line_num, part, chapter, text)
   
 ```
 
@@ -125,6 +127,8 @@ text_tidy %>% head(10)
 
 ## First exploration
 
+### Topwords
+
 ```{r}
 # top 10 words used in Crime and Punishment
 text_tidy %>%
@@ -136,32 +140,159 @@ text_tidy %>%
   labs(title = "Crime and Punishment: Top 10 words used", x = NULL) 
 ```
 
+Unsurprisingly, the word used more often corresponds to the name of the main character, Raskolnikov. We can also use a word cloud:
+
+```{r}
+# People love wordclouds
+library(wordcloud)
+
+text_tidy %>%
+  count(word) %>%
+  with(wordcloud(word, n, 
+                 max.words = 50, 
+                 color = "blue"))
+```
+
+### Sentiment Analysis
+
+* While interesting, word frequency does not tell us much about the emotions/states of mind present in the novel. 
+* For this reason, we will go ahead with a sentiment analysis of “Crime and Punishment”
+
+* While sounding very comlpex, sentiment analysis is usually done in a rather simple way.
+* There are already predefined sentiment lexica around, linking words ith certain sentiments
+* So we do have to only join our word-token with the corresponding sentiments
+* The most popular dictionaries available are
+   1. "bing": classifies words binary into positive and negative sentiment
+   2. “nrc”  has the following emotion categories: positive, negative, anger, anticipation, disgust, fear, joy, sadness, surprise, and trust; and
+   3. “afinn” corresponds to a sentiment score from -5 (very negative) to 5 (very positive). 
+
+
+```{r}
+# You might need to first install the 'textdata' package for some of the lexica
+get_sentiments("bing") %>% 
+  head(20)
+```
+
+Lets calculate them all
+
+```{r}
+sentiment_bing <- text_tidy %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(chapter, index = index %/% 100, sentiment) %>% # index of 100 lines of text
+  mutate(lexicon = 'Bing')
+  
+sentiment_nrc <- text_tidy %>%  
+  inner_join(get_sentiments("nrc")) %>%
+  count(chapter, index = index %/% 100, sentiment) %>% # index of 100 lines of text
+  mutate(lexicon = 'NRC')
+
+sentiment_afinn <- text_tidy %>%  
+  select(-line_num, -part) %>%
+  inner_join(get_sentiments("afinn")) %>%
+  group_by(index = index %/% 100)  %>% # index of 100 lines of text
+  summarise(sentiment = sum(value, na.rm = TRUE)) %>%
+  mutate(lexicon = 'AFINN')
+```
+
+
+```{r}
+# Lets join them all together for plotting
+sentiment_all <- sentiment_afinn %>%
+  bind_rows(sentiment_bing %>%
+              pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+              mutate(sentiment = positive - negative) %>%
+              select(index, sentiment, lexicon) ) %>%
+    bind_rows(sentiment_nrc %>%
+              pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+              mutate(sentiment = positive - negative) %>%
+              select(index, sentiment, lexicon) ) 
+```
+
+```{r, fig.height=5, fig.width=15}
+# crime and punishment - 
+sentiment_all %>%
+  ggplot(aes(x = index, y = sentiment, fill = lexicon)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ lexicon) + 
+  labs(title = "Sentiment Analysis: “Crime and Punishment",
+       subtitle = 'Using the Bing, NRC, AFINN lexicon') 
+```
+
+
+* Since NRS also provides us with options to dive deeper into specific, rather than only positive and negative sentiments.
+
+```{r}
+text_tidy %>%
+  inner_join(get_sentiments("nrc")) %>%
+  count(word, sentiment, sort = TRUE) %>% 
+  filter(sentiment %in% c("joy", "sadness")) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  as.data.frame() %>% 
+  remove_rownames() %>% 
+  column_to_rownames("word") %>% 
+  comparison.cloud(colors = c("darkgreen", "grey75"), 
+                   max.words = 100,
+                   title.size = 1.5)
+```
+
+```{r, fig.height=5, fig.width=15}
+# crime and punishment - 
+sentiment_nrc %>%
+  ggplot(aes(x = index, y = sentiment, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ chapter) + 
+  labs(title = "Sentiment Analysis: “Crime and Punishment",
+       subtitle = 'By chapter: Using NRC lexicon') 
+```
+
+
+### Word network
+
+* Obviously, we already have to sprinkle in some networks here
+* The easiest way would bee to look t words that frequently occur together.
+* We could do that in a more complicated way, but since we already have the line-nubmer, why not start with creating edges between words in the same line?
+* `tidytext` had an amazing function `pairwise_count` for that. However, since it is of more general use,  the developers outsourced it into the not-text-specific `widyr` package, which they also maintain.
+
+```{r}
+library(widyr)
+el_words <- text_tidy %>%
+  pairwise_count(word, index, sort = TRUE) %>%
+  rename(from = item1, to = item2, weight = n)
+```
+
+```{r}
+el_words %>% head()
+```
+```{r}
+library(tidygraph)
+library(ggraph)
+```
+
+```{r}
+g <- el_words %>%
+  filter(weight >= 10) %>%
+  as_tbl_graph(directed = FALSE) %>%
+  igraph::simplify() %>% as_tbl_graph() 
+```
+
+
+```{r, fig.width=10, fig.height=10}
+set.seed(1337)
+g %N>%
+#  filter(centrality_degree(weight = weight) > 100) %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(width = weight, edge_alpha = weight)) +
+  geom_node_point(aes(size = centrality_degree(weight = weight)), color = "plum4") +
+  geom_node_text(aes(label = name,), repel = TRUE) +
+  theme_graph() +
+  theme(legend.position = 'none') +
+  labs(title = 'Co-Word Network Crime and Punishment')
+  
+```
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-# Entity extraction with `RSpacy`
-
-![](https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/SpaCy_logo.svg/1200px-SpaCy_logo.svg.png){width=600}
-
-
-Here a nice [cheat-sheet
-](https://www.datacamp.com/community/blog/spacy-cheatsheet)
-Spacy is today one of the leading solutions for NLP in industry which goes as far as them hosting a [whole conference](https://www.youtube.com/watch?v=hNPwRPg9BrQ&list=PLBmcuObd5An4UC6jvK_-eSl6jCvP1gwXc) with the leading NLP experts worldwide in Berlin last summer
-
-I will introduce you to some functionality but not all. There is an advanced course on SpaCy that can be found on DC.
 
 
 
@@ -170,10 +301,9 @@ I will introduce you to some functionality but not all. There is an advanced cou
 
 ### Main reference
 
-* R for Data Science (Grolemund & Wickham)
-   * [Chapter 14](https://r4ds.had.co.nz/strings.html): To refresh simple string manipulations
+
 * Julia Silge and David Robinson (2020). Text Mining with R: A Tidy Approach, O’Reilly. Online available [here](https://www.tidytextmining.com/)
-   * [Chapter 1](https://www.tidytextmining.com/tidytext.html): Introduction to the tidy text format
+   * [Chapter 2](https://www.tidytextmining.com/sentiment.html): Introduction to sentiment analysis
 
 ### Packages & Ecosystem
 
