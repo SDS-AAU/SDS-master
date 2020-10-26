@@ -36,13 +36,6 @@ library(magrittr) # For extra-piping operators (eg. %<>%)
 
 ### This session
 
-In this applied session, you will:
-
-1. Refresh basic string manipulation skills
-2. Learn how to tokenize texts and analyze these tokens
-3. xxx
-
-
 * Now, that we have some experience with short texts, let's try out to work with longer texts. 
 * We will be analysing a newspaper article as well as a whole (very long) book. 
 * We will continue using more of the `tidytext` functionality.
@@ -125,9 +118,33 @@ text_tidy <- text %>% unnest_tokens(word, text, token = 'words') %>%
 text_tidy %>% head(10)
 ```
 
-## First exploration
+## Stemming
 
-### Topwords
+* We will not use it here a lot, but consider stemming as a possible pre-processing option.
+* Here, words will be reduced to their common word-stem, eg. words like "analysis", "analyze", "analyzing" etc. will all be reduced to "analyz"
+* This sometimes makes it easier to work with word token, however, also is sometimes to aggresive and reduces interpretability.
+
+```{r}
+library(SnowballC) # Includes stemming algos
+```
+
+
+```{r}
+text_tidy %>%
+  mutate(stem = wordStem(word)) %>%
+  head(10)
+```
+
+```{r}
+text_tidy %>%
+  mutate(stem = wordStem(word)) %>%
+  count(stem, sort = TRUE) %>%
+  head(50)
+```
+
+# First exploration
+
+## Topwords
 
 ```{r}
 # top 10 words used in Crime and Punishment
@@ -140,7 +157,8 @@ text_tidy %>%
   labs(title = "Crime and Punishment: Top 10 words used", x = NULL) 
 ```
 
-Unsurprisingly, the word used more often corresponds to the name of the main character, Raskolnikov. We can also use a word cloud:
+* Unsurprisingly, the word used more often corresponds to the name of the main character, Raskolnikov. 
+* We can also use a word cloud:
 
 ```{r}
 # People love wordclouds
@@ -153,7 +171,7 @@ text_tidy %>%
                  color = "blue"))
 ```
 
-### Sentiment Analysis
+## Sentiment Analysis
 
 * While interesting, word frequency does not tell us much about the emotions/states of mind present in the novel. 
 * For this reason, we will go ahead with a sentiment analysis of “Crime and Punishment”
@@ -218,7 +236,6 @@ sentiment_all %>%
        subtitle = 'Using the Bing, NRC, AFINN lexicon') 
 ```
 
-
 * Since NRS also provides us with options to dive deeper into specific, rather than only positive and negative sentiments.
 
 ```{r}
@@ -270,7 +287,7 @@ library(ggraph)
 
 ```{r}
 g <- el_words %>%
-  filter(weight >= 10) %>%
+  filter(weight >= 9) %>%
   as_tbl_graph(directed = FALSE) %>%
   igraph::simplify() %>% as_tbl_graph() 
 ```
@@ -287,12 +304,11 @@ g %N>%
   theme_graph() +
   theme(legend.position = 'none') +
   labs(title = 'Co-Word Network Crime and Punishment')
-  
 ```
 
 ##  Bigrams
 
-TO COME
+*
 
 ## NAmed Entity recognition
 
@@ -305,6 +321,9 @@ TO COME
 
 * Julia Silge and David Robinson (2020). Text Mining with R: A Tidy Approach, O’Reilly. Online available [here](https://www.tidytextmining.com/)
    * [Chapter 2](https://www.tidytextmining.com/sentiment.html): Introduction to sentiment analysis
+* Emil Hvidfeldt and Julia Silge (2020). Supervised Machine Learning for Text Analysis in R, online available [here](https://smltar.com/)
+   * [Chapter 4](https://smltar.com/stemming.html): Stemming
+
 
 ### Packages & Ecosystem
 
