@@ -58,7 +58,7 @@ tweets_raw %>% glimpse()
 tweets <- tibble(ID = colnames(tweets_raw[[1]]), 
                  text = tweets_raw[[1]] %>% as.character(), 
                  labels = tweets_raw[[2]] %>% as.logical())
-rm(tweets_raw)
+#rm(tweets_raw)
 ```
 
 ```{r}
@@ -67,13 +67,12 @@ tweets %>% glimpse()
 
 ```{r}
 tweets %<>%
-  filter(!(text %>% str_detect('^RT')))
+  filter(!(text %>% str_detect('^RT'))) # Filter retweets
 ```
 
 ```{r}
 tweets %>% head()
 ```
-
 
 # Tidying
 
@@ -86,10 +85,10 @@ tweets_tidy <- tweets %>%
 tweets_tidy %>% head(50)
 ```
 
+
 ```{r}
 tweets_tidy %>% count(word, sort = TRUE)
 ```
-
 
 
 # Preprocessing
@@ -98,6 +97,7 @@ tweets_tidy %>% count(word, sort = TRUE)
 # preprocessing
 tweets_tidy %<>%
   filter(!(word %>% str_detect('@'))) %>% # remove hashtags and mentions
+  filter(!(word %>% str_detect('^amp|^http|^t\\.co'))) %>% # Twitter specific stuff
 #  mutate(word = word %>% str_remove_all('[^[:alnum:]]')) %>% ## remove all special characters
   filter(str_length(word) > 2 ) %>% # Remove words with less than  3 characters
   group_by(word) %>%
@@ -107,6 +107,8 @@ tweets_tidy %<>%
 ```
 
 # TFIDF
+
+TFIDF weighting
 
 ```{r}
 # top words
@@ -124,10 +126,6 @@ tweets_tidy %<>%
               n = n)
 ```
 
-```{r}
-tweets_tidy %>%
-  head()
-```
 
 ```{r}
 # TFIDF topwords
@@ -137,6 +135,8 @@ tweets_tidy %>%
 ```
 
 # Inspecting
+
+## Words by party affiliation
 
 ```{r}
 labels_words <- tweets_tidy %>%
@@ -157,7 +157,6 @@ labels_words %>%
   scale_x_reordered()
 ```
 
-
 # Predictive model
 
 ```{r}
@@ -166,6 +165,7 @@ library(tidymodels)
 
 
 ```{r}
+# Notice, we use the initial untokenized tweets
 data <- tweets %>%
   select(labels, text) %>%
   rename(y = labels) %>%
@@ -185,39 +185,26 @@ data_test <- data_split %>% testing()
 ## Preprocessing pipeline
 
 ```{r}
-library(textrecipes)
+library(textrecipes) # Adittional recipes for working with text data
 ```
 
 ```{r}
+# This recipe pretty much reconstructs all preprocessing we did so far
 data_recipe <- data_train %>%
   recipe(y ~.) %>%
-  themis::step_downsample(y) %>%
-  step_filter(!(text %>% str_detect('^RT'))) %>%
+  themis::step_downsample(y) %>% # For downsampling class imbalances (optimal)
+  step_filter(!(text %>% str_detect('^RT'))) %>% # Upfront filtering retweets
   step_filter(text != "") %>%
-  step_tokenize(text, token = "tweets") %>%
-  step_tokenfilter(text, min_times = 100) %>%  
-  step_stopwords(text, keep = FALSE) %>%
-  step_tfidf(text) %>%
+  step_tokenize(text, token = "tweets") %>% # tokenize
+  step_tokenfilter(text, min_times = 100) %>%  # Filter out rare words
+  step_stopwords(text, keep = FALSE) %>% # Filter stopwords
+  step_tfidf(text) %>% # TFIDF weighting
+#  step_pca(all_predictors()) %>% # Dimensionality reduction via PCA (optional)
   prep() # NOTE: Only prep the recipe when not using in a workflow
 ```
 
 ```{r}
 data_recipe
-```
-
-
-```{r}
-data_recipe_reduced <- data_train %>%
-  recipe(y ~.) %>%
-  themis::step_downsample(y) %>%
-  step_filter(!(text %>% str_detect('^RT'))) %>%
-  step_filter(text != "") %>%
-  step_tokenize(text, token = "tweets") %>%
-  step_tokenfilter(text, min_times = 100) %>%  
-  step_stopwords(text, keep = FALSE) %>%
-  step_tfidf(text) %>%
-  step_pca(all_predictors()) %>%
-  prep() # NOTE: Only prep the recipe when not using in a workflow
 ```
 
 Since we will not do hyperparameter tuning, we directly bake/juice the recipe
@@ -230,25 +217,11 @@ data_test_prep <- data_recipe %>% bake(data_test)
 
 ## Defining the models
 
-```{r, warning=FALSE}
-all_cores <- parallel::detectCores(logical = FALSE)
-
-library(doParallel)
-cl <- makePSOCKcluster(all_cores)
-registerDoParallel(cl)
-```
-
-
 ```{r}
 model_en <- logistic_reg(mode = 'classification', 
                          mixture = 0.5, 
                          penalty = 0.5) %>%
   set_engine('glm', family = binomial) 
-```
-
-```{r}
-model_xg <- boost_tree(mode = 'classification') %>%
-  set_engine('ranger') 
 ```
 
 
@@ -286,7 +259,8 @@ Well... soso
 ## Simple test
 
 ```{r}
-pred_own = tibble(text = 'USA USA WE NEED A WALL TO KEEP THE MEXICANS AND ALL SHITHOLE COUNTRIES OUT!')
+# How would the model predict given some tweet text
+pred_own = tibble(text = 'USA USA WE NEED A WALL TO MAKE AMERICA GREAT AGAIN AND KEEP THE MEXICANS AND ALL REALLY BAD COUNTRIES OUT! AMNERICA FIRST')
 ```
 
 
@@ -297,6 +271,7 @@ fit_en %>% predict(new_data = data_recipe %>% bake(pred_own))
 
 ## New data
 
+* We could also use the model to predict on new data, such as the just scraped discussion on the presidential debate.
 
 ```{r}
 # download and open some Trump tweets from trump_tweet_data_archive
@@ -311,7 +286,6 @@ tweets_raw <- stream_in(gzfile(tmp, "pres_debate_2020"))
 tweets_raw %>% glimpse()
 ```
 
-
 ```{r}
 tweets_new <- tibble(ID = tweets_raw[[1]]$id, 
                      text = tweets_raw[[1]]$tweet)
@@ -325,7 +299,7 @@ pred_new <- fit_en %>% predict(new_data = data_recipe %>% bake(tweets_new))
 To be continued by you :)
 
 
-# Topic models
+# Topic models (LDA)
 
 ```{r}
 # for LDA analysis
@@ -335,6 +309,7 @@ library(topicmodels)
 ### Preparing the Data
 
 ```{r}
+# LDA via the topicmodel package requires a document-term-matrix (dtm)
 tweets_dtm <- tweets_tidy %>%
   cast_dtm(document = ID, term = word, value = n)
 ```
@@ -345,7 +320,8 @@ Lets take a look:
 tweets_dtm
 ```
 
-We see again hat the matrix is still rather sparse, which is an artefact of text data generally, but even more so when using twitter data. Lets try to see if we could reduce that somewhat by deleting less often used terms.
+* We see again hat the matrix is still rather sparse, which is an artefact of text data generally, but even more so when using twitter data. 
+* Lets try to see if we could reduce that somewhat by deleting less often used terms.
 
 ```{r}
 library(tm)
@@ -360,9 +336,8 @@ tweets_dtm %>% removeSparseTerms(sparse = .999)
 tweets_dtm %>% removeSparseTerms(sparse = .9999)
 ```
 
-Ok, we might have to accept a high level of sparsity in order to still have a meaningful number of unique words.
-
-Now we can perform a LDA, using the more accurate Gibbs sampling as `method`.
+* Ok, we might have to accept a high level of sparsity in order to still have a meaningful number of unique words.
+* Now we can perform a LDA, using the more accurate Gibbs sampling as `method`.
 
 ```{r}
 tweets_lda <- tweets_dtm %>% 
@@ -372,7 +347,8 @@ tweets_lda <- tweets_dtm %>%
 
 ### $\beta$: Word-Topic Association
 
-$\beta$ is an output of the LDA model, indicating the propability that a word occurs in a certain topic. Therefore, loking at the top probability words of a topic often gives us a good intuition regarding its properties.
+* $\beta$ is an output of the LDA model, indicating the propability that a word occurs in a certain topic.
+* Therefore, loking at the top probability words of a topic often gives us a good intuition regarding its properties.
 
 ```{r}
 # LDA output is defined for tidy(), so we can easily extract it
@@ -387,8 +363,6 @@ lda_beta <- tweets_lda %>%
 ```{r}
 lda_beta %>% head()
 ```
-
-
 
 ```{r}
 # Notice the "reorder_within()"
@@ -408,7 +382,7 @@ lda_beta %>%
 
 ### $\gamma$: Document-Topic Association
 
-In LDA, documents are represented as a mix of topics. This association of a document to a topic is captured by $\gamma$
+* In LDA, documents are represented as a mix of topics. This association of a document to a topic is captured by $\gamma$
 
 ```{r}
 lda_gamma <- tweets_lda %>% 
@@ -434,7 +408,8 @@ lda_gamma %>%
   arrange(desc(gamma)) %>%
   slice(1:3) %>%
   ungroup() %>%
-  left_join(tweets %>% select(ID, text), by = c('document' = 'ID'))
+  left_join(tweets %>% select(ID, text), by = c('document' = 'ID')) %>%
+  select(topic, text)
 ```
 
 
@@ -493,6 +468,8 @@ Further NLP packages ecosystem
 
 * Julia Silge and David Robinson (2020). Text Mining with R: A Tidy Approach, O’Reilly. Online available [here](https://www.tidytextmining.com/)
    * [Chapter 6](https://www.tidytextmining.com/topicmodeling.html): Introduction topic models
+* Emil Hvidfeldt and Julia Silge (2020). Supervised Machine Learning for Text Analysis in R, online available [here](https://smltar.com/)
+   * [Chapter 7](https://smltar.com/mlclassification.html): Classification
 
 ### Further sources
 
