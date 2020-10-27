@@ -34,6 +34,11 @@ library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
 library(magrittr) # For extra-piping operators (eg. %<>%)
 ```
 
+```{r}
+library(tidygraph)
+library(ggraph)
+```
+
 # Danish elites data
 
 * https://github.com/antongrau/eliter
@@ -70,7 +75,7 @@ data %>% glimpse()
 data %>% count(role, sort = TRUE)
 ```
 ```{r}
-role_selected <- c('Member', 'Chairman', 'Vice chairman', 'Chief executive', 'Executive')
+role_selected <- c('Member', 'Chairman', 'Vice chairman', 'Chief executive')
 ```
 
 ```{r}
@@ -78,19 +83,17 @@ data %<>% filter(role %in% role_selected)
 ```
 
 ```{r}
-data %>% count(sector, sort = TRUE)
+data %>% count(type, sort = TRUE)
 ```
 
 
 ```{r}
-sector_select <- c('Corporations')
+type_select <- c('Organisation')
 ```
 
 ```{r}
-data %<>% filter(sector_select %in% sector_select)
+data %<>% filter(type %in% type_select)
 ```
-
-
 
 
 ```{r}
@@ -102,13 +105,13 @@ data %>% count(affiliation_id, affiliation, sort = TRUE)
 ```
 
 ```{r}
-el <-data %>%
+el <- data %>%
   select(person_id, affiliation_id) %>%
   left_join(data %>% select(person_id, affiliation_id), by = "affiliation_id") 
 ```
 
 ```{r}
-el %<>% c
+el %<>% 
   select(-affiliation_id) %>%
   rename(from = person_id.x, 
          to = person_id.y) %>%
@@ -150,9 +153,9 @@ g <- as_tbl_graph(el, directed = FALSE) %>%
 ```
 
 ```{r}
-g <- g %E>%
-  filter(weight > 1) %N>%
-  filter(!node_is_isolated())
+#g <- g %E>%
+#  filter(weight > 1) %N>%
+#  filter(!node_is_isolated())
 ```
 
 
@@ -170,6 +173,75 @@ g <- g %N>%
 g
 ```
 
+```{r}
+g %N>%
+  mutate(cent_eigen = centrality_eigen(weight = weight)) %>%
+  as_tibble() %>%
+  arrange(desc(cent_eigen)) %>%
+  head()
+```
+
+```{r}
+g <- g %N>%
+  mutate(community = group_louvain(weights = weight) )
+```
+
+```{r}
+g %N>%
+  as_tibble() %>%
+  count(community)
+```
+
+```{r}
+g <- g %N>%
+  mutate(community = ifelse(community > 4, NA, community))
+```
+
+```{r}
+g %N>%
+  as_tibble() %>%
+  count(community)
+```
+
+```{r}
+g <- g %N>%
+  morph(to_split, community) %N>%
+  mutate(cent_com = centrality_eigen(weight = weight),
+         com_center = cent_com == max(cent_com)) %>%
+  unmorph()
+```
+
+
+```{r, fig.width=15, fig.height=15}
+set.seed(1337)
+g %E>%
+  filter(weight > 1) %N>% 
+  filter(percent_rank(centrality_eigen(weights = weight)) > 0.99 ) %>%
+  ggraph(layout = 'fr') + 
+  geom_edge_link(aes(alpha =  weight)) +
+  geom_node_point(aes(size= centrality_eigen(weights = weight), col = community)) +
+  geom_node_text(aes(label = label), repel = TRUE) + 
+  theme_graph() +
+  theme(legend.position = 'bottom')
+```
+
+```{r}
+g  %N>%
+  mutate(cent_drg = centrality_degree(weights = weight)) %>%
+  as_tibble() %>%
+  arrange(desc(cent_drg)) %>%
+  head(50)
+```
+
+```{r}
+g %N>%
+  mutate(cent_dgr = centrality_degree(weights = weight)) %>%
+  as_tibble() %>%
+  group_by(community) %>%
+  arrange(desc(cent_dgr)) %>%
+  slice(1:10) %>%
+  ungroup()
+```
 
 
 
