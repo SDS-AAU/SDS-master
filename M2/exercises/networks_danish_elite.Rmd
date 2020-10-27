@@ -1,5 +1,5 @@
 ---
-title: 'Advanced Network Analysis: A look into Danish Elite NEtworks'
+title: 'Network Analysis Workshop: A look into Danish Elite Networks'
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
@@ -13,7 +13,28 @@ output:
     theme: flatly
 ---
 
-# Danish elites
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+```
+
+# Danish elites data
 
 * https://github.com/antongrau/eliter
 
@@ -22,56 +43,65 @@ output:
 ## Get the data
 
 ```{r}
-# remotes::install_github("antongrau/soc.elite") # Somehow doesnt work
-```
-
-
-## first inspection
-
-### All
-
-```{r}
-den17 <- read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/networks/elite_den17.csv') 
+# remotes::install_github("antongrau/eliter") # Somehow doesnt work
 ```
 
 ```{r}
-den17 %>% head()
+data <- read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/networks/elite_den17.csv') 
+```
+
+# First Inspection & EDA
+
+```{r}
+data %>% head()
+```
+```{r}
+colnames(data) <- colnames(data) %>% str_to_lower()
+```
+
+```{r}
+data %>% glimpse()
+```
+
+```{r}
+data %>% count(role, sort = TRUE)
+```
+```{r}
+positions <- c('Member', 'Chairman', 'Vice chairman', 'Chief executive', 'Executive')
+```
+
+```{r}
+data %<>% filter(role %in% positions)
 ```
 
 
 ```{r}
-den17 %>% count(ROLE, sort = TRUE)
-```
-
-
-```{r}
-den17 %<>% filter(ROLE %in% c('Member', 'Chairman', 'Vice chairman', 'Chief executive', 'Executive'))
-```
-
-
-```{r}
-den17 %>% count(TYPE, sort = TRUE)
-```
-
-
-```{r}
-den17 %<>% drop_na(CVR_AFFILIATION)
+data %>% count(type, sort = TRUE)
 ```
 
 ```{r}
-den17 %>% count(PERSON_ID, NAME, sort = TRUE)
+data %<>% drop_na(cvr_affiliation)
 ```
+
 ```{r}
-el <-den17 %>%
-  select(PERSON_ID, AFFILIATION_ID) %>%
-  left_join(den17 %>% select(PERSON_ID, AFFILIATION_ID), by = "AFFILIATION_ID") 
+data %>% count(person_id, name, sort = TRUE)
+```
+
+```{r}
+data %>% count(affiliation_id, affiliation, sort = TRUE)
+```
+
+```{r}
+el <-data %>%
+  select(person_id, affiliation_id) %>%
+  left_join(data %>% select(person_id, affiliation_id), by = "affiliation_id") 
 ```
 
 ```{r}
 el %<>% 
-  select(-AFFILIATION_ID) %>%
-  rename(from = PERSON_ID.x, 
-         to = PERSON_ID.y) %>%
+  select(-affiliation_id) %>%
+  rename(from = person_id.x, 
+         to = person_id.y) %>%
   filter(from != to)
 ```
 
@@ -82,36 +112,31 @@ el %<>%
 
 ```{r}
 el %>% 
+  arrange(desc(weight)) %>%
   head()
 ```
-
-```{r}
-el %>% arrange(desc(weight)) 
-```
+`
 ```{r}
 el %>% 
   ggplot(aes(x = weight)) +
   geom_histogram()
 ```
 
-
 ## create the network
 
 Node names
 
 ```{r}
-nodes <- den17 %>% select(PERSON_ID, NAME) %>%
-  rename(name = PERSON_ID, label = NAME) %>%
+nodes <- data %>% select(person_id, name) %>%
+  rename(name = person_id, label = name) %>%
   mutate(name = name %>% as.character()) %>%
   distinct(name, .keep_all = TRUE)
 ```
 
 ```{r}
-g <- as_tbl_graph(el, directed = FALSE)
-```
-
-```{r}
-g <- g %>% simplify() %>% as_tbl_graph()
+g <- as_tbl_graph(el, directed = FALSE) %>% 
+  simplify() %>% 
+  as_tbl_graph()
 ```
 
 ```{r}
@@ -158,16 +183,14 @@ g %N>%
 ```
 
 
-
-
 ```{r, fig.width=15, fig.height=15}
 set.seed(1337)
 g %N>% 
-  filter(percent_rank(centrality_degree(weights = weight)) > 0.99 ) %>%
+  filter(percent_rank(centrality_degree(weights = weight)) > 0.90 ) %>%
   ggraph(layout = 'fr') + 
   geom_edge_link(alpha = 0.25) +
   geom_node_point(aes(size= centrality_betweenness(weights = weight), col = community %>% factor())) +
-  geom_node_text(aes(label = label, filter = percent_rank(centrality_betweenness(weights = weight)) > 0.90), repel = TRUE) + 
+  geom_node_text(aes(label = label,), repel = TRUE) + 
   theme_graph() +
   theme(legend.position = 'bottom')
 ```
@@ -212,7 +235,17 @@ g %N>%
 
 
 ```{r}
-#directors08 <- readRDS('../../00_data/networks/elite_directors08.rda') %>% as_tibble()
+directors08 <- readRDS('../../00_data/networks/elite_directors08.rda') %>% as_tibble()
+```
+
+```{r}
+directors08 %>% glimpse()
+```
+
+
+
+```{r}
+sequence.data %>% glimpse()
 ```
 
 ```{r}
