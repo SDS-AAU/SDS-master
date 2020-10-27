@@ -37,7 +37,6 @@ library(magrittr) # For extra-piping operators (eg. %<>%)
 # Danish elites data
 
 * https://github.com/antongrau/eliter
-
 * https://magtelite.dk/data/
 
 ## Get the data
@@ -52,6 +51,8 @@ data <- read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/netwo
 
 # First Inspection & EDA
 
+## Initial cleaning
+
 ```{r}
 data %>% head()
 ```
@@ -63,25 +64,34 @@ colnames(data) <- colnames(data) %>% str_to_lower()
 data %>% glimpse()
 ```
 
+## Selecting categories
+
 ```{r}
 data %>% count(role, sort = TRUE)
 ```
 ```{r}
-positions <- c('Member', 'Chairman', 'Vice chairman', 'Chief executive', 'Executive')
+role_selected <- c('Member', 'Chairman', 'Vice chairman', 'Chief executive', 'Executive')
 ```
 
 ```{r}
-data %<>% filter(role %in% positions)
+data %<>% filter(role %in% role_selected)
+```
+
+```{r}
+data %>% count(sector, sort = TRUE)
 ```
 
 
 ```{r}
-data %>% count(type, sort = TRUE)
+sector_select <- c('Corporations')
 ```
 
 ```{r}
-data %<>% drop_na(cvr_affiliation)
+data %<>% filter(sector_select %in% sector_select)
 ```
+
+
+
 
 ```{r}
 data %>% count(person_id, name, sort = TRUE)
@@ -98,7 +108,7 @@ el <-data %>%
 ```
 
 ```{r}
-el %<>% 
+el %<>% c
   select(-affiliation_id) %>%
   rename(from = person_id.x, 
          to = person_id.y) %>%
@@ -160,105 +170,6 @@ g <- g %N>%
 g
 ```
 
-```{r}
-g <- g %N>%
-  mutate(community = group_louvain(weights = weight) )
-```
-
-```{r}
-g %N>%
-  as_tibble() %>%
-  count(community)
-```
-
-```{r}
-g <- g %N>%
-  mutate(community = ifelse(community > 4, NA, community))
-```
-
-```{r}
-g %N>%
-  as_tibble() %>%
-  count(community)
-```
-
-
-```{r, fig.width=15, fig.height=15}
-set.seed(1337)
-g %N>% 
-  filter(percent_rank(centrality_degree(weights = weight)) > 0.90 ) %>%
-  ggraph(layout = 'fr') + 
-  geom_edge_link(alpha = 0.25) +
-  geom_node_point(aes(size= centrality_betweenness(weights = weight), col = community %>% factor())) +
-  geom_node_text(aes(label = label,), repel = TRUE) + 
-  theme_graph() +
-  theme(legend.position = 'bottom')
-```
-```{r}
-g  %N>%
-  mutate(cent_drg = centrality_degree(weights = weight)) %>%
-  as_tibble() %>%
-  arrange(desc(cent_drg)) %>%
-  head(50)
-```
-```{r}
-g %N>%
-  mutate(cent_dgr = centrality_degree(weights = weight)) %>%
-  as_tibble() %>%
-  group_by(community) %>%
-    arrange(desc(cent_dgr)) %>%
-    slice(1:10) %>%
-  ungroup()
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-directors08 <- readRDS('../../00_data/networks/elite_directors08.rda') %>% as_tibble()
-```
-
-```{r}
-directors08 %>% glimpse()
-```
-
-
-
-```{r}
-sequence.data %>% glimpse()
-```
-
-```{r}
-#directors08 %>% glimpse()
-```
-
-```{r}
-#directors08 %>% count(virksomhedsnavn, sort = TRUE)
-```
-
-```{r}
-#directors08 %>% count(navn, sort = TRUE)
-```
 
 
 
