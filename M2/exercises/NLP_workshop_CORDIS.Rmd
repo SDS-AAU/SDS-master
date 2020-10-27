@@ -34,16 +34,318 @@ library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
 library(magrittr) # For extra-piping operators (eg. %<>%)
 ```
 
+```{r}
+library(tidytext)
+```
+
+
 # Get the data
 
 ```{r}
 data <- read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/M2/data/cordis-h2020reports.gz')
 ```
 
+# First inspection
+
 ```{r}
 data %>% glimpse()
 ```
+# Tokenizing
+
+```{r}
+text <- data %>% 
+  select(rcn, summary) %>%
+  rename(id = rcn,
+         text = summary)
+```
+
+```{r}
+text_tidy <- text %>% unnest_tokens(word, text, token = 'words') %>%
+  anti_join(stop_words, by = 'word')
+```
+
+# Topwords
+
+```{r}
+# top 10 words used
+text_tidy %>%
+  count(word, sort = TRUE) %>%
+  slice(1:10) %>%
+  ggplot(aes(x = fct_reorder(word, n), y = n, fill = word)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Top 10 words used", x = NULL) 
+```
+
+```{r}
+# People love wordclouds
+library(wordcloud)
+
+text_tidy %>%
+  count(word) %>%
+  with(wordcloud(word, n, 
+                 max.words = 50, 
+                 color = "blue"))
+```
+
+# Word network
 
 
+```{r}
+library(widyr)
+el_words <- text_tidy %>%
+  pairwise_count(word, id, sort = TRUE) %>%
+  rename(from = item1, to = item2, weight = n)
+```
+
+```{r}
+el_words %>% head()
+```
+
+```{r}
+library(tidygraph)
+library(ggraph)
+```
+
+```{r}
+g <- el_words %>%
+  filter(weight >= 50) %>%
+  as_tbl_graph(directed = FALSE) %>%
+  igraph::simplify() %>% as_tbl_graph() 
+```
+
+
+```{r, fig.width=10, fig.height=10}
+set.seed(1337)
+g %N>%
+#  filter(centrality_degree(weight = weight) > 100) %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(width = weight, edge_alpha = weight)) +
+  geom_node_point(aes(size = centrality_degree(weight = weight)), color = "plum4") +
+  geom_node_text(aes(label = name,), repel = TRUE) +
+  theme_graph() +
+  theme(legend.position = 'none') +
+  labs(title = 'Co-Word Network')
+```
+
+# TFIDF weighting
+
+```{r}
+# TFIDF weights
+text_tidy %<>%
+  add_count(id, word) %>%
+  bind_tf_idf(term = word,
+              document = id,
+              n = n)
+```
+
+```{r}
+# TFIDF topwords
+text_tidy %>%
+  count(word, wt = tf_idf, sort = TRUE) %>%
+  head(20)
+```
+
+
+
+# Bigrams
+
+```{r}
+text_tidy_ngrams <- text %>% 
+  unnest_tokens(bigram, text, token = 'ngrams', n = 2) %>%
+  na.omit() %>%
+  separate(bigram, c("word1", "word2"), sep = " ") %>%
+  anti_join(stop_words, by = c('word1' = 'word')) %>%
+  anti_join(stop_words, by = c('word2' = 'word')) %>%
+  unite(bigram, word1, word2, sep = " ") %>%
+  count(id, bigram) %>%
+  add_count(id, bigram) %>%
+  bind_tf_idf(term = bigram,
+              document = id,
+              n = n)
+```
+
+```{r}
+text_tidy_ngrams %>%
+  count(bigram, wt = tf_idf, sort = TRUE) %>%
+  head(50)
+```
+
+# Topic modelling
+
+```{r}
+library(topicmodels)
+```
+
+
+```{r}
+text_dtm <- text_tidy %>%
+  count(id, word) %>%
+  cast_dtm(document = id, term = word, value = n)
+```
+
+```{r}
+text_lda <- text_dtm %>% 
+  LDA(k = 4, method = "Gibbs",
+      control = list(seed = 1337))
+```
+
+## Betas
+
+```{r}
+# LDA output is defined for tidy(), so we can easily extract it
+lda_beta <- text_lda %>% 
+  tidy(matrix = "beta") %>%
+  group_by(topic) %>%
+  arrange(topic, desc(beta)) %>%
+  slice(1:10) %>%
+  ungroup() 
+```
+
+```{r}
+# Notice the "reorder_within()"
+lda_beta %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  group_by(topic, term) %>%    
+  arrange(desc(beta)) %>%  
+  ungroup() %>%
+  ggplot(aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  scale_x_reordered() +
+  labs(title = "Top 10 terms in each LDA topic",
+       x = NULL, y = expression(beta)) +
+  facet_wrap(~ topic, ncol = 2, scales = "free")
+```
+
+## Gammas
+
+```{r}
+lda_gamma <- text_lda %>% 
+  tidy(matrix = "gamma")
+```
+
+```{r}
+top_topics <- text_lda %>% 
+  tidy(matrix = "gamma")  %>%
+  group_by(document) %>%
+  top_n(1, wt = gamma) %>%
+  ungroup()
+```
+
+```{r}
+top_topics
+```
+
+LDAViz
+
+```{r}
+topicmodels_json_ldavis <- function(fitted, doc_dtm, method = "PCA", doc_in = NULL, topic_in = NULL){
+  require(topicmodels); require(dplyr); require(LDAvis)
+  
+  # Find required quantities
+  phi <- posterior(fitted)$terms %>% as.matrix() # Topic-term distribution
+  theta <- posterior(fitted)$topics %>% as.matrix() # Document-topic matrix
+  
+  # # Restrict (not working atm)
+  # if(!is_null(ID_in)){theta <- theta[rownames(theta) %in%  doc_in,]; doc_fm  %<>% dfm_subset(dimnames(doc_fm)$docs %in% doc_in)}
+  
+  # Restrict
+  if(!is_null(topic_in)){
+    phi <- phi[topic_in, ]
+    theta <- theta[ , topic_in]
+  }
+  text_tidy <- doc_dtm %>% tidy()
+  vocab <- colnames(phi)
+  doc_length <- tibble(document = rownames(theta)) %>% left_join(text_tidy %>% count(document, wt = count), by = 'document')
+  tf <- tibble(term = vocab) %>% left_join(text_tidy %>% count(term, wt = count), by = "term") 
+  
+  if(method == "PCA"){mds <- jsPCA}
+  if(method == "TSNE"){library(tsne); mds <- function(x){tsne(svd(x)$u)} }
+  
+  # Convert to json
+  json_lda <- LDAvis::createJSON(phi = phi, theta = theta, vocab = vocab, doc.length = doc_length %>% pull(n), term.frequency = tf %>% pull(n),
+                                 reorder.topics = FALSE, mds.method = mds,plot.opts = list(xlab = "Dim.1", ylab = "Dim.2")) 
+  return(json_lda)
+}
+```
+
+
+```{r}
+library(LDAvis)
+json_lda <- topicmodels_json_ldavis(fitted = text_lda, 
+                                    doc_dtm = text_dtm, 
+                                    method = "TSNE")
+json_lda %>% serVis()
+# json_lda %>% serVis(out.dir = 'LDAviz')
+```
+
+# Part of speech etc....
+
+```{r}
+library(spacyr)
+# spacy_install() # creates a new conda environment called spacy_condaenv, as long as some version of conda is installed 
+```
+
+```{r}
+spacy_initialize(model = "en_core_web_sm")
+```
+
+
+```{r}
+text_entities <-text %>% 
+  pivot_wider(names_from = id, values_from = text) %>% 
+  as.character() %>% 
+  spacy_parse(
+    pos = TRUE,
+    tag = TRUE,
+    lemma = TRUE,
+    entity = TRUE,
+    dependency = TRUE
+  )
+```
+
+```{r}
+text_entities %<>% 
+  entity_consolidate()
+```
+
+```{r}
+text_entities %>% count(entity_type)
+```
+```{r}
+text_entities %>% 
+  filter(entity_type == 'PRODUCT') %>%
+  count(token)
+```
+
+
+
+```{r}
+el_products <- text_entities %>% 
+  filter(entity_type == 'PRODUCT') %>%
+  pairwise_count(token, doc_id, sort = TRUE) %>%
+  rename(from = item1, to = item2, weight = n)
+```
+
+
+```{r}
+g <- el_products %>%
+  as_tbl_graph(directed = FALSE) %>%
+  igraph::simplify() %>% as_tbl_graph() 
+```
+
+
+```{r, fig.width=10, fig.height=10}
+set.seed(1337)
+g %N>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(width = weight, edge_alpha = weight)) +
+  geom_node_point(aes(size = centrality_degree(weight = weight)), color = "plum4") +
+  geom_node_text(aes(label = name,), repel = TRUE) +
+  theme_graph() +
+  theme(legend.position = 'none') +
+  labs(title = 'CH2020 Network PRoducts')
+```
 
 

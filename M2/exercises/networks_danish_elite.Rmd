@@ -243,5 +243,12 @@ g %N>%
   ungroup()
 ```
 
-
+```{r}
+g %N>%
+  as_tibble() %>%
+  group_by(community) %>%
+  arrange(desc(cent_com)) %>%
+  slice(1:10) %>%
+  ungroup()
+```
 
