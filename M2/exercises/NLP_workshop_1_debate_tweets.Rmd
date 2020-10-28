@@ -157,6 +157,17 @@ labels_words %>%
   scale_x_reordered()
 ```
 
+## Distance
+
+```{r}
+tweets_tidy %>% head()
+```
+
+```{r}
+
+```
+
+
 
 # Predictive model
 
@@ -227,9 +238,10 @@ data_recipe <- data_train %>%
   step_tokenfilter(text, min_times = 100) %>%  # Filter out rare words
   step_stopwords(text, keep = FALSE) %>% # Filter stopwords
   step_tfidf(text) %>% # TFIDF weighting
-#  step_pca(all_predictors()) %>% # Dimensionality reduction via PCA (optional)
+  step_pca(all_predictors()) %>% # Dimensionality reduction via PCA (optional)
   prep() # NOTE: Only prep the recipe when not using in a workflow
 ```
+
 
 ```{r}
 data_recipe
