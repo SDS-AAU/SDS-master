@@ -142,13 +142,13 @@ tweets_tidy %>%
 labels_words <- tweets_tidy %>%
   group_by(labels) %>%
   count(word, wt = tf_idf, sort = TRUE, name = "tf_idf") %>%
-  slice(1:20) %>%
-  ungroup() %>%
-  mutate(word = reorder_within(word, by = tf_idf, within = labels)) 
+  slice(1:100) %>%
+  ungroup() 
 ```
 
-```{r}
+```{r, fig.width=10}
 labels_words %>%
+  mutate(word = reorder_within(word, by = tf_idf, within = labels)) %>%
   ggplot(aes(x = word, y = tf_idf, fill = labels)) +
   geom_col(show.legend = FALSE) +
   labs(x = NULL, y = "tf-idf") +
@@ -156,6 +156,36 @@ labels_words %>%
   coord_flip() +
   scale_x_reordered()
 ```
+
+
+```{r}
+words_classifier <- labels_words %>%
+  arrange(desc(tf_idf)) %>%
+  distinct(word, .keep_all = TRUE) %>%
+  select(-tf_idf)
+```
+
+```{r}
+tweet_null_model <- tweets_tidy %>%
+  inner_join(labels_words, by = 'word')
+```
+
+```{r}
+null_res <- tweet_null_model %>%
+  group_by(ID) %>%
+  summarise(truth = mean(labels.x, na.rm = TRUE) %>% round(0),
+         pred = mean(labels.y, na.rm = TRUE) %>% round(0))
+```
+
+```{r}
+table(null_res$truth, null_res$pred)
+```
+```{r}
+tweets %>% count(labels)
+```
+
+
+
 
 # Predictive model
 
