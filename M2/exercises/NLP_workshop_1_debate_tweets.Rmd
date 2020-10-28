@@ -158,6 +158,14 @@ labels_words %>%
 ```
 
 
+# Predictive model
+
+```{r}
+library(tidymodels)
+```
+
+## Simple manual baseline
+
 ```{r}
 words_classifier <- labels_words %>%
   arrange(desc(tf_idf)) %>%
@@ -180,18 +188,9 @@ null_res <- tweet_null_model %>%
 ```{r}
 table(null_res$truth, null_res$pred)
 ```
-```{r}
-tweets %>% count(labels)
-```
 
 
-
-# Predictive model
-
-```{r}
-library(tidymodels)
-```
-
+## Preprocessing
 
 ```{r}
 # Notice, we use the initial untokenized tweets
@@ -221,7 +220,7 @@ library(textrecipes) # Adittional recipes for working with text data
 # This recipe pretty much reconstructs all preprocessing we did so far
 data_recipe <- data_train %>%
   recipe(y ~.) %>%
-  themis::step_downsample(y) %>% # For downsampling class imbalances (optimal)
+  #themis::step_downsample(y) %>% # For downsampling class imbalances (optimal)
   step_filter(!(text %>% str_detect('^RT'))) %>% # Upfront filtering retweets
   step_filter(text != "") %>%
   step_tokenize(text, token = "tweets") %>% # tokenize
@@ -308,24 +307,39 @@ library(jsonlite)
 tmp <- tempfile()
 download.file("https://github.com/SDS-AAU/SDS-master/raw/master/M2/data/pres_debate_2020.gz", tmp)
 
-tweets_raw <- stream_in(gzfile(tmp, "pres_debate_2020"))
+tweets_raw_new <- stream_in(gzfile(tmp, "pres_debate_2020"))
 ```
 
 ```{r}
-tweets_raw %>% glimpse()
+tweets_raw_new %>% glimpse()
 ```
 
 ```{r}
-tweets_new <- tibble(ID = tweets_raw[[1]]$id, 
-                     text = tweets_raw[[1]]$tweet)
-rm(tweets_raw)
+tweets_new <- tibble(ID = tweets_raw_new$id[1,] %>% t() %>% as.character(), 
+                     text = tweets_raw_new$tweet[1,] %>% t() %>% as.character())
+#rm(tweets_raw_new)
 ```
+
+```{r}
+tweets_new %>% glimpse()
+```
+
 
 ```{r}
 pred_new <- fit_en %>% predict(new_data = data_recipe %>% bake(tweets_new))
 ```
 
 To be continued by you :)
+
+X
+
+X
+
+X
+
+X
+
+X
 
 
 # Topic models (LDA)
