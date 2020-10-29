@@ -168,7 +168,6 @@ tweets_tidy %>% head()
 ```
 
 
-
 # Predictive model
 
 ```{r}
@@ -231,14 +230,14 @@ library(textrecipes) # Adittional recipes for working with text data
 # This recipe pretty much reconstructs all preprocessing we did so far
 data_recipe <- data_train %>%
   recipe(y ~.) %>%
-  #themis::step_downsample(y) %>% # For downsampling class imbalances (optimal)
+  themis::step_downsample(y) %>% # For downsampling class imbalances (optimal)
   step_filter(!(text %>% str_detect('^RT'))) %>% # Upfront filtering retweets
   step_filter(text != "") %>%
   step_tokenize(text, token = "tweets") %>% # tokenize
-  step_tokenfilter(text, min_times = 100) %>%  # Filter out rare words
+  step_tokenfilter(text, min_times = 75) %>%  # Filter out rare words
   step_stopwords(text, keep = FALSE) %>% # Filter stopwords
   step_tfidf(text) %>% # TFIDF weighting
-  step_pca(all_predictors()) %>% # Dimensionality reduction via PCA (optional)
+  #step_pca(all_predictors()) %>% # Dimensionality reduction via PCA (optional)
   prep() # NOTE: Only prep the recipe when not using in a workflow
 ```
 
@@ -336,9 +335,93 @@ tweets_new <- tibble(ID = tweets_raw_new$id[1,] %>% t() %>% as.character(),
 tweets_new %>% glimpse()
 ```
 
+```{r}
+data_new <- data_recipe %>% bake(tweets_new)
+```
 
 ```{r}
-pred_new <- fit_en %>% predict(new_data = data_recipe %>% bake(tweets_new))
+data_new %>% glimpse()
+```
+
+
+```{r}
+pred_new <- fit_en %>% predict(new_data = data_new)
+```
+
+```{r}
+tweets_new %<>%
+  mutate(pred = pred_new %>% pull(.pred_class))
+```
+
+```{r}
+tweets_new %>% count(pred)
+```
+
+```{r}
+tweets_tidy_new <- tweets_new %>%
+  unnest_tokens(word, text, token = "tweets") 
+```
+
+```{r}
+# preprocessing
+tweets_tidy_new %<>%
+  filter(!(word %>% str_detect('@|#presidential'))) %>% # remove hashtags and mentions
+  filter(!(word %>% str_detect('^amp|^http|^t\\.co'))) %>% # Twitter specific stuff
+#  mutate(word = word %>% str_remove_all('[^[:alnum:]]')) %>% ## remove all special characters
+  filter(str_length(word) > 2 ) %>% # Remove words with less than  3 characters
+  group_by(word) %>%
+  filter(n() > 100) %>% # remove words occuring less than 100 times
+  ungroup() %>%
+  anti_join(stop_words, by = 'word') # remove stopwords
+```
+
+
+```{r}
+# TFIDF weights
+tweets_tidy_new %<>%
+  add_count(ID, word) %>%
+  bind_tf_idf(term = word,
+              document = ID,
+              n = n)
+```
+
+```{r}
+labels_words_new <- tweets_tidy_new %>%
+  group_by(pred) %>%
+  count(word, wt = tf_idf, sort = TRUE, name = "tf_idf") %>%
+  slice(1:20) %>%
+  ungroup() 
+```
+
+```{r}
+hashtags_words_new <- tweets_tidy_new %>%
+  filter(word %>% str_detect('#')) %>%
+  group_by(pred) %>%
+  count(word, wt = tf_idf, sort = TRUE, name = "tf_idf") %>%
+  slice(1:20) %>%
+  ungroup() 
+```
+
+```{r, fig.width=10}
+labels_words_new %>%
+  mutate(word = reorder_within(word, by = tf_idf, within = pred)) %>%
+  ggplot(aes(x = word, y = tf_idf, fill = pred)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~pred, ncol = 2, scales = "free") +
+  coord_flip() +
+  scale_x_reordered()
+```
+
+```{r, fig.width=10}
+hashtags_words_new %>%
+  mutate(word = reorder_within(word, by = tf_idf, within = pred)) %>%
+  ggplot(aes(x = word, y = tf_idf, fill = pred)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~pred, ncol = 2, scales = "free") +
+  coord_flip() +
+  scale_x_reordered()
 ```
 
 To be continued by you :)
@@ -354,7 +437,7 @@ X
 X
 
 
-# Topic models (LDA)
+# Topic models (LDA) on new data
 
 ```{r}
 # for LDA analysis
@@ -365,7 +448,7 @@ library(topicmodels)
 
 ```{r}
 # LDA via the topicmodel package requires a document-term-matrix (dtm)
-tweets_dtm <- tweets_tidy %>%
+tweets_dtm <- tweets_tidy_new %>%
   cast_dtm(document = ID, term = word, value = n)
 ```
 
@@ -383,15 +466,6 @@ library(tm)
 tweets_dtm %>% removeSparseTerms(sparse = .99)
 ```
 
-```{r}
-tweets_dtm %>% removeSparseTerms(sparse = .999)
-```
-
-```{r}
-tweets_dtm %>% removeSparseTerms(sparse = .9999)
-```
-
-* Ok, we might have to accept a high level of sparsity in order to still have a meaningful number of unique words.
 * Now we can perform a LDA, using the more accurate Gibbs sampling as `method`.
 
 ```{r}
@@ -456,16 +530,19 @@ lda_gamma %>%
   labs(title = "Distribution of probabilities for all topics",
        y = "Number of documents", x = expression(gamma))
 ```
+```{r}
+lda_gamma %<>%
+  left_join(tweets_new %>% select(ID, pred), by = c('document' = 'ID'))
+```
 
 ```{r}
-lda_gamma %>% 
-  group_by(topic) %>%
-  arrange(desc(gamma)) %>%
-  slice(1:3) %>%
-  ungroup() %>%
-  left_join(tweets %>% select(ID, text), by = c('document' = 'ID')) %>%
-  select(topic, text)
+lda_gamma %>%
+  group_by(pred, topic) %>%
+  summarise(gamma = sum(gamma)) %>%
+  arrange(pred, gamma)
 ```
+
+
 
 
 ```{r}
@@ -491,19 +568,48 @@ top_topics %>%
   count(topic)
 ```
 
-```{r}
-x <- lda_gamma %>%
-  left_join(tweets %>% select(ID, labels), by = c('document' = 'ID'))
-```
 
 ```{r}
-x %>%
-  group_by(labels, topic) %>%
-  summarise(n = sum(gamma) ) %>%
-  group_by(labels) %>%
-  mutate(n = n / sum(n)) %>%
-  ungroup()
+topicmodels_json_ldavis <- function(fitted, doc_dtm, method = "PCA", doc_in = NULL, topic_in = NULL){
+  require(topicmodels); require(dplyr); require(LDAvis)
+  
+  # Find required quantities
+  phi <- posterior(fitted)$terms %>% as.matrix() # Topic-term distribution
+  theta <- posterior(fitted)$topics %>% as.matrix() # Document-topic matrix
+  
+  # # Restrict (not working atm)
+  # if(!is_null(ID_in)){theta <- theta[rownames(theta) %in%  doc_in,]; doc_fm  %<>% dfm_subset(dimnames(doc_fm)$docs %in% doc_in)}
+  
+  # Restrict
+  if(!is_null(topic_in)){
+    phi <- phi[topic_in, ]
+    theta <- theta[ , topic_in]
+  }
+  text_tidy <- doc_dtm %>% tidy()
+  vocab <- colnames(phi)
+  doc_length <- tibble(document = rownames(theta)) %>% left_join(text_tidy %>% count(document, wt = count), by = 'document')
+  tf <- tibble(term = vocab) %>% left_join(text_tidy %>% count(term, wt = count), by = "term") 
+  
+  if(method == "PCA"){mds <- jsPCA}
+  if(method == "TSNE"){library(tsne); mds <- function(x){tsne(svd(x)$u)} }
+  
+  # Convert to json
+  json_lda <- LDAvis::createJSON(phi = phi, theta = theta, vocab = vocab, doc.length = doc_length %>% pull(n), term.frequency = tf %>% pull(n),
+                                 reorder.topics = FALSE, mds.method = mds,plot.opts = list(xlab = "Dim.1", ylab = "Dim.2")) 
+  return(json_lda)
+}
 ```
+
+
+```{r}
+library(LDAvis)
+json_lda <- topicmodels_json_ldavis(fitted = tweets_lda, 
+                                    doc_dtm = tweets_dtm, 
+                                    method = "TSNE")
+json_lda %>% serVis()
+# json_lda %>% serVis(out.dir = 'LDAviz')
+```
+
 
 # Endnotes
 
