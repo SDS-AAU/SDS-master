@@ -1,0 +1,195 @@
+---
+title: 'NLP workshop - Exploring Presidential Debate on twitter'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+```
+
+```{r}
+library(tidytext)
+```
+
+# This session
+
+
+# Moving on to text-vectorization
+
+Before we dive into text-vectorization and representation: 
+
+```{r}
+text <- tibble(text = "President Trump has said he came up with the term fake news. But the phrase has been in general circulation since the end of the 19th century, according to Merriam-Webster. Trump was, however, the first US President to deploy it against his opponents. And over the last four years, he has brought the phrase into the mainstream, popularizing it as a smear for unfavorable, but factual coverage. According to a database maintained by Stephanie Sugars of the US Press Freedom Tracker, Trump has used the phrase fake news nearly 900 times in tweets aimed to denigrate the media, insult particular news outlets, discredit supposed leaks and leakers, and allege falsehoods. As election day nears, he's redoubled his efforts bashing the fourth estate, research by Sugars has shown. This has given cover and conferred legitimacy to other politicians hoping to do the same. Fake news has been invoked by dozens of leaders, governments and state media around the world, including Syrian President Bashar al-Assad, Venezuelan President Nicolas Maduro, Philippine President Rodrigo Duterte, Polish President Andrzej Duda, former Spanish Foreign Minister Alfonso Dastis, Chinese Ambassador to the United Kingdom Liu Xiaoming and former Malaysia Prime Minister Najib Razak, just to name a few.")
+```
+
+```{r}
+# SOME STUFFF
+```
+
+# Bag of words model
+
+* In order for a computer to understand text we need to somehow find a useful representation.
+* If you need to compare different texts e.g. articles, you will probably go for keywords. These keywords may come from a keyword-list with for example 200 different keywords
+* In that case you could represent each document with a (sparse) vector with 1 for "keyword present" and 0 for "keyword absent"
+* We can also get a bit more sophoistocated and count the number of times a word from our dictionary occurs.
+* For a corpus of documents that would give us a document-term matrix.
+
+![example](https://i.stack.imgur.com/C1UMs.png)
+
+Let's try creating a bag of words model from our initial example.
+
+```{r}
+text <- tibble(id = c(3:6),
+               text = c('A text about cats.',
+                        'A text about dogs.',
+                        'And another text about a dog.',
+                        'Why always writing about cats and dogs, always dogs?'))
+```
+
+```{r}
+text_tidy <- text %>% 
+  unnest_tokens(word, text, token = 'words') %>% 
+  count(id, word)
+```
+
+
+* How to we get a document-term matrix now?
+* We could use `cast_dtm()` to create a DTM in the format of the `tm` package.
+
+```{r}
+text_dtm <- text_tidy %>%
+  cast_dtm(id, word, n)
+```
+
+```{r}
+text_dtm 
+```
+
+* We can simply confert ig to a tibble. Since there exists no direct transfer function, we have to first transform it to a matrix.
+* Notice how we recover the rownames
+
+```{r}
+text_dtm %>% as.matrix() %>% as_tibble(rownames = 'id') 
+```
+
+* Sidenote: We can also tidy the DTM again to a tidy token-dataframe.
+
+```{r}
+text_dtm %>% tidy()
+```
+
+* We could also do it by hand, with well-known `dplyr` syntax
+
+```{r}
+text_dtm <- text_tidy %>%
+  pivot_wider(names_from = word, values_from = n, values_fill = 0)
+```
+
+
+```{r}
+text_dtm
+```
+
+
+
+
+# TF-IDF - Term Frequency - Inverse Document Frequency
+
+* A token is importan for a document if appears very often
+* A token becomes less important for comparaison across a corpus if it appears all over the place in the corpus
+* *Innovation* in a corpus of abstracts talking about innovation is not that important
+
+$$w_{i,j} = tf_{i,j}*log(\frac{N}{df_i})$$
+
+
+- $w_{i,j}$ = the TF-IDF score for a term i in a document j
+- $tf_{i,j}$ = number of occurence of term i in document j
+- $N$ = number of documents in the corpus
+- $df_i$ = number of documents with term i
+
+
+```{r}
+# DO TFIDF
+```
+
+
+
+
+
+```{r}
+# reports = pd.read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/M2/data/cordis-h2020reports.gz')
+```
+
+#Topic modelling - NLP meets unsupervised ML
+
+The corpus is a list of tuples, with word-ids and the number of their occurrence in documents: LDA - https://youtu.be/DWJYZq_fQ2A
+
+We will start with a topic modelling approach that is good for interpretable topics but not too much for further processing
+
+![alt text](https://miro.medium.com/max/1600/1*pZo_IcxW1GVuH2vQKdoIMQ.jpeg)
+
+
+We will be using a dataset from EU Cordis which describes H2020 research projects. No tweets for now.
+
+http://data.europa.eu/euodp/en/data/dataset/cordisH2020projects
+
+```{r}
+# Some topicmodelling
+```
+
+### Your Turn:
+
+![alt text](https://media.giphy.com/media/1zjRp3fs05jhjTuwr3/giphy.gif)
+
+Perform an LDA analysis of the #OKBoomer dataset
+
+- Filter the corpus using `tweet-preprocessor` - try to figure out how to use it using it's documentation
+- Clean up further with SpaCy (keep only ADV, ADJ, NOUN)
+- Use Gensim to build a Dictionary (Filter extremes) and Corpus
+- Use Gensim to run LDA
+- Identify 10 topics
+- Plot topic-counts by day
+
+```{r}
+# Some more LDAS & Similarity Matrix
+```
+
+
+```{r}
+#UMAP
+```
+
+# Summary
+
+
+
+
+
+

@@ -1,0 +1,266 @@
+---
+title: 'Networks Assignment 1: Minimal example solution (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+
+library(tidygraph)
+library(igraph)
+library(ggraph)
+```
+
+# Read Data
+
+```{r}
+el_friendship <- read_delim('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/network_krackhard/Krack-High-Tec-edgelist-Friendship.txt',
+                        delim = ' ', col_names = FALSE)
+el_advice <- read_delim('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/network_krackhard/Krack-High-Tec-edgelist-Advice.txt',
+                        delim = ' ', col_names = FALSE)
+el_work <- read_delim('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/network_krackhard/Krack-High-Tec-edgelist-ReportsTo.txt',
+                        delim = ' ', col_names = FALSE)
+```
+
+```{r}
+nodes <- read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/network_krackhard/Krack-High-Tec-Attributes.csv')
+```
+
+# Preprocessing
+
+```{r}
+el_friendship %<>%  
+  mutate_all(as.numeric) %>%
+  filter(X3 == 1) %>%
+  select(-X3) %>%
+  rename(from = X1, to = X2)
+
+el_advice %<>% 
+  mutate_all(as.numeric) %>%
+  filter(X3 == 1) %>%
+  select(-X3) %>%
+  rename(from = X1, to = X2)
+
+el_work %<>% 
+  mutate_all(as.numeric) %>%
+  filter(X3 == 1) %>%
+  select(-X3) %>%
+  rename(from = X1, to = X2)
+```
+
+```{r}
+colnames(nodes) <- colnames(nodes) %>% str_to_lower()
+
+nodes %<>%
+  rename(name = id) %>%
+  mutate(name = name %>% as.character(),
+         level = level %>% recode("1" = "ceo", "2" = "vice", "3" = "manager"),
+         dept = dept %>% as.character())
+```
+
+# 1. Create a network
+
+* Generate network objects for the companies organizational structure (reports to), friendship, advice
+* This networks are generated from the corresponding edgelists
+* Also attach node characteristics from the corresponding nodelist
+
+```{r}
+g_friendship <- el_friendship %>% as_tbl_graph(directed = TRUE) %>%
+  left_join(nodes, by = "name")
+
+g_advice <- el_advice %>% as_tbl_graph(directed = TRUE) %>%
+  left_join(nodes, by = "name")
+
+g_work <- el_work %>% as_tbl_graph(directed = TRUE) %>%
+  left_join(nodes, by = "name")
+```
+
+# A: Network level characteristics
+
+Find the overal network level of:
+
+* Density
+* Transistivity (Clustering Coefficient)
+* Reciprocity
+
+... for the different networks. 
+
+```{r}
+nw_stats <- tibble(
+  Stat = c('Edge Density', 'Transistivity', 'Reciprocity'),
+  Friendship = c(edge_density(g_friendship), transitivity(g_friendship, type ="global"), reciprocity(g_friendship)), 
+  Advice = c(edge_density(g_advice), transitivity(g_advice, type ="global"), reciprocity(g_advice)), 
+  Work = c(edge_density(g_work), transitivity(g_work, type ="global"), reciprocity(g_work))
+  )
+```
+
+Describe and interpret the results. Answer the following
+questions:
+
+* Are relationships like friendship and advice giving usually reciprocal?
+* Are friends of your friends also your friends?
+* Are the employees generally more likely to be in a friendship or adviceseeking
+relationship?
+
+```{r}
+nw_stats
+```
+
+# B: Node level characteristics
+
+Likewise, find out:
+
+* Who is most popular in the networks. Who is the most wanted friend, and advice giver?
+*Are managers in higher hierarchy more popular as friend, and advice giver?
+
+```{r}
+g_friendship <- g_friendship %N>%
+  mutate(cent_dgr = centrality_degree(mode = 'in'))
+
+g_advice <- g_advice %N>%
+  mutate(cent_dgr = centrality_degree(mode = 'in'))
+```
+
+```{r}
+g_friendship %N>% as_tibble() %>% arrange(desc(cent_dgr)) 
+```
+```{r}
+g_advice %N>% as_tibble() %>% arrange(desc(cent_dgr)) 
+```
+
+```{r}
+g_friendship %N>% as_tibble() %>% 
+  group_by(level) %>%
+  summarise(cent_dgr = cent_dgr %>% mean())
+```
+
+```{r}
+g_advice %N>% as_tibble() %>% 
+  group_by(level) %>%
+  summarise(cent_dgr = cent_dgr %>% mean())
+```
+
+
+# C: Relational Characteristics
+
+Answer the following questions:
+
+* Are managers from the same 1. department, or on the same 2. hirarchy, 3.age, or 4. tenuere more likely to become friends or give advice? (hint: assortiativity related)
+* Are friends more likely to give each others advice?
+
+```{r}
+assortativity_nominal(g_friendship, V(g_friendship)$level %>% factor(), directed = TRUE)
+```
+
+```{r}
+assortativity(g_friendship, V(g_friendship)$age, directed = TRUE)
+```
+
+```{r}
+assortativity(g_friendship, V(g_friendship)$tenure, directed = TRUE)
+```
+
+```{r}
+assortativity_nominal(g_advice, V(g_advice)$level %>% factor(), directed = TRUE)
+```
+
+```{r}
+assortativity(g_advice, V(g_advice)$age, directed = TRUE)
+```
+
+```{r}
+assortativity(g_advice, V(g_advice)$tenure, directed = TRUE)
+```
+
+```{r}
+el_friendship_complete <- read_delim('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/network_krackhard/Krack-High-Tec-edgelist-Friendship.txt',
+                        delim = ' ', col_names = FALSE)
+el_advice_complete <- read_delim('https://github.com/SDS-AAU/SDS-master/raw/master/00_data/network_krackhard/Krack-High-Tec-edgelist-Advice.txt',
+                        delim = ' ', col_names = FALSE)
+```
+
+```{r}
+cor(el_friendship_complete %>% pull(X3), 
+    el_advice_complete %>% pull(X3))
+```
+
+
+
+# 3. Aggregated Networks
+
+* Reconstruct the advice and friendship network on the aggregated level of departments, where nodes represent departments and edges the number of cross departmental friendships/advice relationships.
+
+```{r}
+el_friendship_dept <- el_friendship %>% 
+  mutate_all(as.character) %>%
+  left_join(nodes %>% select(name, dept), by = c('from' = 'name')) %>%
+  rename(dept_from = dept) %>%
+  left_join(nodes %>% select(name, dept), by = c('to' = 'name')) %>%
+  rename(dept_to = dept) %>%
+  select(dept_from, dept_to)
+```
+
+```{r}
+g_friendship_dept <- el_friendship_dept %>% as_tbl_graph(directed = TRUE)
+```
+
+```{r}
+el_advice_dept <- el_advice %>% 
+  mutate_all(as.character) %>%
+  left_join(nodes %>% select(name, dept), by = c('from' = 'name')) %>%
+  rename(dept_from = dept) %>%
+  left_join(nodes %>% select(name, dept), by = c('to' = 'name')) %>%
+  rename(dept_to = dept) %>%
+  select(dept_from, dept_to)
+```
+
+```{r}
+g_advice_dept <- el_advice_dept %>% as_tbl_graph(directed = TRUE)
+```
+
+```{r}
+el_work_dept <- el_work %>% 
+  mutate_all(as.character) %>%
+  left_join(nodes %>% select(name, dept), by = c('from' = 'name')) %>%
+  rename(dept_from = dept) %>%
+  left_join(nodes %>% select(name, dept), by = c('to' = 'name')) %>%
+  rename(dept_to = dept) %>%
+  select(dept_from, dept_to)
+```
+
+```{r}
+g_work_dept <- el_work_dept %>% as_tbl_graph(directed = TRUE)
+```
+
+# 4. Visualization
+
+* Everything goes. Show us some pretty and informative plots. 
+
+
