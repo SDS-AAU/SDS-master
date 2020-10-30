@@ -1,0 +1,213 @@
+---
+title: 'NLP Assignment 1: Minimal example solution (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+
+library(tidytext)
+library(tidymodels)
+```
+
+# Getting the data
+
+```{r}
+tmp <- tempfile()
+download.file("https://github.com/SDS-AAU/SDS-2020/raw/master/M2/assignments/data/twitter_hate.zip", tmp)
+tweets <- read_csv(tmp)
+```
+
+```{r}
+tweets %>% glimpse()
+```
+
+```{r}
+tweets %<>%
+  rename(id = X1) %>%
+  mutate(id = id %>% as.character(),
+         text = tweet,
+         class = class %>% factor())
+```
+
+```{r}
+levels(tweets$class) <- c('hate', 'offensive', 'neither')
+```
+
+```{r}
+tweets %>% glimpse()
+```
+
+# 1. Preprocessing and vectorizaion.
+
+* Justify your choices and explain possible alternatives (e.g. removing stopwords, identifying bi/tri-grams, removing verbs or use of stemming, lemmatization etc.)
+* Create a bag-of-words representation, apply TF-IDF and dimensionality reduction (LSA-topic modelling alternatively simply PCA or SVD) to transform your corpus into a feature matrix.
+
+## Tidy tokenlist
+
+```{r}
+tweets_tidy <- tweets %>%
+  select(id, text) %>%
+  unnest_tokens(word, text, token = "tweets") 
+```
+
+```{r}
+tweets_tidy %>% head(50)
+```
+
+
+
+```{r}
+# Notice, we use the initial untokenized tweets
+data <- tweets %>%
+  select(id, class, text) %>%
+  rename(y = class) %>%
+  mutate(y = y  %>% as.factor()) 
+```
+
+
+## Training & Test split
+
+```{r}
+set.seed(1337)
+data_split <- initial_split(data, prop = 0.75, strata = y)
+
+data_train <- data_split  %>%  training()
+data_test <- data_split %>% testing()
+```
+
+## Preprocessing pipeline
+
+```{r}
+library(textrecipes) # Adittional recipes for working with text data
+```
+
+NOTE: Id preserve
+
+```{r}
+# This recipe pretty much reconstructs all preprocessing we did so far
+data_recipe <- data_train %>%
+  recipe(y ~ .) %>%
+  themis::step_downsample(y) %>% # For downsampling class imbalances (optimal)
+  step_filter(!(text %>% str_detect('^RT'))) %>% # Upfront filtering retweets
+  step_filter(text != "") %>%
+  step_tokenize(text, token = "tweets") %>% # tokenize
+  step_tokenfilter(text, min_times = 75) %>%  # Filter out rare words
+  step_stopwords(text, keep = FALSE) %>% # Filter stopwords
+  step_tfidf(text) %>% # TFIDF weighting
+  #step_pca(all_predictors()) %>% # Dimensionality reduction via PCA (optional)
+  prep() # NOTE: Only prep the recipe when not using in a workflow
+```
+
+
+```{r}
+data_recipe
+```
+
+Since we will not do hyperparameter tuning, we directly bake/juice the recipe
+
+```{r}
+data_train_prep <- data_recipe %>% juice()
+id_train <- data_train_prep %>% pull(id) 
+data_train_prep %<>% select(-id)
+
+data_test_prep <- data_recipe %>% bake(data_test)
+id_test<- data_test_prep %>% pull(id) 
+data_test_prep %<>% select(-id)
+```
+
+
+## Defining the models
+
+```{r}
+model_en <- logistic_reg(mode = 'classification', 
+                         mixture = 0.5, 
+                         penalty = 0.5) %>%
+  set_engine('glm', family = binomial) 
+```
+
+
+## Define the workflow
+
+We will skip the workflow step this time, since we do not evaluate different models against each others.
+
+## fit the model
+
+```{r}
+fit_en <- model_en %>% fit(formula = y ~., data = data_train_prep)
+```
+
+
+```{r}
+pred_collected <- tibble(
+  truth = data_train_prep %>% pull(y),
+  pred = fit_en %>% predict(new_data = data_train_prep) %>% pull(.pred_class)
+  ) 
+```
+
+
+```{r}
+pred_collected %>% conf_mat(truth, pred)
+```
+
+```{r}
+pred_collected %>% conf_mat(truth, pred) %>% summary()
+```
+
+## Bonus 
+```{r}
+pred_inspect <- pred_collected %>% 
+  mutate(correct = truth == pred) %>%
+  bind_cols(id = id_train %>% as.character()) %>%
+  left_join(tweets %>% select(id, text), by = 'id') %>%
+  relocate(id)
+```
+
+```{r}
+pred_inspect %>% 
+  head()
+```
+
+
+# Embeddings (Bonus)
+
+```{r}
+library(textdata)
+
+glove6b <- embedding_glove6b(dimensions = 100)
+glove6b
+# These mebeddings can now be loaded with step_wordembeddings
+```
+
+
+
+
+
+

@@ -213,6 +213,7 @@ cor(el_friendship_complete %>% pull(X3),
 
 
 
+
 # 3. Aggregated Networks
 
 * Reconstruct the advice and friendship network on the aggregated level of departments, where nodes represent departments and edges the number of cross departmental friendships/advice relationships.
