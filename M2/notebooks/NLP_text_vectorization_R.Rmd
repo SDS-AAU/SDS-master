@@ -1,5 +1,5 @@
 ---
-title: 'NLP workshop - Exploring Presidential Debate on twitter'
+title: '(Somewhat) advanced NLP: text vectorization'
 author: "Daniel S. Hain (dsh@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
@@ -41,17 +41,10 @@ library(tidytext)
 # This session
 
 
-# Moving on to text-vectorization
+# Refresher:
 
-Before we dive into text-vectorization and representation: 
+![](https://sds-aau.github.io/SDS-master/00_media/nlp_tidyworkflow.png)
 
-```{r}
-text <- tibble(text = "President Trump has said he came up with the term fake news. But the phrase has been in general circulation since the end of the 19th century, according to Merriam-Webster. Trump was, however, the first US President to deploy it against his opponents. And over the last four years, he has brought the phrase into the mainstream, popularizing it as a smear for unfavorable, but factual coverage. According to a database maintained by Stephanie Sugars of the US Press Freedom Tracker, Trump has used the phrase fake news nearly 900 times in tweets aimed to denigrate the media, insult particular news outlets, discredit supposed leaks and leakers, and allege falsehoods. As election day nears, he's redoubled his efforts bashing the fourth estate, research by Sugars has shown. This has given cover and conferred legitimacy to other politicians hoping to do the same. Fake news has been invoked by dozens of leaders, governments and state media around the world, including Syrian President Bashar al-Assad, Venezuelan President Nicolas Maduro, Philippine President Rodrigo Duterte, Polish President Andrzej Duda, former Spanish Foreign Minister Alfonso Dastis, Chinese Ambassador to the United Kingdom Liu Xiaoming and former Malaysia Prime Minister Najib Razak, just to name a few.")
-```
-
-```{r}
-# SOME STUFFF
-```
 
 # Bag of words model
 
@@ -66,11 +59,13 @@ text <- tibble(text = "President Trump has said he came up with the term fake ne
 Let's try creating a bag of words model from our initial example.
 
 ```{r}
-text <- tibble(id = c(3:6),
+text <- tibble(id = c(1:6),
                text = c('A text about cats.',
                         'A text about dogs.',
                         'And another text about a dog.',
-                        'Why always writing about cats and dogs, always dogs?'))
+                        'Why always writing about cats and dogs, always dogs?',
+                        'There are too little text about cats but to many about dogs',
+                        'Cats, cats, cats! I love cats soo much. Cats are way better than dogs'))
 ```
 
 ```{r}
@@ -80,8 +75,18 @@ text_tidy <- text %>%
 ```
 
 
+## The document-term matrix (DTM)
+
+* The simplest form of vector representation of text is a ddocument-term matrix
 * How to we get a document-term matrix now?
-* We could use `cast_dtm()` to create a DTM in the format of the `tm` package.
+* We could do it by hand, with well-known `dplyr` syntax (Note: only works when you have one row per unique document-word pair)
+
+```{r}
+text_tidy %>%
+  pivot_wider(names_from = word, values_from = n, values_fill = 0)
+```
+
+* We could also use `cast_dtm()` to create a DTM in the format of the `tm` package.
 
 ```{r}
 text_dtm <- text_tidy %>%
@@ -92,7 +97,7 @@ text_dtm <- text_tidy %>%
 text_dtm 
 ```
 
-* We can simply confert ig to a tibble. Since there exists no direct transfer function, we have to first transform it to a matrix.
+* We can simply convert ig to a tibble. Since there exists no direct transfer function, we have to first transform it to a matrix.
 * Notice how we recover the rownames
 
 ```{r}
@@ -104,87 +109,215 @@ text_dtm %>% as.matrix() %>% as_tibble(rownames = 'id')
 ```{r}
 text_dtm %>% tidy()
 ```
-
-* We could also do it by hand, with well-known `dplyr` syntax
+* We also can directly use a similar function to cast a sparse matrix (which we for sure then also could transform to a tibble again)
 
 ```{r}
-text_dtm <- text_tidy %>%
-  pivot_wider(names_from = word, values_from = n, values_fill = 0)
+text_tidy %>% cast_sparse(row = id, column = word, value = n)
+```
+
+* Finally, we could just apply a text recipe here
+
+```{r}
+library(recipes)
+library(textrecipes)
+```
+
+```{r}
+text %>%
+  recipe(~.) %>% 
+  step_tokenize(text, token = 'words') %>% # tokenize
+  step_tf(text) %>% # TFIDF weighting
+  prep() %>% juice()
 ```
 
 
-```{r}
-text_dtm
-```
+## TF-IDF - Term Frequency - Inverse Document Frequency
 
-
-
-
-# TF-IDF - Term Frequency - Inverse Document Frequency
-
-* A token is importan for a document if appears very often
-* A token becomes less important for comparaison across a corpus if it appears all over the place in the corpus
-* *Innovation* in a corpus of abstracts talking about innovation is not that important
+* A token is important for a document if appears very often
+* A token becomes less important for comparison across a corpus if it appears all over the place in the corpus
+* *Cat* in a corpus of websites talking about cats is not that important
 
 $$w_{i,j} = tf_{i,j}*log(\frac{N}{df_i})$$
-
 
 - $w_{i,j}$ = the TF-IDF score for a term i in a document j
 - $tf_{i,j}$ = number of occurence of term i in document j
 - $N$ = number of documents in the corpus
 - $df_i$ = number of documents with term i
 
+```{r}
+# TFIDF weights
+text_tidy %<>%
+  bind_tf_idf(term = word,
+              document = id,
+              n = n)
+```
+
+* We obviously could also cast a tf_idf weighted dtm...
 
 ```{r}
-# DO TFIDF
+text_tidy %>%
+  select(id, word, tf_idf) %>%
+  pivot_wider(names_from = word, values_from = tf_idf, values_fill = 0)
+```
+
+* btw: this is equivalent to just running a textrecipe like that:
+
+```{r}
+text %>%
+  recipe(~.) %>% 
+  step_tokenize(text, token = 'words') %>% # tokenize
+  step_tfidf(text) %>% # TFIDF weighting
+  prep() %>% juice()
+```
+
+* A last reminder on the powerful `pairwise_xx()` functions from the `widyr` package
+* For instance, pair
+
+```{r}
+library(widyr)
+```
+
+```{r}
+text_tidy %>% pairwise_dist(id, word, tf_idf, method = "manhattan") %>%
+  mutate(similarity = 1 - (distance / max(distance)) ) %>%
+  select(-distance) %>%
+  arrange(desc(similarity))
+```
+
+
+
+# Dimensionality reduction techniques
+
+```{r}
+rm(list=ls())
+```
+
+* Ok, lets get first some more interesting 
+
+```{r}
+text <- read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/M2/data/cordis-h2020reports.gz')
+```
+
+```{r}
+text %<>%
+  rename(id = X1) %>%
+  filter(language == 'en')
+```
+
+
+
+```{r}
+# preprocessing
+text_tidy %<>%
+  #mutate(word = word %>% str_remove_all('[^[:alnum:]]')) %>% ## remove all special characters
+  filter(str_length(word) > 2 ) %>% # Remove words with less than  3 characters
+  group_by(word) %>%
+  filter(n() > 100) %>% # remove words occuring less than 100 times
+  ungroup() %>%
+  anti_join(stop_words, by = 'word') # remove stopwords
 ```
 
 
 
 
 
-```{r}
-# reports = pd.read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/M2/data/cordis-h2020reports.gz')
+
+```{r, include=FALSE}
+text_dtm <- text %>%
+  unnest_tokens(word, text, token = 'words') %>% 
+  count(id, word) %>%
+  pivot_wider(names_from = word, values_from = n, values_fill = 0)
 ```
 
-#Topic modelling - NLP meets unsupervised ML
-
-The corpus is a list of tuples, with word-ids and the number of their occurrence in documents: LDA - https://youtu.be/DWJYZq_fQ2A
-
-We will start with a topic modelling approach that is good for interpretable topics but not too much for further processing
-
-![alt text](https://miro.medium.com/max/1600/1*pZo_IcxW1GVuH2vQKdoIMQ.jpeg)
 
 
-We will be using a dataset from EU Cordis which describes H2020 research projects. No tweets for now.
-
-http://data.europa.eu/euodp/en/data/dataset/cordisH2020projects
+## PCA
 
 ```{r}
-# Some topicmodelling
+text_pca <- text_dtm %>% 
+  column_to_rownames('id') %>% 
+  prcomp(center = TRUE, scale. = TRUE)
 ```
-
-### Your Turn:
-
-![alt text](https://media.giphy.com/media/1zjRp3fs05jhjTuwr3/giphy.gif)
-
-Perform an LDA analysis of the #OKBoomer dataset
-
-- Filter the corpus using `tweet-preprocessor` - try to figure out how to use it using it's documentation
-- Clean up further with SpaCy (keep only ADV, ADJ, NOUN)
-- Use Gensim to build a Dictionary (Filter extremes) and Corpus
-- Use Gensim to run LDA
-- Identify 10 topics
-- Plot topic-counts by day
 
 ```{r}
-# Some more LDAS & Similarity Matrix
+text_pca %>% glimpse()
 ```
+
+```{r}
+text_pca[['x']]
+```
+
+* Again, alternatively with a recipe...
+
+```{r}
+text_pca <- text %>%
+  recipe(~.) %>% 
+  update_role(id, new_role = "id") %>%
+  step_tokenize(text, token = 'words') %>% # tokenize
+  step_tfidf(text, prefix = NULL) %>% # TFIDF weighting
+  step_pca(all_predictors(), num_comp = 3) %>% # PCA
+  prep() 
+```
+
+```{r}
+text_pca %>% juice()
+```
+
+```{r}
+text_pca %>%
+  tidy(3) %>%
+  filter(component %in% paste0("PC", 1:3)) %>%
+  mutate(component = fct_inorder(component)) %>%
+  ggplot(aes(value, terms, fill = terms)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~component, nrow = 1) +
+  labs(y = NULL)
+```
+
+
+```{r}
+library(embed)
+```
+
+```{r}
+text_UMAP <- text %>%
+  recipe(~.) %>% 
+  update_role(id, new_role = "id") %>%
+  step_tokenize(text, token = 'words') %>% # tokenize
+  step_tfidf(text, prefix = NULL) %>% # TFIDF weighting
+  step_umap(all_predictors(), n_neighbors = 2) %>%
+  prep() 
+```
+
+
+
+
+
+
+
+## Topic Models: LDA
+
+
 
 
 ```{r}
 #UMAP
 ```
+
+
+
+# Embeddings (Bonus)
+
+```{r}
+library(textdata)
+
+glove6b <- embedding_glove27b(dimensions = 100)
+glove6b
+# These mebeddings can now be loaded with step_wordembeddings
+```
+
+
+
 
 # Summary
 
