@@ -192,51 +192,118 @@ text_tidy %>% pairwise_dist(id, word, tf_idf, method = "manhattan") %>%
 rm(list=ls())
 ```
 
-* Ok, lets get first some more interesting 
+* Ok, lets get first some more interesting data. We will work with the CORDIS project descriptions of EU Horizon 2020 projects again.
 
 ```{r}
 text <- read_csv('https://github.com/SDS-AAU/SDS-master/raw/master/M2/data/cordis-h2020reports.gz')
 ```
 
 ```{r}
+colnames(text) <- colnames(text) %>% str_to_lower()
 text %<>%
-  rename(id = X1) %>%
-  filter(language == 'en')
+  select(-x1) %>%
+  rename(id = projectid) %>%
+  relocate(id) %>%
+  filter(language == 'en') %>%
+  drop_na(id)
 ```
 
+* Lets create a tidy tokenlist
 
+```{r}
+text_tidy <- text %>%
+  rename(text = summary) %>%
+  select(id, text) %>%
+  unnest_tokens(word, text, token = "words")
+```
+
+* some preprocessing
 
 ```{r}
 # preprocessing
 text_tidy %<>%
-  #mutate(word = word %>% str_remove_all('[^[:alnum:]]')) %>% ## remove all special characters
   filter(str_length(word) > 2 ) %>% # Remove words with less than  3 characters
-  group_by(word) %>%
-  filter(n() > 100) %>% # remove words occuring less than 100 times
-  ungroup() %>%
-  anti_join(stop_words, by = 'word') # remove stopwords
+  filter(!(word %in% c('project', 'research'))) %>%
+  anti_join(stop_words, by = 'word') 
 ```
 
+* We can also ad bigrams
 
+```{r}
+text_tidy %<>%
+  unnest_tokens(word, word, token = 'ngrams', n = 2, n_min = 1) %>%
+  group_by(word) %>% filter(n() > 25) %>% ungroup() 
+```
 
+```{r}
+text_tidy %>%
+  count(word, sort = TRUE)
+```
 
+* Lets finish this up and also add TF-IDF weights
 
-
-```{r, include=FALSE}
-text_dtm <- text %>%
-  unnest_tokens(word, text, token = 'words') %>% 
+```{r}
+text_tidy %<>%
   count(id, word) %>%
+  bind_tf_idf(term = word,
+              document = id,
+              n = n) %>%
+  select(-tf, -idf)
+```
+
+* Is there a big difference?
+
+```{r}
+text_tidy %>%
+  count(word, wt = tf_idf, sort = TRUE)
+```
+
+* And finally, lets get a DTM dataframe 
+
+```{r}
+text_dtm <- text_tidy %>%
+  select(id, word, n) %>%
   pivot_wider(names_from = word, values_from = n, values_fill = 0)
 ```
 
+* And, just in case, a TFIDF weighted version
 
+```{r, include=FALSE}
+text_dtm_tf_idf <- text_tidy %>%
+  select(id, word, tf_idf) %>%
+  pivot_wider(names_from = word, values_from = tf_idf, values_fill = 0)
+```
 
-## PCA
+* We could also prepare a recipe which doe pretty much the same...
+
+```{r}
+recipe_base <- text %>%
+  rename(text = summary) %>%
+  select(id, text) %>%
+  # BAse recipe starts
+  recipe(~.) %>% 
+  update_role(id, new_role = "id") %>% # Update role of ID
+  step_tokenize(text, token = 'words') %>% # tokenize
+  step_stopwords(text, keep = FALSE) %>% # remove stopwords
+  step_untokenize(text) %>% # Here we now have to first untokenize
+  step_tokenize(text, token = "ngrams", options = list(n = 1, n_min = 1)) %>% # and tokenize again
+  step_tokenfilter(text, min_times = 25) 
+```
+
+* Here, we can further preprocess to do whatever we would like, such as obtaining a dtm
+
+```{r}
+recipe_base %>% 
+  step_tf(text) %>% 
+  prep() %>% 
+  juice() %>% 
+  head(100)
+```
 
 ```{r}
 text_pca <- text_dtm %>% 
   column_to_rownames('id') %>% 
-  prcomp(center = TRUE, scale. = TRUE)
+  prcomp(center = TRUE, scale. = TRUE, rank. = 10)
 ```
 
 ```{r}
@@ -244,35 +311,207 @@ text_pca %>% glimpse()
 ```
 
 ```{r}
-text_pca[['x']]
+text_pca[['x']] %>%
+  head()
 ```
 
 * Again, alternatively with a recipe...
 
 ```{r}
-text_pca <- text %>%
-  recipe(~.) %>% 
-  update_role(id, new_role = "id") %>%
-  step_tokenize(text, token = 'words') %>% # tokenize
-  step_tfidf(text, prefix = NULL) %>% # TFIDF weighting
-  step_pca(all_predictors(), num_comp = 3) %>% # PCA
+recipe_pca <- recipe_base %>% # tokenize
+  step_tfidf(text, prefix = '') %>% # TFIDF weighting
+  step_pca(all_predictors(), num_comp = 10) %>% # PCA
   prep() 
 ```
 
 ```{r}
-text_pca %>% juice()
+recipe_pca %>% juice()
 ```
+* Some plotting
 
 ```{r}
-text_pca %>%
-  tidy(3) %>%
-  filter(component %in% paste0("PC", 1:3)) %>%
+recipe_pca %>% juice() %>%
+  ggplot(aes(x = PC01, y = PC02)) +
+  geom_point() 
+```
+* we can also use the tidy results of the recipe to do some more analytics
+
+```{r}
+recipe_pca %>%
+  tidy(7) %>%
+  filter(component %in% paste0("PC", 1:4)) %>%
+  group_by(component) %>%
+    arrange(desc(value)) %>%
+    slice(c(1:2, (n()-2):n())) %>%
+  ungroup() %>%
   mutate(component = fct_inorder(component)) %>%
   ggplot(aes(value, terms, fill = terms)) +
   geom_col(show.legend = FALSE) +
   facet_wrap(~component, nrow = 1) +
   labs(y = NULL)
 ```
+
+* **Note**: Also check further for further dimensionlity reduction steps:
+   * tep_kpca():
+   * step_ica()
+   * step_isomap()
+   * step_nmf()
+
+
+# Topic Models: Latent-Dirichlet-Allocation (LDA)
+
+* While we already did it somewhat 'on-the-fly', here a more formal introduction to LDA
+* In contrast to dimnesionality reduction techiques mostly aiming at preprocessing data or easing visualization, LDA more aims at EDA and interpretation
+* It is a generative approach to identify topics (clusters) within the word-usage in documents.
+   * Topics are represented as a probability distribution over the words in the vocabulary. Hhigh probability words can be used to charactrize the topic.
+   * Documents are represented as a mixture of topics.
+
+![alt text](https://miro.medium.com/max/1600/1*pZo_IcxW1GVuH2vQKdoIMQ.jpeg)
+
+
+```{r}
+library(topicmodels)
+```
+
+
+```{r}
+text_dtm <- text_tidy %>%
+  cast_dtm(document = id, term = word, value = n)
+```
+
+```{r}
+text_lda <- text_dtm %>% 
+  LDA(k = 6, method = "Gibbs",
+      control = list(seed = 1337))
+```
+
+
+* $\beta$ is an output of the LDA model, indicating the propability that a word occurs in a certain topic.
+* Therefore, loking at the top probability words of a topic often gives us a good intuition regarding its properties.
+
+```{r}
+# LDA output is defined for tidy(), so we can easily extract it
+lda_beta <- text_lda %>% 
+  tidy(matrix = "beta") 
+```
+
+```{r}
+lda_beta %>%
+  # slice
+  group_by(topic) %>%
+  arrange(topic, desc(beta)) %>%
+  slice(1:10) %>%
+  ungroup() %>%
+  # visualize
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  group_by(topic, term) %>%    
+  arrange(desc(beta)) %>%  
+  ungroup() %>%
+  ggplot(aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  scale_x_reordered() +
+  labs(title = "Top 10 terms in each LDA topic",
+       x = NULL, y = expression(beta)) +
+  facet_wrap(~ topic, ncol = 3, scales = "free")
+```
+
+* Documents are represented as a mix of topics. This association of a document to a topic is captured by $\gamma$
+
+```{r}
+lda_gamma <- text_lda %>% 
+  tidy(matrix = "gamma")
+```
+
+
+```{r}
+lda_gamma %>%
+  group_by(topic) %>%
+    arrange(desc(gamma)) %>% 
+    slice(1:10) %>%
+  ungroup() %>%
+  left_join(text %>% select(id, projectacronym) %>% mutate(id = id %>% as.character()), by = c('document' = 'id'))
+```
+
+
+```{r}
+library(LDAvis)
+```
+
+
+```{r}
+topicmodels_json_ldavis <- function(fitted, doc_dtm, method = "PCA"){
+  require(topicmodels); require(dplyr); require(LDAvis)
+  
+  # Find required quantities
+  phi <- posterior(text_lda)$terms %>% as.matrix() # Topic-term distribution
+  theta <- posterior(fitted)$topics %>% as.matrix() # Document-topic matrix
+  
+  text_tidy <- doc_dtm %>% tidy()
+  vocab <- colnames(phi)
+  doc_length <- tibble(document = rownames(theta)) %>% left_join(text_tidy %>% count(document, wt = count), by = 'document')
+  tf <- tibble(term = vocab) %>% left_join(text_tidy %>% count(term, wt = count), by = "term") 
+  
+  if(method == "PCA"){mds <- jsPCA}
+  if(method == "TSNE"){library(tsne); mds <- function(x){tsne(svd(x)$u)} }
+  
+  # Convert to json
+  json_lda <- LDAvis::createJSON(phi = phi, theta = theta, vocab = vocab, doc.length = doc_length %>% pull(n), term.frequency = tf %>% pull(n),
+                                 reorder.topics = FALSE, mds.method = mds,plot.opts = list(xlab = "Dim.1", ylab = "Dim.2")) 
+  return(json_lda)
+}
+```
+
+
+```{r}
+library(LDAvis)
+json_lda <- topicmodels_json_ldavis(fitted = text_lda, 
+                                    doc_dtm = text_dtm, 
+                                    method = "TSNE")
+
+# json_lda %>% serVis(out.dir = 'LDAviz')
+```
+
+
+<iframe width="1200" height="1500" src="notebooks/LDAviz'/index.html" frameborder="0"></iframe>
+
+
+
+
+* Note that an LDA can also be performed via a recipe:
+
+```{r}
+recipe_lda <- recipe_base %>% # tokenize
+  step_untokenize(text) %>% # Is a bit silly, needs the full text vectors instead of tokens....
+  step_lda(text, num_topics = 6) %>% # LDA
+  prep() 
+```
+
+```{r}
+recipe_lda %>% juice()
+```
+
+
+
+# Embeddings (Bonus)
+
+* One last thing we did not venture in yet, are embeddings
+* I will not go into details here, just see it as a peak of what's to come in further sessions.
+* The idee of word embedding is (in a nutshell) that (Pennington et al, 2014)
+
+
+```{r}
+library(textdata)
+
+glove6b <- embedding_glove27b(dimensions = 100)
+glove6b
+# These mebeddings can now be loaded with step_wordembeddings
+```
+
+
+
+
+
 
 
 ```{r}
@@ -291,35 +530,45 @@ text_UMAP <- text %>%
 
 
 
-
-
-
-
-## Topic Models: LDA
-
-
-
-
-```{r}
-#UMAP
-```
-
-
-
-# Embeddings (Bonus)
-
-```{r}
-library(textdata)
-
-glove6b <- embedding_glove27b(dimensions = 100)
-glove6b
-# These mebeddings can now be loaded with step_wordembeddings
-```
-
-
-
-
 # Summary
+
+# Endnotes
+
+### Packages & Ecosystem
+
+* [`textrecipes`](https://textrecipes.tidymodels.org/)
+* [`embed`](https://embed.tidymodels.org/)
+* [`topicmodels`](https://cran.r-project.org/web/packages/topicmodels/vignettes/topicmodels.pdf)
+* [`text2vec`](http://text2vec.org/)
+* [`textdata`](http://text2vec.org/)
+
+
+
+### References 
+
+CHapters:
+
+* Julia Silge and David Robinson (2020). Text Mining with R: A Tidy Approach, O’Reilly. Online available [here](https://www.tidytextmining.com/)
+   * [Chapter 6](https://www.tidytextmining.com/topicmodeling.html): xxx
+* Emil Hvidfeldt and Julia Silge (2020). Supervised Machine Learning for Text Analysis in R, online available [here](https://smltar.com/)
+   * [Chapter 5](https://smltar.com/embeddings.html): Word Embeddings
+
+
+Articles:
+* Blei, David M., Andrew Y. Ng, and Michael I. Jordan. "Latent dirichlet allocation." Journal of machine Learning research 3, no. Jan (2003): 993-1022.
+* Jeffrey Pennington, Richard Socher, and Christopher D Manning. Glove: Global vectors for word representation. In Conference on Empirical Methods on Natural Language Processing (EMNLP), pages 1532–1543, 2014
+
+### Further sources
+
+
+* [Julia Silge's Blog](https://juliasilge.com/): Full of great examples of predictive modeling, NLP, and the combination fo both, using tidy ecosystems
+* [Emil Hvitfeldt's Blog](https://www.hvitfeldt.me/): Likewise, full of great examples of applied tidy ML & NLP in R
+
+### Session Info
+
+```{r}
+sessionInfo()
+```
 
 
 
