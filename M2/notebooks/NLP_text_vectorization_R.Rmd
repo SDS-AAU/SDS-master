@@ -40,6 +40,13 @@ library(tidytext)
 
 # This session
 
+This session, we will
+
+1. Review NLP workflows and data structures in R
+2. Explore different type of DTM matrix type vector representations of text.
+3. Add different types of dimensionality reduction techniques to the repertoir.
+6. HAve a peak into word-embeddings
+5. Add some goddies on top
 
 # Refresher:
 
@@ -170,8 +177,21 @@ text %>%
   prep() %>% juice()
 ```
 
+* Sidenote, when we use a POS engine such as `spacyr` for tokenization, we can also add recipes for lematization, filter for POS etc.
+
+```{r}
+text %>%
+  recipe(~.) %>% 
+  step_tokenize(text, engine = "spacyr") %>%
+  step_pos_filter(text, keep_tags = "NOUN") %>%
+  step_lemma(text) %>%
+  step_tf(text) %>%
+  prep() %>%
+  juice()
+```
+
 * A last reminder on the powerful `pairwise_xx()` functions from the `widyr` package
-* For instance, pair
+* For instance, pairwise similarities/distances
 
 ```{r}
 library(widyr)
@@ -183,7 +203,6 @@ text_tidy %>% pairwise_dist(id, word, tf_idf, method = "manhattan") %>%
   select(-distance) %>%
   arrange(desc(similarity))
 ```
-
 
 
 # Dimensionality reduction techniques
@@ -290,6 +309,8 @@ recipe_base <- text %>%
   step_tokenfilter(text, min_times = 25) 
 ```
 
+* Sidenote
+
 * Here, we can further preprocess to do whatever we would like, such as obtaining a dtm
 
 ```{r}
@@ -314,6 +335,12 @@ text_pca %>% glimpse()
 text_pca[['x']] %>%
   head()
 ```
+
+
+```{r}
+text_pca %>% tidy()
+```
+
 
 * Again, alternatively with a recipe...
 
@@ -355,8 +382,8 @@ recipe_pca %>%
    * tep_kpca():
    * step_ica()
    * step_isomap()
-   * step_nmf()
-
+   * step_nnmf()
+   
 
 # Topic Models: Latent-Dirichlet-Allocation (LDA)
 
@@ -367,7 +394,6 @@ recipe_pca %>%
    * Documents are represented as a mixture of topics.
 
 ![alt text](https://miro.medium.com/max/1600/1*pZo_IcxW1GVuH2vQKdoIMQ.jpeg)
-
 
 ```{r}
 library(topicmodels)
@@ -488,12 +514,12 @@ json_lda <- topicmodels_json_ldavis(fitted = text_lda,
                                     doc_dtm = text_dtm, 
                                     method = "TSNE")
 
-# json_lda %>% serVis() # For direct output
+json_lda %>% serVis() # For direct output
 # json_lda %>% serVis(out.dir = 'LDAviz') # For saving the html
 ```
 
 
-<!-- <iframe width="1200" height="1500" src="https://sds-aau.github.io/SDS-master/M2/notebooks/LDAviz/index.html" frameborder="0"></iframe> -->
+<iframe width="1200" height="1500" src="https://sds-aau.github.io/SDS-master/M2/notebooks/LDAviz/index.html" frameborder="0"></iframe> 
 
 Didnt really figure out how to embedd the resulting plot, but the outcome can be seen [here](https://sds-aau.github.io/SDS-master/M2/notebooks/LDAviz/index.html)
 
@@ -541,7 +567,6 @@ doc_embeddings <- word_embeddings %>%
 
 * These embddings could now be used for instance for some clustering or SML exercise
 * I guess you can already see how to use these embeddings in an SML model.
-
 
 ```{r}
 library(uwot) # for UMAP
@@ -645,7 +670,6 @@ recipe_umap %>% prep() %>% juice() %>%
 * [`text2vec`](http://text2vec.org/): Package vor vector space modelling (aka embeddings & other vectorizations) of textdata
 * [`textdata`](https://github.com/EmilHvitfeldt/textdata): Useful datasets for text, such as GloVe embeddings, sentiment lexica etc.
 * [`uwot`](https://github.com/jlmelville/uwot): UMAP for R
-* [`uwot`](https://github.com/jlmelville/uwot): UMAP for R
 
 ### References 
 
@@ -663,9 +687,8 @@ Articles:
 
 ### Further sources
 
-
 * [Julia Silge's Blog](https://juliasilge.com/): Full of great examples of predictive modeling, NLP, and the combination fo both, using tidy ecosystems
-* [Emil Hvitfeldt's Blog](https://www.hvitfeldt.me/): Likewise, full of great examples of applied tidy ML & NLP in R
+* [Emil Hvitfeldt's Blog](https://www.hvitfeldt.me/): Likewise, full of great examples of applied tidy ML & NLP in 
 
 ### Session Info
 
