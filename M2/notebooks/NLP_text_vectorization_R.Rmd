@@ -440,6 +440,7 @@ library(LDAvis)
 
 
 ```{r}
+# A bit of a lenghty function....
 topicmodels_json_ldavis <- function(fitted, doc_dtm, method = "PCA"){
   require(topicmodels); require(dplyr); require(LDAvis)
   
@@ -469,11 +470,12 @@ json_lda <- topicmodels_json_ldavis(fitted = text_lda,
                                     doc_dtm = text_dtm, 
                                     method = "TSNE")
 
-# json_lda %>% serVis(out.dir = 'LDAviz')
+# json_lda %>% serVis() # For direct output
+# json_lda %>% serVis(out.dir = 'LDAviz') # For saving the html
 ```
 
 
-<iframe width="1200" height="1500" src="notebooks/LDAviz'/index.html" frameborder="0"></iframe>
+<iframe width="1200" height="1500" src="https://sds-aau.github.io/SDS-master/M2/notebooks/LDAviz'/index.html" frameborder="0"></iframe>
 
 
 
