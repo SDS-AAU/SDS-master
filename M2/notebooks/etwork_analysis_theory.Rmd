@@ -1,0 +1,90 @@
+---
+title: 'Introduction to Network Analysis (Part I)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  ioslides_presentation:
+#    css: '../../00_notebooks/css_style_ioslides.css'
+   
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+knitr::opts_chunk$set(
+  echo = FALSE,
+  comment = FALSE,
+  warning = FALSE
+  )
+
+# Load packages
+library(tidyverse)
+library(magrittr)
+library(knitr)
+library(kableExtra)
+
+# Extra
+library(tidygraph)
+library(ggraph)
+library(igraph)
+library(ggforce)
+```
+
+
+
+<style type="text/css">
+  .img_small{
+    width: 50%;
+  }
+.img{
+  width: 75%;
+}
+.img_big{
+  width: 100%;
+}
+</style>
+
+## This session 
+
+Welcome to your first part of the introduction to network analysis. In this session you will learn:
+
+1. Why applying network analysis is helpful to answer certain questions.
+2. Why framing certain contexts as networks gives new insights.
+3. The basic structure of relational data.
+4. How to construct graph objects from different datasources.
+5. How to analyse basic features of nodes, edges, and graphs.
+6. How to identify groups and communities in graphs.
+7. How to do simple network visualizations.
+
+# Introduction
+
+## Networks... so what?
+
+<center>
+![](https://www.dropbox.com/s/b8x2iwhaxacheem/networks_google_apple.png?dl=1){.img_big}
+</center>
+
+
+## The basic jargon
+
+```{r, echo=FALSE}
+# If you see this code, dont worry about it. Its just to create the visual
+tibble(from = c(1,2,3,1), to = c(3,1,5,5), text = rep("Edge", 4)) %>% 
+  as_tbl_graph() %N>%
+  mutate(text = "Node") %>%
+  ggraph(layout = "nicely") +
+  geom_node_point(size = 10, col = "skyblue") + 
+  geom_node_text(aes(label = name)) +
+  geom_edge_link(aes(label = text, alpha = 0.5, show.legend = FALSE)) +
+  theme_graph() +
+  labs(title = "What is a network?", subtitle = "A system of elements (nodes/vertices) and connections (edges) between them") +
+  geom_mark_ellipse(aes(x, y, label = "Node / Vertex", 
+                        description = "Elements in the system",
+                        filter = name == 1)) 
+```
+
+* *Plainly speaking, a network is a **system** of **elements** which are connected by some **relationship**. 
+* The whole system is called a **network** or **graph**. 
+The elements are commonly referred to as **nodes** (system theory jargon) or **vertices** (graph theory jargon) of a graph.
+The connections are **edges** or **links**. 
+
+
