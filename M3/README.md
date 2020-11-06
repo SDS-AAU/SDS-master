@@ -4,7 +4,7 @@
 
 ## Part I: Introduction to Artificial Neural Networks & Deep Learning
 
-* Theory: Introduction to Artificial Neural Networks (ANNs) & Deep Learning (DL): [Slides](https://sds-aau.github.io/SDS-master/M3/notebooks/ANN_intro.html) [Video (comming soon)](xxx)
+* Theory: Introduction to Artificial Neural Networks (ANNs) & Deep Learning (DL): [Video](https://www.loom.com/share/418cea49ec694fe4b42e99088bfdbb84) [Slides](https://sds-aau.github.io/SDS-master/M3/notebooks/ANN_intro.html) 
 
 # Further Resources
 
