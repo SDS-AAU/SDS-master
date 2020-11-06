@@ -20,3 +20,4 @@
 ### Deep Learning in R
 
 * [R-Keras (RStudio)](https://keras.rstudio.com/)
+* [R-Torch (Rstudio)](https://blog.rstudio.com/2020/09/29/torch/)
