@@ -3127,7 +3127,7 @@ slide:not(.current) .plotly.html-widget{
       <h1 data-config-title><!-- populated from slide_config.json --></h1>
       
       <p data-config-presenter><!-- populated from slide_config.json --></p>
-            <p style="margin-top: 6px; margin-left: -2px;">Updated November 05, 2020</p>
+            <p style="margin-top: 6px; margin-left: -2px;">Updated November 06, 2020</p>
           </hgroup>
   </slide>
 
@@ -3143,7 +3143,7 @@ slide:not(.current) .plotly.html-widget{
 }
 </style>
 
-<slide class=""><hgroup><h2>This session</h2></hgroup><article  id="this-session" class="smaller ">
+<slide class=""><hgroup><h2>This session</h2></hgroup><article  id="this-session">
 
 <p>In this session, you will:</p>
 
@@ -3152,10 +3152,289 @@ slide:not(.current) .plotly.html-widget{
 <li>Get introduced to the history and general intuition of artificial neural networks</li>
 <li>Grasp the benefits of deep learning</li>
 <li>Understand the basic architecture of deep learning models</li>
-<li>Get hand on experience in the <code>Keras</code> framework</li>
-<li>Run your first deep learning models</li>
-<li>Figure out, why and how these models learn</li>
-</ol></article></slide>
+</ol>
+
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Introduction</h2></hgroup><article  id="introduction">
+
+</article></slide><slide class=""><hgroup><h2>AI &amp; Co: What’s that?</h2></hgroup><article  class="smaller" id="ai-co-whats-that">
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/random_cylon.jpg' title=''/>
+
+</center>
+
+<ul>
+<li>In the past few years, artificial intelligence (AI) has been a subject of intense media hype.</li>
+<li>We’re promised a future of intelligent chatbots, self-driving cars, and virtual assistants</li>
+<li>A future sometimes painted in a grim light and other times as utopian, where human jobs will be scarce, and most economic activity will be handled by robots or AI agents.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>AI in context</h2></hgroup><article  class="smaller" id="ai-in-context">
+
+<center>
+
+<img class="img_small" src='https://sds-aau.github.io/SDS-master/00_media/dl_overview.png' title=''/>
+
+</center>
+
+<ul>
+<li>Notice: ML is just a particular subset of the realm of AI technologies and algorithms.<br/></li>
+<li>Artificial Neural Networks in turn are just a subset of ML techniques.</li>
+<li>Deep Learning, again, is a subsey of ML, refering to a particular type of neural networks.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Historical trends</h2></hgroup><article  class="smaller" id="historical-trends">
+
+<center>
+
+<img class="img_small" src='https://sds-aau.github.io/SDS-master/00_media/DL_timeline.jpg' title=''/>
+
+</center>
+
+<ul>
+<li>Long and rich history dating back to the 1940s. Three major waves of developments in deep learning research:
+
+<ol>
+<li><em>Cybernetics:</em> (1940s-1960s) has marked important developments in theories of biological learning and the training of simple models with a single neuron</li>
+<li><em>Connectionism</em> (1980s-1990s) has brought methodological advances that have allowed faster training of artificial neural networks with a few hidden layers</li>
+<li>The ongoing wave that started around 2006 during which the appellative <strong>deep learning</strong> was coined.</li>
+</ol></li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<ul>
+<li>NNs in toy application around since the 1950s, but for a long time, the missing piece was an efficient way to train large neural networks.</li>
+<li>This changed in the mid-1980s, when multiple people independently rediscovered the <strong>Backpropagation algorithm</strong> - a way to train chains of parametric operations using <strong>gradient-descent</strong> optimization.</li>
+<li>First practical application in 1989 from Bell Labs: Yann LeCun combined convolutional neural networks and backpropagation to the problem of classifying handwritten digits. LeNet was used by the US Postal Service to automate the reading of ZIP codes on mail envelopes.</li>
+<li>Yet, lacking data, computing power, and the inability to extend beyond some simple applications led most researchers abandoning ANNs.</li>
+<li>Around 2010, only a number of people where still working on neural networks started to make important breakthroughs: the groups of <strong>Geoffrey Hinton</strong> at the University of Toronto, <strong>Yoshua Bengio</strong> at the University of Montreal, <strong>Yann LeCun</strong> at New York University, <strong>Dan Ciresan</strong> and IDSIA.</li>
+<li>In 2011, Dan Ciresan started winning image-classification competitions (ImageNet) with GPU-trained deep NNs. Then, Hinton’s group entered with convolutional neural networks, which dominated the competition ever since.</li>
+<li>Since, deep learning has also found applications in many other types of problems, such as NLP, and completely replaced SVMs and tree models in a wide range of applications.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Why today?</h2></hgroup><article  class="smaller" id="why-today">
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/dl_why_today.JPG' title=''/>
+
+</center>
+
+<ul>
+<li>Faster computers (Moore’s law)</li>
+<li>More data (&lsquo;Data Is the New Oil in the Digital Economy&rsquo;)</li>
+<li>Ecosystem &amp; Software accessibility</li>
+<li>Methodological / algorithmic advances</li>
+</ul>
+
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Artificial Neural Networks</h2></hgroup><article  id="artificial-neural-networks">
+
+</article></slide><slide class=""><hgroup><h2>Biological Analogies</h2></hgroup><article  id="biological-analogies">
+
+<ul>
+<li>Artificial Neural Networks (ANNs) are the building blocks of deep learning systems.</li>
+<li>The term &lsquo;neural network&rsquo; refers to neurobiology: central concepts in deep learning were developed in part by drawing inspiration from our understanding of the brain.</li>
+<li>However, thiss refers to an <em>abstract and simplified inspiration</em>, rather than the mimicing of human brain activity. They share some very basics, but are highly stilized. Its like saying a paper airplane is an artificial F20 fighter jet.</li>
+<li>Today, there is broad agreement in the scientific community that deep learning cannot be seen as an accurate model of how the brain actually works.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<center>
+
+<img class="img_small" src='https://sds-aau.github.io/SDS-master/00_media/dl_biology.JPG' title=''/>
+
+</center>
+
+<p>Analogies with human brain:</p>
+
+<ul>
+<li>The units of calculation in an ANN are called <strong>neurons</strong>.</li>
+<li>The neurons are connected via <strong>synapses</strong> which are weighted.</li>
+<li>The network learns to accomplish a given task by adjusting these weights inputs.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<ul>
+<li>Somewhat like in the biological brain, NN model decision processes in the following steps:
+
+<ul>
+<li>Take input cells (neurons or units), and connect them to some output cell (in neuroscience, via a synapse)</li>
+<li>The receiving cell’s input is equal to the submitting cell’s output, weighted by the strength of the connection</li>
+<li>The cell transforms this input via a non-linear activation function to an output, which it in turn submits to other connected cells</li>
+</ul></li>
+<li>We refer to networks because the final architecture is obtained by composing together many different functions</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_neural_net1.png' title=''/>
+
+</center>
+
+</article></slide><slide class=""><hgroup><h2>Feedforward NNs</h2></hgroup><article  id="feedforward-nns">
+
+<ul>
+<li>The goal of <strong>deep feedforward neural networks</strong>, also known as multilayer perceptrons (MLPs), is to approximate some function \(f^*\)
+
+<ul>
+<li>A feedforward network defines a mapping \(y = f(x; \theta)\) and learns the value of the parameter \(\theta\) that result in the best function approximation</li>
+<li><em>Feedforward</em> because information flows through the function being evaluated from \(x\), through the intermediate computation used to define \(f\), and finally to the output \(y\)</li>
+</ul></li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_perceptron.png' title=''/>
+
+</center>
+
+<ul>
+<li>The simplest architecture called perceptron. The model is associated with a directed acyclic graphs describing how functions are composed together.</li>
+<li>A perceptron can learn relatively simple functional forms.</li>
+<li>By adding additional layers, the exibility of the model can dramatically improve; additional layers can be understood as latent variables</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<ul>
+<li><p>Let us consider three functions \(f^{(1)}\), \(f^{(2)}\), and \(f^{(3)}\) connected in a chain, to form \(f(x) = f^{(3)}(f^{(2)}(f^{(1)}(x)))\)</p></li>
+<li><p>\(f^{(1)}\) is called first layer (or <em>input layer</em>), \(f^{(2)}\) second layer (or first hidden layer), and so on… the overall length of the chain gives the <em>depth</em> of the model</p></li>
+<li><p>The final layer of the network is called the <em>output layer</em> \(f^*(x)\)</p></li>
+<li><p>During neural network training, we drive \(f(x)\) to match \(f^*(x)\)</p></li>
+<li><p>Because the training data does not show the desired output for each of the intermediate layers, these layers are called hidden layers</p></li>
+<li><p>The dimensionality of the hidden layers determines the <em>width</em> of the network</p></li>
+<li><p>Deep NNs overcome an obvious defect of linear models, that is their limited capacity to linear functions approximation; NN understand complex interactions between input variables</p></li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_neural_net3.png' title=''/>
+
+</center>
+
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Deep Learning</h2></hgroup><article  id="deep-learning">
+
+</article></slide><slide class=""><hgroup><h2>Deep Learning</h2></hgroup><article  id="deep-learning-1">
+
+<ul>
+<li>Deep learning can be viewed as a subset of machine learning methods aimed at processing large and complex datasets through networks of synthetic neurons, where subsequent layers learn increasingly abstract representations of the data that eventually become an input into predictions (Goodfellow, Bengio, and Courville, 2016)<br/></li>
+<li>Deep learning allows computational models that are composed of multiple processing layers to learn representations of data with multiple levels of abstraction (LeCun, Bengio, and Hinton, 2015)</li>
+<li>Deep learning, as it is primarily used, is essentially a statistical technique for classifying patterns, based on sample data, using neural networks with multiple layers […] Deep learning is a perfectly fine way of optimizing a complex system for representing a mapping between inputs and outputs, given a sufficiently large data set (Markus, 2018)</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Why &lsquo;deep&rsquo;?</h2></hgroup><article  class="smaller" id="why-deep">
+
+<center>
+
+<img class="img_big" src='https://sds-aau.github.io/SDS-master/00_media/dl_deep_network.JPG' title=''/>
+
+</center>
+
+<ul>
+<li>So, whats the special thing about <strong>deep learning</strong>, and why is it <em>deep</em> anyhow?</li>
+<li>Conceptually, DL is a new take on learning representations from data that puts an emphasis on learning <strong>successive layers of increasingly meaningful representations</strong>, which is almost exclusively done via a neural network architecture.</li>
+<li>In contrast, most other ML approaches focus on learning only one or two layers of representations of the data \(\rightarrow\) shallow learning.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<center>
+
+<img class="img_small" src='https://sds-aau.github.io/SDS-master/00_media/dl_concept_1.jpg' title=''/>
+
+</center>
+
+<ul>
+<li>What do the representations learned by a deep-learning algorithm look like?</li>
+<li>Let’s examine how a network several layers deep transforms an image of a digit in order to recognize what digit it is.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<center>
+
+<img class="img_small" src='https://sds-aau.github.io/SDS-master/00_media/DL_concept_2.jpg' title=''/>
+
+</center>
+
+<ul>
+<li>The network transforms the digit image into representations that are increasingly different from the original image and increasingly informative about the final result.</li>
+<li>You can think of a deep network as a multistage information-distillation operation, where information goes through successive filters and comes out increasingly purified (that is, useful with regard to some task).</li>
+<li>So that’s what deep learning is, technically: a multistage way to learn data representations. It’s a simple idea-but, as it turns out, very simple mechanisms, sufficiently scaled, can end up looking like magic.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Inductive inference and high-level abstractions</h2></hgroup><article  class="smaller" id="inductive-inference-and-high-level-abstractions">
+
+<ul>
+<li>Machine learning methods construct hypotheses directly from the data through <em>inductive inference</em>
+
+<ul>
+<li>If a large data set contains several instances of white swans and no instances of swans of other colours, a machine learning algorithm may infer that &lsquo;all swans are white&rsquo;</li>
+<li>Inductive inferences consists of hypotheses which are always subject to falsification by additional data, i.e. there may still be an undiscovered island of black swans!</li>
+</ul></li>
+<li>Suppose the goal of a machine learning algorithm is to recognize a face in a picture, then the algorithm could use the presence of a nose as a feature
+
+<ul>
+<li>Describing exactly what a nose is in terms of pixel composition can be difficult as there are countless different shapes, shadows can modify and obscure part of the nose, view angles, etc.</li>
+<li>These attributes are known as <strong>factors of variations</strong>, i.e. constructs in the human mind that can be thought of as high-level abstractions that help us make sense of the rich variability of the observed data</li>
+<li>A deep learning system learn from experience and understand the world in terms of a <strong>hierarchy of concepts</strong>, with each concept defined through its relation to simpler concepts</li>
+</ul></li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/dl_hierarchy.JPG' title=''/>
+
+</center>
+
+</article></slide><slide class=""><hgroup><h2>Neural Network Architectures</h2></hgroup><article  id="neural-network-architectures">
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/dl_architecture1.JPG' title=''/>
+
+</center>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/dl_architecture2.JPG' title=''/>
+
+</center>
+
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Summary</h2></hgroup><article  id="summary">
+
+</article></slide><slide class=""><hgroup><h2>Take-aways</h2></hgroup><article  id="take-aways">
+
+<ul>
+<li>Neural network architectures are the main drivers of latest hypes in AI and deep learning.</li>
+<li>They appear to have particular advantages in areas where the target function is subject to complex (eg. spatial, sequencial) interdependencies, such as image and language data.</li>
+<li>Deep neural networks increase the hypothesis space enourmeously.</li>
+<li>Deep neural networks typically need large amounts of data to be trained.</li>
+<li>Different architctural designs lead to performance advantage for particular types of problems.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Further resources &amp; readings</h2></hgroup><article  id="further-resources-readings">
+
+<ul>
+<li>Bengio, Yoshua, Ian J. Goodfellow, and Aaron Courville. &ldquo;Deep learning.&rdquo; An MIT Press book. (2015). <a href='https://www.deeplearningbook.org/' title=''>html</a> (Deep Learning Bible)</li>
+<li>LeCun, Yann, Yoshua Bengio, and Geoffrey Hinton. &ldquo;Deep learning.&rdquo; Nature 521.7553 (2015): 436-444. <a href='http://www.cs.toronto.edu/~hinton/absps/NatureDeepReview.pdf' title=''>pdf</a> (Deep Learning Survey)</li>
+<li>Schmidhuber, Jürgen. &ldquo;Deep learning in neural networks: An overview.&rdquo; Neural networks 61 (2015): 85-117. <a href='https://arxiv.org/pdf/1404.7828v4.pdf' title=''>pdf</a></li>
+<li>3Blue1Brown: Best visual introduction to ANNs <a href='https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi' title=''>Youtube</a> (Watch Chapter 1 for this session)</li>
+</ul></article></slide>
 
 
   <slide class="backdrop"></slide>

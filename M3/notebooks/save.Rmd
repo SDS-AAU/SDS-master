@@ -102,19 +102,8 @@ rm(list=ls())
 ```
 
 
-### A brief history of ANNs and DL
 
-![](https://sds-aau.github.io/SDS-master/00_media/DL_timeline.png){width=800px}
 
-Although the core ideas of neural networks were investigated in toy forms as early as the 1950s, yet the approach took decades to get started. For a long time, the missing piece was an efficient way to train large neural networks. This changed in the mid-1980s, when multiple people independently rediscovered the **Backpropagation algorithm** - a way to train chains of parametric operations using gradient-descent optimization - and started applying it to neural networks.
-
-The first successful practical application of neural nets came in 1989 from Bell Labs, when Yann LeCun combined the earlier ideas of convolutional neural networks and backpropagation, and applied them to the problem of classifying handwritten digits. The resulting network, dubbed LeNet, was used by the United States Postal Service in the 1990s to automate the reading of ZIP codes on mail envelopes (we will take a practical look at that later).
-
-However, then winter came for research on ANNs. After initial success, lacking data, computing power, and the inability to extend the range of applications beyond some simple applications led most researchers abandoning this line of inquiry. Around 2010, only a number of people where still working on neural networks started to make important breakthroughs: the groups of **Geoffrey Hinton** at the University of Toronto, **Yoshua Bengio** at the University of Montreal, **Yann LeCun** at New York University, **Dan Ciresan** and IDSIA.
-
-In 2011, Dan Ciresan started winning image-classification competitions with GPU-trained deep neural networks - the first practical success of deep learning. Then, Hinton's group entered the in the yearly large-scale image-classification challenge ImageNet (notoriously difficult at the time, consisting of classifying ca. 1.4m high-res color images in 1.000 categories, top accuracy about 74.3%) with convolutional neural network (more on that later in the module) architectures, which dominated the competitiopn ever since. ConvNets soon became THE algorithm for all computer vision tasks; more generally, they work on all perceptual tasks. in 2015, accuracies of 96.4% made the fomerly daunting classification task on ImageNet to be considered a solved problem. 
-
-At the same time, deep learning has also found applications in many other types of problems, such as NLP, and completely replaced SVMs and tree models in a wide range of applications. For instance, CERN for long used tree based models to analyze particle data from their Large Hadron Collider (LHC), yet recently switched to Keras-based deep neural networks due to their higher performance and ease of training on large datasets.
 
 
 ### The *deep* in deep learning
