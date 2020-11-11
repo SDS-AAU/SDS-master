@@ -362,11 +362,11 @@ rm(layer, model)
 * In order to get access to a much richer hypothesis space that would benefit from deep representations, you need a non-linearity, or activation function. 
    * `relu` is the most popular activation function in deep learning, but there are many other candidates, which all come with similarly strange names: `prelu`, `elu`, and so on. A `relu` (rectified linear unit) is a function meant to zero out negative values, and commonly used for intermediate layers (formerly, almost all layers where modelled with `sigmoid`, but nowadays its proven that for intermediate layers `relu` mostly works better).
 
-![](https://www.dropbox.com/s/jeebmvvcptg4cly/DL_activation_1.jpg?dl=1){width=500px}
+![](https://sds-aau.github.io/SDS-master/00_media/DL_activation_1.jpg){width=500px}
 
 Our output layer, however, should model a binary choice (yes/no classification). For such a model, we would in a 2-class problem commonly use a a `sigmoid` function, which we already know from logistic regression models. It "squashes" arbitrary values into the `[0, 1]` interval, outputting something that can be interpreted as a probability.
 
-![](https://www.dropbox.com/s/whm8dcug8r6fyad/DL_activation_2.jpg?dl=1){width=500px}
+![](https://sds-aau.github.io/SDS-master/00_media/DL_activation_2.jpg){width=500px}
 
 However, since we have a multi-class prediction problem, we choose `softmax`, which squashes the outputs of each unit to be between `0` and `1`, just like a `sigmoid`, but it also divides each output such that the total sum of the outputs is equal to `1`. The output is equivalent to a categorical probability distribution, it tells you the probability that any of the classes are true.
 
@@ -557,6 +557,14 @@ model_keras_hist <- model_keras  %>% fit(x = x_train,
                                          )
 ```
 
+# Your Turn
+
+Using the Keras API and reference ([Python](https://keras.io/) or [R](https://keras.rstudio.com/)) manual and in particular construct additional simple models (with appropriate metrics):
+
+* Regression example
+* Multi-label example
+
+Also consider further resources mentioned below
 
 # Endnotes
 
