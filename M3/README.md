@@ -23,4 +23,5 @@
 ### Deep Learning in R
 
 * [R-Keras (RStudio)](https://keras.rstudio.com/)
+* [RStudio AI blog](https://blogs.rstudio.com/ai/): Excellent source for frequent torch/keras exercises and announcements within th R ecosystem
 * [R-Torch (Rstudio)](https://blog.rstudio.com/2020/09/29/torch/)
