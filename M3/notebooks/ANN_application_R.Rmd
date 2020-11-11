@@ -254,7 +254,8 @@ metrics
 
 * In the previous example, we started from data stored in multidimensional arrays, also called **tensors**. 
 * In general, most current ML systems use tensors as their basic data structure. Tensors are fundamental to the field-so fundamental that Google's **TensorFlow** was named after them. So what's a tensor?
-* Tensors are a generalization of vectors and matrices to an arbitrary number of dimensions (note that in the context of tensors, a dimension is often called an axis). In `R`, vectors are used to create and manipulate 1D tensors, and matrices are used for 2D tensors. For higher-level dimensions, array objects (which support any number of dimensions) are used.
+* Tensors are a generalization of vectors and matrices to an arbitrary number of dimensions (note that in the context of tensors, a dimension is often called an axis). 
+* In `R`, vectors are used to create and manipulate 1D tensors, and matrices are used for 2D tensors. For higher-level dimensions, array objects (which support any number of dimensions) are used.
 
 ## Key tensor-attributes
 
@@ -262,7 +263,7 @@ A tensor is defined by three key attributes:
 
 1. **Number of axes** (rank): For instance, a 3D tensor has three axes, and a matrix has two axes.
 2. **Shape:** This is an integer vector that describes how many dimensions the tensor has along each axis. 
-3. **Data type:** This is the type of the data contained in the tensor; for instance, a tensor's type could be integer or double. On rare occasions, you may see a character tensor. But because tensors live in preallocated contiguous memory segments, and strings, being variable-length, would preclude the use of this implementation, they're rarely used.
+3. **Data type:** This is the type of the data contained in the tensor; for instance, a tensor's type could be integer or double. On rare occasions, you may see a character tensor. 
 
 ## Tensor reshaping
 
@@ -484,15 +485,13 @@ data %<>%
 ```
 
 ```{r}
-data_split <- initial_split(data, prop = 0.75, strata = y)
+data_split <- tidymodels::initial_split(data, prop = 0.75, strata = y)
 
 data_train <- data_split  %>%  training()
 data_test <- data_split %>% testing()
 ```
 
 ## Preprocessing recipe
-
-
 
 ```{r}
 data_recipe <- data_train %>%
@@ -527,13 +526,13 @@ model_keras %>%
     activation         = "relu", 
     input_shape        = ncol(x_train)) %>% 
   # Dropout to prevent overfitting
-#  layer_dropout(rate = 0.1) %>%
+  layer_dropout(rate = 0.1) %>%
   # Second hidden layer
   layer_dense(
     units              = 12, 
     activation         = "relu") %>% 
   # Dropout to prevent overfitting
- # layer_dropout(rate = 0.1) %>%
+  layer_dropout(rate = 0.1) %>%
   # Output layer
   layer_dense(
     units              = ncol(y_train), 
@@ -554,7 +553,7 @@ model_keras_hist <- model_keras  %>% fit(x = x_train,
                                          y = y_train, 
                                          epochs = 10, # How often shall we re-run the model on the whole sample
                                          batch_size = 12, # How many observations should be included in every batch
-                                         #validation_split = 0.25 # If we want to do a  cross-validation in the training
+                                         validation_split = 0.25 # If we want to do a  cross-validation in the training
                                          )
 ```
 
@@ -573,6 +572,10 @@ You can find more info about:
 Datacamp
    * [Introduction to TensorFlow in R](https://learn.datacamp.com/courses/introduction-to-tensorflow-in-r): A bit low-level, but a good intro for starters
    * Also follow the Python intros, they might still be helpful for you.
+   
+Others
+
+* [RStudio AI blog](https://blogs.rstudio.com/ai/): Excellent source for frequent torch/keras exercises and announcements within th R ecosystem
 
 ### Session info
 
