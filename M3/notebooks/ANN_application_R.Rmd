@@ -584,6 +584,12 @@ Datacamp
 Others
 
 * [RStudio AI blog](https://blogs.rstudio.com/ai/): Excellent source for frequent torch/keras exercises and announcements within th R ecosystem
+* [R Markdown Notebooks for "Deep Learning with R"](https://github.com/skeydan/deep-learning-with-r-notebooks): A collection of exercises/tutorials/demos from the [Deep Learning with R](https://www.manning.com/books/deep-learning-with-r) book. Good illustrations of diffent types of ML problems and their solutions.
+
+Books
+
+* François Chollet & J. J. Allaire (2018). Deep Learning with R, Manning Publications: Good book, but not for free. Find it [here](https://www.manning.com/books/deep-learning-with-r). though, in case of interest.
+
 
 ### Session info
 
