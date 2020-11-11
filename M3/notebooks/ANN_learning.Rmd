@@ -1,0 +1,387 @@
+---
+title: 'Artificial Neural Networks: How the network learns?'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  ioslides_presentation:
+     widescreen: true
+#     smaller: true
+#    css: '../../00_notebooks/css_style_ioslides.css'
+   
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+knitr::opts_chunk$set(
+  echo = FALSE,
+  comment = FALSE,
+  warning = FALSE
+  )
+
+# Load packages
+library(tidyverse)
+library(magrittr)
+library(knitr)
+library(kableExtra)
+library(keras)
+```
+
+
+<style type="text/css">
+  .img_small{
+    width: 50%;
+  }
+.img{
+  width: 75%;
+}
+.img_big{
+  width: 100%;
+}
+</style>
+
+## This session 
+
+In this session, you will:
+
+1. xxxx
+
+
+
+
+
+# Neural network architecture
+
+## Weights, XOR problem
+
+X
+X 
+X
+
+
+
+## Activation functions
+
+* Lets take first a step back. Every cell gets `inputs` from the connected other cells on lower layers which are activated, where the intensity of the input is scaled by the weight of the connection. 
+* If the cell gets activated on its own is determined by its **activation function**, a mathematical transformation of its inputs, where the cell (usually) activates above a certain threshhold. This can be done in different ways, eg, a **rectified linear unit** (ReLU) or a **sigmoid**, which we already know from logistic regression models
+
+* Back to our network: Here, each neural layer from our first network example transforms its input data as follows:
+
+`output = relu(dot(W, input) + b)`
+
+* In this expression, `W` and `b` are tensors that are attributes of the layer. 
+* They're called the weights or trainable parameters of the layer (the kernel and bias attributes, respectively). 
+* These weights contain the information learned by the network from exposure to training data. 
+* The activation of every cell in the layer is therefore dependent on the multiplication of 
+   1. the corresponding input and weight tensor (`dot(W, input)`)
+   2. the bias (`b`), a constant which influences the tendency to activate.
+
+X
+X
+X
+
+## Architecture choices
+
+x
+x
+x
+
+
+
+
+
+
+# Data representations for neural networks
+
+## Tensors
+
+* Most current DL frameworks use **tensors** as their basic data structure. 
+* Tensors are fundamental to the field-so fundamental that Google's **TensorFlow** was named after them. So what's a tensor?
+
+* Tensors are a generalization of vectors and matrices to an arbitrary number of dimensions (note that in the context of tensors, a dimension is often called an axis). 
+
+## Key tensor-attributes
+
+A tensor is defined by three key attributes:
+
+1. **Number of axes** (rank): For instance, a 3D tensor has three axes, and a matrix has two axes.
+2. **Shape:** This is an integer vector that describes how many dimensions the tensor has along each axis. 
+3. **Data type:** This is the type of the data contained in the tensor; for instance, a tensor's type could be integer or double. On rare occasions, you may see a character tensor.
+
+
+```{r, include=FALSE}
+mnist <- dataset_mnist()
+train_images <- mnist$train$x
+train_labels <- mnist$train$y
+test_images <- mnist$test$x
+test_labels <- mnist$test$y
+```
+
+* LEts inspect a classic, the MNIST dataset of handwritten digits
+* Now we display the number of axes of the tensor `train_images`, and then its shape and datatype:
+
+```{r}
+dim(train_images)
+```
+
+```{r}
+typeof(train_images)
+```
+
+* So what we have here is a 3D tensor of integers. 
+* More precisely, it's an array of 60,000 matrices of 28x28 integers. 
+* Each such matrix is a grayscale image, with coefficients between 0 and 255. Thats how they look:
+
+```{r}
+digit <- train_images[5,,]
+digit[7:28,8:20] # I crop it a bit, otherwise the columns dont fit on one page
+```
+
+
+## Tensors and dimensionality
+
+![](https://sds-aau.github.io/SDS-master/00_media/dl_tensors_funny.jpg){.img}
+
+## Scalars (0D tensors)
+
+* A tensor that contains only one number is called a scalar (or scalar tensor, or zero-dimensional tensor, or 0D tensor). ?R? doesn't have a data type to represent scalars (all numeric objects are vectors, matrices, or arrays), but an R vector that's always length `1` is conceptually similar to a scalar.
+
+```{r}
+x <- 1
+str(x)
+```
+
+
+## Vectors (1D tensors)
+
+A one-dimensional array of numbers is called a vector, or 1D tensor. A 1D tensor is said to have exactly one axis. We can convert the `R` vector to an array object to inspect its dimensions:
+
+```{r}
+x <- c(12, 3, 6, 14, 10)
+str(x)
+```
+
+```{r}
+x %>% as.array() %>% dim()
+```
+
+* This vector has five entries and so is called a five-dimensional vector. Don't confuse a 5D vector with a 5D tensor! 
+* A 5D vector has only one axis and has five dimensions along its axis, whereas a 5D tensor has five axes (and may have any number of dimensions along each axis).
+* Dimensionality can denote either the number of entries along a specific axis (as in the case of our 5D vector) or the number of axes in a tensor (such as a 5D tensor), which can be confusing at times. 
+* In the latter case, it's technically more correct to talk about a tensor of rank 5 (the rank of a tensor being the number of axes), but the ambiguous notation 5D tensor is common regardless.
+
+## Matrices (2D tensors)
+
+* A two-dimensional array of numbers is a matrix, or 2D tensor. 
+* A matrix has two axes (often referred to as rows and columns). You can visually interpret a matrix as a rectangular grid of numbers:
+
+```{r}
+x <- matrix(1:15, nrow = 3, ncol = 5)
+x
+```
+
+```{r}
+str(x)
+```
+
+```{r}
+dim(x)
+```
+
+# Arrays (3D and higher-dimensional tensors)
+
+If you pack such matrices in a new array, you obtain a 3D tensor, which you can visually interpret as a cube of numbers:
+
+```{r}
+x <- array(rep(1:15, 2), 
+           dim = c(3,5,2))
+x
+```
+
+```{r}
+str(x)
+```
+
+```{r}
+dim(x)
+```
+
+----
+
+* By packing 3D tensors in an array, you can create a 4D tensor, and so on. 
+* In deep learning, you'll generally manipulate tensors that are 0D to 4D, although you may go up to 5D if you process video data.
+* For example, in the case before, we where working with 3d tensors, where the first two where a (greyscale pixel) matrix, and the third the different observations (samples) stacked on each others. 
+* 3d tensors are also often used for time series. Whenever time matters in your data (or the notion of sequence order), it makes sense to store it in a 3D tensor with an explicit time axis. Each sample can be encoded as a sequence of vectors (a 2D tensor), and thus a batch of data will be encoded as a 3D tensor.
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/DL_tensor_3d.jpg){width=500px}
+</center>
+
+However, this greyscale raster matrix is somewhat a special case. Images typically have three dimensions: height, width, and color. Therefore, a 2d image would therefore still represent a 3d tensor, and a bunch of them together a 4d tensor. For example, a batch of 128 RGB-color images could be stored in a 4d tensor of shape `(128, 256, 256, 3)`
+
+![](hhttps://sds-aau.github.io/SDS-master/00_media/DL_tensor_4d.jpg){width=500px}
+
+You might already see it coming.... vidoes represent a time series of images, therefore would be a 5d tensor. Videos can be seen as series of frames, where each frame can be stored in a 3D tensor `(height, width, color_depth)`,  their sequence in a 4D tensor `(frames, height, width, color_depth)`, and thus a batch of different videos  in a 5D tensor of shape `(samples, frames, height, width, color_depth)`.
+
+
+## Geometric interpretation of tensor operations
+
+Because the contents of the tensors manipulated by tensor operations can be interpreted as coordinates of points in some geometric space, all tensor operations have a geometric interpretation. For instance, let's consider addition. 
+
+We'll start with the following vector: `A = [0.5, 1.0]`. It's a point in a 2D space, but can also be under stood as a vector leading from the origin to this point.
+
+![](https://sds-aau.github.io/SDS-master/00_media/DL_vector_1.jpg){width=300px}
+
+Let's consider a new point, `B = [1, 0.25]`, which we willll add to the previous one. This is done geometrically by chaining together the vector arrows, with the resulting location being the vector representing the sum of the previous two vectors
+
+![](https://sds-aau.github.io/SDS-master/00_media/DL_vector_2.jpg){width=300px}
+
+In general, elementary geometric operations such as affine transformations, rotations, scaling, and so on can be expressed as tensor operations. For instance, a rotation of a 2D vector by an angle `theta` can be achieved via a dot product with a 2x2 matrix `R = [u, v]`, where `u` and `v` are both vectors of the plane: `u = [cos(theta), sin(theta)]` and `v = [-sin(theta), cos(theta)]`.
+
+Some linear, vector and matrix algebra knowledge might light up again in your brain, right? Good! While for many out-of-the box "run-this-model" operations on tabular data, you might not need it, it will be necessary in case you need to tinker and customize a bit at your models to squeeze out a bit more accuracy. 
+
+![](https://sds-aau.github.io/SDS-master/00_media/DL_linear_algebra.jpg){width=500px}
+
+Anyhow, a bit of a refresher in linear algebra would also support your intuition on what's going on under the hood of deep learning (Btw: there is a DataCamp course on that). We, however, leave it like that for now.
+
+
+
+
+
+
+# Learning in Neural Networks
+
+## The learning problem
+
+* So, now we know what the *deep* means, and how such a deep neutwork is structured. However, we still do not know so much about the *learning*. 
+* Generally, learning appears in the network by adjusting the weights between the different cells. 
+* But how does that happen?
+
+
+
+* Initially, these weight matrices are filled with small random values (a step called *random initialization*).
+* Of course, there is no reason to expect that `relu(dot(W, input) + b)`, when `W` and `b` are random, will yield any useful representations.
+* What comes next is to gradually adjust these weights, based on some feedback signal (provided by the *loss function dicussed later*). 
+
+* This gradual adjustment, also called *training*, is basically the learning that ML is all about. 
+* This happens within what's called a training loop, which works as follows. Repeat these steps in a loop, as long as necessary:
+
+1. Draw a batch of training samples `x` and corresponding targets `y`.
+2. Run the network on `x` (a step called the *forward pass*) to obtain predictions `y_pred`.
+3. Compute the **loss** of the network on the batch, a measure of the mismatch between `y_pred` and `y`.
+4. Update all weights of the network in a way that slightly reduces the loss on this batch.
+
+You'll eventually end up with a network that has a very low loss on its training data: a low mismatch between predictions `y_pred` and expected targets `y`. The network has "learned" to map its inputs to correct targets. From afar, it may look like magic, but when you reduce it to elementary steps, it turns out to be simple.
+
+Step 1 sounds easy enough-just I/O code. Steps 2 and 3 are merely the application of a handful of tensor operations, so you could implement these steps purely from what you learned in the previous section. 
+
+The difficult part is step 4: updating the network's weights. Given an individual weight coefficient in the network, how can you compute whether the coefficient should be increased or decreased, and by how much?
+
+The currently dominnat approach to do so is to take advantage of the fact that all operations used in the network are differentiable, and compute the *gradient of the loss* with regard to the network's coefficients. You can then move the coefficients in the opposite direction from the gradient, thus decreasing the loss.
+
+## Refresher What's a derivative?
+
+* Consider a continuous, smooth function `f(x) = y`, mapping a real number `x` to a new real number `y`. 
+* Because the function is continuous, a small change in x can only result in a small change in `y`. 
+* Let's say you increase `x` by a small factor `epsilon_x`: this results in a small `epsilon_y` change to `y`:
+
+`f(x + epsilon_x) = y + epsilon_y`
+
+* In addition, because the function is smooth (its curve has no abrupt angles), when `epsilon_x` is small enough, around a certain point `p`, it's possible to approximate `f` as a linear function of slope `a`, so that `epsilon_y` becomes `a * epsilon_x`:
+
+`f(x + epsilon_x) = y + a * epsilon_x`
+
+* Obviously, this linear approximation is valid only when `x` is close enough to `p`. The slope `a` is called the **derivative** of `f` in `p`. 
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/DL_gradient_1.jpg){.img}
+</center>
+
+* For every differentiable function `f(x)`, there exists a derivative function `f'(x)` that maps values of `x` to the slope of the local linear approximation of `f` in those points. 
+* If you're trying to update `x` by a factor `epsilon_x` in order to minimize `f(x)`, and you know the derivative of `f`, then your job is done: the derivative completely describes how `f(x)` evolves as you change `x`. 
+
+* If you want to reduce the value of `f(x)`, you just need to move `x` a little in the opposite direction from the derivative. 
+* It is helpful to track cregions where `f'(x)==0`, since they indicate the directional change of the curvature, and therefore local maxima or minima of `f(x)`.
+* Btw: The curvature of `f(x)` is found in its second derivative, `f''(x)`.
+
+## Derivative of a tensor operation: the gradient
+
+A **gradient** is the derivative of a tensor operation. Consider an input vector `x`, a matrix `W`, a target `y`, and a loss function (to be explained later) `loss`. You can use `W` to compute a target candidate `y_pred`, and compute the `loss`, or mismatch, between the target candidate `y_pred` and the target `y`:
+
+`y_pred = dot(W, x)`
+`loss_value = loss(y_pred, y)`
+
+If the data inputs `x` and `y` are frozen, then this can be interpreted as a function mapping values of `W` to `loss` values:
+
+`loss_value = f(W)`
+
+### Stochastic gradient descent
+Since `f'(x)==0`indicates a local minimum, to find the global one we "only" need to identify all `f'(x)==0` regions and check which has the lowest `f(x)`. Applied to a neural network, that means finding analytically the combination of weight values that yields the smallest possible `loss`. 
+
+![](https://sds-aau.github.io/SDS-master/00_media/DL_gradient_2.jpg?dl=1){width=400px}
+
+To do so, we use the four-step algorithm outlined earlier: modify the parameters little by little based on the current loss value on a random batch of data. Because you're dealing with a differentiable function, you can compute its gradient, which gives you an efficient way to implement step 4. 
+
+If you update the weights in the opposite direction from the gradient, the `loss` will be a little less every time:
+
+1. Draw a batch of training samples `x` and corresponding targets `y`.
+2. Run the network on `x` to obtain predictions `y_pred`.
+3. Compute the loss of the network on the batch, a measure of the mismatch between `y_pred` and `y`.
+4. Compute the gradient of the `loss` with regard to the network's parameters (a backward pass).
+5. Move the parameters a little in the opposite direction from the gradient-for example, `W = W - (step * gradient)` - thus reducing the `loss` on the batch a bit.
+
+Easy enough! What we just described is **stochastic gradient descent** (mini-batch SGD). The term stochastic refers to the fact that each batch of data is drawn at random (stochastic is a scientific synonym of random). 
+
+![](https://www.dropbox.com/s/5q6sxn3wuzyp8uz/DL_gradient_3.jpg?dl=1){width=400px}
+
+As you can see, intuitively it's important to pick a reasonable value for the `step`, which we call the **learning rate**. If it's too small, the descent down the curve will take many iterations, and it could get stuck in a local minimum. If step is too large, your updates may end up taking you to completely random locations on the curve.
+
+There are many different ways to tinkwer with things like the learning rate and momentum (we call these ways of defining the learning function to find the global optimum *optimizer*), which influence how efficient the process leads (or not) to a global optimum.
+
+![](https://www.dropbox.com/s/84gqqwtrg2knjkj/DL_optimizer.gif?dl=1){width=400px}
+
+### The Backpropagation algorithm: Chaining derivatives
+
+So, now we are almost there. We know now how to minimize the `loss function` within a layer. However, the issue with deep learning is... well... that you want to sue **many** layers. 
+
+How do we move on from here? Indeed, the rise of deep learning had to wait till the implementation of a efficient way to train multi-layered networks.
+
+Luckily, we now have it, and its called **backpropagation**. And its actually pretty simple. While an enourmeous task in terms of number of calculations, the math behind it chould be acessible by highschool students. Just imagine, we have a 4-layered network, connected by 4 weight tensors.
+
+`f(W1, W2, W3) = a(W1, b(W2, c(W3)))`
+
+Calculus tells us that such a chain of functions can be differentiated using the following identity, called the **chain rule** (ohh, dark memories, right?): 
+
+`f(g(x)) = f'(g(x)) * g'(x)`
+
+Applying the chain rule to the computation of the gradient values of a neural network was one simple but brillinat ideas. Now we can start with the last output layer, and propagate the loss via the chain rule step-by-step back over all weights in the leyer below, and then the one below etc., and adjust the weights accordingly. 
+
+Backpropagation starts with the final loss value and works backward from the top layers to the bottom layers, applying the chain rule to compute the contribution that each parameter had in the loss value.
+
+Sounds like a hell to calculate by hand, right? Would be, but dont worry, you will not have to.
+
+
+# The parts of a deep learning model
+
+## Overview
+
+As we understand by now training a neural network revolves around the following objects:
+
+1. The **layers**, which are combined into a network (or model)
+2. The **input** data and corresponding **outcome** targets
+3. The **loss function**, which defines the feedback signal used for learning
+4. The **optimizer**, which determines how learning proceeds
+
+
+In interaction, it can be illustrated like this: The network, composed of layers that are chained together, maps the input data to outcomes of interest by doing predictions. The loss function then compares these predictions to the targets, producing a loss value: a measure of how well the network's predictions match what was expected. The optimizer uses this loss value to update the network's weights.
+
+![](https://www.dropbox.com/s/pvop4cm45k5rscu/DL_deep_learning_parts.jpg?dl=1){width=750px}
+
+Let's take a closer look at layers, networks, loss functions, and optimizers.
+
+## Layers: the building blocks of deep learning
+
+A layer is a data-processing module that takes as input one or more tensors and that outputs one or more tensors. Some layers are stateless, but more frequently layers have a state: the layer's weights, one or several tensors learned with stochastic gradient descent, which together contain the network's knowledge.
+
+Different layers are appropriate for different tensor formats and different types of data processing. For instance, simple vector data, stored in 2D tensors of shape `(samples, features)`, is often processed by **densely connected layers**, also called fully connected or dense layers (the `layer_dense` function in Keras). Sequence data, stored in 3D tensors of shape (samples, timesteps, features), is typically processed by recurrent layers such as `layer_lstm`. Image data, stored in 4D tensors, is usually processed by 2D convolution layers (`layer_conv_2d`). All that will be introduced in later sessions.
+
+You can think of layers as the LEGO bricks of deep learning, a metaphor that is made explicit by frameworks like `Keras`. Building deep-learning models in Keras is done by clipping together compatible layers to form useful data-transformation pipelines. The notion of layer compatibility here refers specifically to the fact that every layer will only accept input tensors of a certain shape and will return output tensors of a certain shape. Consider the following example:
