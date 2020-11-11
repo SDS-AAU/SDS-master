@@ -8,7 +8,7 @@
 
 ## Simple feed-forward networks (ANNs)
 * Application: Python multiclass with Penguins [Video](https://www.loom.com/share/cab10cb936294618a43fce5e8e30a51c) [Colab](https://nbviewer.jupyter.org/github/SDS-AAU/SDS-master/blob/master/M3/notebooks/M3_ANN_Python_Intro.ipynb)
-* Application: Images &B Penguins (R) Video [1: Intro](https://www.loom.com/share/b84e8e5228034031b0febe40a01f5e22) [2: Comming soon]() [Html](https://sds-aau.github.io/SDS-master/M3/notebooks/ANN_application_R.nb.html)
+* Application: Images &B Penguins (R) Video [1: Intro](https://www.loom.com/share/b84e8e5228034031b0febe40a01f5e22) [2: Details & Tabular Data Example](https://www.loom.com/share/0b4e1a4d456e46388eb2afd30be369fd) [Html](https://sds-aau.github.io/SDS-master/M3/notebooks/ANN_application_R.nb.html)
 
 
 # Further Resources
