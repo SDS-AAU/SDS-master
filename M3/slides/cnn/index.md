@@ -53,7 +53,7 @@ Let's start by unpacking what visual data actually is: Images are matrices!
 
 ---
 
-To understand what the relavant features are hidden in the image we need to understand how individual pixels interact – We need to identify patterns. 
+To understand what the relevant features are hidden in the image we need to understand how individual pixels interact – We need to identify patterns. 
 
 ![bg left](https://images.unsplash.com/photo-1521846562476-9c2446539e47?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=cc956433f2bc33db1424a895f18d1463&auto=format&fit=crop&w=1651&q=80)
 
@@ -70,7 +70,7 @@ To understand what the relavant features are hidden in the image we need to unde
 ![alt text](https://cdn-images-1.medium.com/max/1600/1*ZCjPUFrB6eHPRi4eyP6aaA.gif)
 
 A really [great post](https://medium.com/impactai/cnns-from-different-viewpoints-fab7f52d159c
-) about CNN from different viewmoints: 
+) about CNN from different viewpoints: 
 
 - Imagine now, instead of one window, you have many windows with different shapes to detect different features...
 
