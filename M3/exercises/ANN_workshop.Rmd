@@ -155,45 +155,104 @@ y_test <- bake(data_recipe, new_data = data_test) %>% pull(y)
 # Define the network
 
 ```{r}
-model_keras <- keras_model_sequential()
-```
-
-```{r}
-model_keras %>% 
-  layer_dense(units = 521, activation = "relu", input_shape = ncol(x_train)) %>% 
-  layer_dense(units = 12, activation = "relu") %>% 
+model_base <- keras_model_sequential() %>% 
+  layer_dense(units = 64, activation = "relu", input_shape = ncol(x_train)) %>% 
+  layer_dense(units = 64, activation = "relu") %>% 
   layer_dense(units = 1, activation = "linear") 
 ```
 
 ```{r}
-model_keras %>% 
+model_base %>% 
   compile(
     optimizer = "adam",
     loss = "mse",
-    metrics = list("mean_absolute_error")
+    metrics = list("mean_squared_error")
   )
 ```
 
 
 ```{r}
-model_keras_hist <- model_keras  %>% fit(x = x_train, 
+hist_base <- model_base  %>% fit(x = x_train, 
                                          y = y_train, 
                                          epochs = 10, # How often shall we re-run the model on the whole sample
-                                         batch_size = 150, # How many observations should be included in every batch
+                                         batch_size = 128, # How many observations should be included in every batch
                                          validation_split = 0.25, # If we want to do a  cross-validation in the training
                                          # callbacks = callback_tensorboard("logs/run_a")
                                          )
 ```
 
 ```{r}
-model_keras_hist %>% plot(smooth = TRUE)
+hist_base %>% plot(smooth = TRUE)
 ```
 
 ```{r}
-metrics <- model_keras %>% evaluate(x_test, y_test)
+model_keras_base %>% evaluate(x_test, y_test) %>% sqrt()
+```
+
+
+# Part 2: Play around
+
+```{r}
+model_keras_small <- keras_model_sequential() %>% 
+  # architecture
+  layer_dense(units = 12, activation = "relu", input_shape = ncol(x_train)) %>% 
+  layer_dense(units = 1, activation = "linear") %>% 
+  # compile
+  compile(optimizer = "adam", loss = "mse", metrics = list("mean_squared_error")
+  )
+```
+
+
+```{r}
+model_keras_big <- keras_model_sequential() %>% 
+  # architecture
+  layer_dense(units = 512, activation = "relu", input_shape = ncol(x_train)) %>% 
+  layer_dense(units = 512, activation = "relu") %>% 
+  layer_dense(units = 512, activation = "relu") %>% 
+  layer_dense(units = 512, activation = "relu") %>% 
+  layer_dense(units = 512, activation = "relu") %>% 
+  layer_dense(units = 1, activation = "linear") %>% 
+  # compile
+  compile(optimizer = "adam", loss = "mse", metrics = list("mean_squared_error")
+  )
 ```
 
 ```{r}
-metrics
+hist_small <- model_keras_small %>% fit(x = x_train, y = y_train, validation_split = 0.25, 
+                                        epochs = 10, # How often shall we re-run the model on the whole sample
+                                        batch_size = 128 # How many observations should be included in every batch
+                                        )
 ```
+
+```{r}
+hist_big <- model_keras_big %>% fit(x = x_train, y = y_train, validation_split = 0.25, 
+                                        epochs = 10, # How often shall we re-run the model on the whole sample
+                                        batch_size = 125 # How many observations should be included in every batch
+                                        )
+```
+
+```{r}
+val_collected <- tibble(epoc = 1:10, 
+       MSE =hist_base$metrics$val_mean_squared_error[1:10],
+       model = 'base') %>%
+  bind_rows(
+    tibble(epoc = 1:10, 
+       MSE =hist_small$metrics$val_mean_squared_error[1:10],
+       model = 'small') 
+  ) %>%
+  bind_rows(
+    tibble(epoc = 1:10, 
+       MSE =hist_big$metrics$val_mean_squared_error[1:10],
+       model = 'big') 
+  )
+```
+
+
+```{r}
+val_collected %>%
+  ggplot(aes(x = epoc, y = MSE)) +
+  geom_line(aes(col = model))
+```
+
+
 
