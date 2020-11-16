@@ -571,6 +571,7 @@ Also consider further resources mentioned below
 ### References
 
 ### More info
+
 You can find more info about:
 
 * `keras` [here](https://keras.rstudio.com/): Excellent documentation, tutorials, and resources regarding `keras`, maintained by Rstudio

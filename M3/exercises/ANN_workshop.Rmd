@@ -1,0 +1,247 @@
+---
+title: 'Neural Networks Exercise: Predicting Airbnb prices with simple ANNs (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+
+
+## Preamble
+
+```{r}
+# Clear workspace
+rm(list=ls()); graphics.off() 
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+library(skimr) # For nice data summaries
+
+# Load our main predictive tool
+library(tidymodels)
+library(keras)
+```
+
+
+# Load the data
+
+```{r}
+data <- read_csv('http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz')
+```
+
+
+# Data munging/tidying
+
+### Variable transformations
+
+```{r}
+data %<>%
+  mutate(price = price %>% parse_number(),
+         cleaning_fee = parse_number(cleaning_fee),
+         price_all = 3*price + cleaning_fee)
+```
+
+```{r}
+data %>%
+  glimpse()
+```
+
+
+### Varriable selection
+
+```{r}
+data %<>% 
+  select(price_all, review_scores_rating, neighbourhood_cleansed, calculated_host_listings_count, availability_365, host_listings_count, accommodates, room_type, bathrooms, is_business_travel_ready, guests_included, instant_bookable, number_of_reviews, cancellation_policy, host_is_superhost, host_identity_verified, bedrooms, beds, cancellation_policy) 
+```
+
+```{r}
+data %<>% 
+  mutate(across(is_logical, as.factor))
+```
+
+
+```{r}
+data %<>%
+  rename(y = price_all) %>%
+  relocate(y)
+```
+
+### Missing values
+
+```{r}
+data %<>% 
+  mutate(across(is_character, ~ifelse(.x == "", NA, .x))) %>%
+  drop_na(y) 
+```
+
+### Filtering
+
+Also check the categorical variables for rare types
+
+```{r}
+data %>% count(room_type, sort = TRUE)
+```
+
+```{r}
+select_room_type <- c('Entire home/apt', 'Private room')
+```
+
+
+## Train Test split
+
+
+```{r}
+data_split <- initial_split(data, prop = 0.75, strata = y)
+
+data_train <- data_split  %>%  training()
+data_test <- data_split %>% testing()
+```
+
+## Preprocessing recipe
+
+```{r}
+data_recipe <- data_train %>%
+  recipe(y ~.) %>%
+  # Filtering
+  step_filter(room_type %in% select_room_type) %>% # filter room type
+  step_filter(percent_rank(y) <= 0.95) %>% # filter y outliers
+  step_filter(number_of_reviews >= 2) %>% # filtern number of reviews
+  # Standard preprocessing
+  step_normalize(all_numeric(), -all_outcomes()) %>% # Centers all numeric variables to mean = 0 & sd = 1
+  step_nzv(all_predictors()) %>% # get rid of near zero variance vars
+  step_dummy(all_nominal(), -all_outcomes(), one_hot = TRUE) %>% # Dummies of all categorical
+  step_knnimpute(all_predictors()) %>% # Inpute missing variables
+  prep()
+```
+
+## Prepare input data
+
+```{r}
+x_train <- juice(data_recipe) %>% select(-y) %>% as.matrix()
+x_test <- bake(data_recipe, new_data = data_test) %>% select(-y) %>% as.matrix()
+```
+
+```{r}
+y_train <- juice(data_recipe)  %>% pull(y)
+y_test <- bake(data_recipe, new_data = data_test) %>% pull(y) 
+```
+
+# Define the network
+
+```{r}
+model_keras <- keras_model_sequential()
+```
+
+```{r}
+model_keras %>% 
+  layer_dense(units = 521, activation = "relu", input_shape = ncol(x_train)) %>% 
+  layer_dense(units = 12, activation = "relu") %>% 
+  layer_dense(units = 1, activation = "linear") 
+```
+
+```{r}
+model_keras %>% 
+  compile(
+    optimizer = "adam",
+    loss = "mse",
+    metrics = list("mean_absolute_error")
+  )
+```
+
+
+```{r}
+model_keras_hist <- model_keras  %>% fit(x = x_train, 
+                                         y = y_train, 
+                                         epochs = 10, # How often shall we re-run the model on the whole sample
+                                         batch_size = 150, # How many observations should be included in every batch
+                                         validation_split = 0.25, # If we want to do a  cross-validation in the training
+                                         # callbacks = callback_tensorboard("logs/run_a")
+                                         )
+```
+
+```{r}
+model_keras_hist %>% plot(smooth = TRUE)
+```
+
+```{r}
+metrics <- model_keras %>% evaluate(x_test, y_test)
+```
+
+```{r}
+metrics
+```
+
+<!---
+## Monitoring runs
+
+```{r}
+library(tfruns)
+```
+
+```{r}
+# launch TensorBoard (data won't show up until after the first epoch)
+tensorboard("logs/run_a")
+```
+
+## Dropout
+
+```{r}
+model_keras2 <- keras_model_sequential() %>%
+  # Architecture
+  layer_dense(units = 521, activation = "relu", input_shape = ncol(x_train)) %>% 
+  layer_dropout(rate = 0.1) %>%
+  layer_dense(units = 512, activation = "relu") %>% 
+  layer_dropout(rate = 0.1) %>%
+  layer_dense(units = 1, activation = "linear") %>% 
+  # Compilation
+  compile(
+    optimizer = "adam",
+    loss = "mse",
+    metrics = list("mean_absolute_error")
+  )
+```
+
+## Early stopping
+
+```{r}
+set.seed(1337)
+model_keras_hist2 <- model_keras  %>% fit(x = x_train, 
+                                         y = y_train, 
+                                         epochs = 100, # How often shall we re-run the model on the whole sample
+                                         batch_size = 100, # How many observations should be included in every batch
+                                         validation_split = 0.25, # If we want to do a  cross-validation in the training
+                                         callbacks = list(callback_tensorboard("logs/run_a"),
+                                                          callback_early_stopping(patience = 5))
+                                         )
+```
+
+```{r}
+tensorboard(latest_run())  
+```
+--->
