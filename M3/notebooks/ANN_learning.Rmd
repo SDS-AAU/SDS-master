@@ -50,8 +50,6 @@ In this session, you will:
 
 ## Tensors
 
-
-
 * Most current DL frameworks use **tensors** as their basic data structure. 
 * Tensors are fundamental to the field-so fundamental that Google's **TensorFlow** was named after them. So what's a tensor?
 * Tensors are a generalization of vectors and matrices to an arbitrary number of dimensions (note that in the context of tensors, a dimension is often called an axis). * A tensor is defined by three key attributes:
@@ -66,3 +64,70 @@ In this session, you will:
 * **Scalars (0D tensors):**  A tensor that contains only one number is called a scalar (or scalar tensor, or zero-dimensional tensor, or 0D tensor). 
 * **Vectors (1D tensors):** A one-dimensional array of numbers is called a vector, or 1D tensor. A 1D tensor is said to have exactly one axis. 
 * **Matrices (2D tensors):** A two-dimensional array of numbers is a matrix.
+* **Arrays (3D and higher-dimensional tensors):** If you pack such matrices in a new array, you obtain a 3D tensor. If you stack these arrays into another one, then you get a 4d tensor, and so forth...
+
+## Tensor examples 2d
+
+```{r}
+dataset_mnist()$train$x[5,7:28,8:20]
+```
+
+## Higher-dimensional tensors
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/DL_tensor_3d.jpg){.img}
+</center>
+
+* Tensors of 3+d are used for many advanced applications, eg. timeseries, language and image processing.
+For example, in the case before, we where working with 3d tensors, where the first two where a (greyscale pixel) matrix, and the third the different observations (samples) stacked on each others. 
+* However, this greyscale raster matrix is somewhat a special case. Images typically have three dimensions: height, width, and color. Therefore, a 2d image would therefore still represent a 3d tensor, and a bunch of them together a 4d tensor. For example, a batch of 128 RGB-color images could be stored in a 4d tensor of shape `(128, 256, 256, 3)`
+* 3d tensors are also often used for time series. Whenever time matters in your data (or the notion of sequence order), it makes sense to store it in a 3D tensor with an explicit time axis. Each sample can be encoded as a sequence of vectors (a 2D tensor), and thus a batch of data will be encoded as a 3D tensor.
+
+----
+
+<center>
+![](hhttps://sds-aau.github.io/SDS-master/00_media/DL_tensor_4d.jpg){.img}
+</center>
+
+![](https://sds-aau.github.io/SDS-master/00_media/DL_vector_1.jpg){.img}
+
+* You might already see it coming.... colored videoes represent a time series of images, therefore would be a 5d tensor. 
+* Videos can be seen as series of frames, where each frame can be stored in a 3D tensor `(height, width, color_depth)`,  their sequence in a 4D tensor `(frames, height, width, color_depth)`, and thus a batch of different videos  in a 5D tensor of shape `(samples, frames, height, width, color_depth)`.
+
+## Geometric interpretation of tensor operations
+
+
+![](https://sds-aau.github.io/SDS-master/00_media/DL_vector_2.jpg){.img}
+
+* Because the contents of the tensors manipulated by tensor operations can be interpreted as coordinates of points in some geometric space, all tensor operations have a geometric interpretation. For instance, let's consider addition. 
+   * We'll start with the following vector: `A = [0.5, 1.0]`. It's a point in a 2D space, but can also be under stood as a vector leading from the origin to this point.
+   * Let's consider a new point, `B = [1, 0.25]`, which we will add to the previous one. This is done geometrically by chaining together the vector arrows, with the resulting location being the vector representing the sum of the previous two vectors
+
+---- 
+
+![](https://sds-aau.github.io/SDS-master/00_media/DL_linear_algebra.jpg){img.}
+
+* In general, elementary geometric operations such as transformations, rotations, scaling, and so on can be expressed as tensor operations. For instance, a rotation of a 2D vector by an angle `theta` can be achieved via a dot product with a 2x2 matrix `R = [u, v]`, where `u` and `v` are both vectors of the plane: `u = [cos(theta), sin(theta)]` and `v = [-sin(theta), cos(theta)]`.
+* Some linear, vector and matrix algebra knowledge might light up again in your brain, right? Good! While for many out-of-the box "run-this-model" operations on tabular data, you might not need it, it will be necessary in case you need to tinker and customize a bit at your models to squeeze out a bit more accuracy. 
+
+
+
+# Building blocks of networks
+
+## Layers: the building blocks of deep learning
+
+![](https://sds-aau.github.io/SDS-master/dl_layer_illu.png){img.}
+
+
+* A layer is a data-processing module that takes as input one or more tensors and that outputs one or more tensors. 
+* Some layers are stateless, but more frequently layers have a state: the layer's weights, one or several tensors learned with stochastic gradient descent, which together contain the network's knowledge.
+
+Different layers are appropriate for different tensor formats and different types of data processing. For instance, simple vector data, stored in 2D tensors of shape `(samples, features)`, is often processed by **densely connected layers**, also called fully connected or dense layers (the `layer_dense` function in Keras). Sequence data, stored in 3D tensors of shape (samples, timesteps, features), is typically processed by recurrent layers such as `layer_lstm`. Image data, stored in 4D tensors, is usually processed by 2D convolution layers (`layer_conv_2d`). All that will be introduced in later sessions.
+
+You can think of layers as the LEGO bricks of deep learning, a metaphor that is made explicit by frameworks like `Keras`. Building deep-learning models in Keras is done by clipping together compatible layers to form useful data-transformation pipelines. The notion of layer compatibility here refers specifically to the fact that every layer will only accept input tensors of a certain shape and will return output tensors of a certain shape. Consider the following example:
+
+
+
+
+
+
