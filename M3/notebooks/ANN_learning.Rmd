@@ -69,7 +69,7 @@ In this session, you will:
 ## Tensor examples 2d
 
 ```{r}
-dataset_mnist()$train$x[5,7:28,8:20]
+keras::dataset_mnist()$train$x[5,7:28,8:20]
 ```
 
 ## Higher-dimensional tensors
@@ -86,8 +86,9 @@ For example, in the case before, we where working with 3d tensors, where the fir
 ----
 
 <center>
-![](hhttps://sds-aau.github.io/SDS-master/00_media/DL_tensor_4d.jpg){.img}
+![](https://sds-aau.github.io/SDS-master/00_media/DL_tensor_4d.jpg){.img}
 </center>
+
 
 ![](https://sds-aau.github.io/SDS-master/00_media/DL_vector_1.jpg){.img}
 
@@ -116,18 +117,37 @@ For example, in the case before, we where working with 3d tensors, where the fir
 
 ## Layers: the building blocks of deep learning
 
-![](https://sds-aau.github.io/SDS-master/dl_layer_illu.png){img.}
-
-
 * A layer is a data-processing module that takes as input one or more tensors and that outputs one or more tensors. 
 * Some layers are stateless, but more frequently layers have a state: the layer's weights, one or several tensors learned with stochastic gradient descent, which together contain the network's knowledge.
+* Different layers are appropriate for different tensor formats and different types of data processing. For instance, simple vector data, stored in 2D tensors of shape `(samples, features)`, is often processed by **densely connected layers**, also called fully connected or dense layers (the `layer_dense` function in Keras). * Sequence data, stored in 3D tensors of shape (samples, timesteps, features), is typically processed by recurrent layers such as `layer_lstm`. Image data, stored in 4D tensors, is usually processed by 2D convolution layers (`layer_conv_2d`). All that will be introduced in later sessions.
 
-Different layers are appropriate for different tensor formats and different types of data processing. For instance, simple vector data, stored in 2D tensors of shape `(samples, features)`, is often processed by **densely connected layers**, also called fully connected or dense layers (the `layer_dense` function in Keras). Sequence data, stored in 3D tensors of shape (samples, timesteps, features), is typically processed by recurrent layers such as `layer_lstm`. Image data, stored in 4D tensors, is usually processed by 2D convolution layers (`layer_conv_2d`). All that will be introduced in later sessions.
+----
 
-You can think of layers as the LEGO bricks of deep learning, a metaphor that is made explicit by frameworks like `Keras`. Building deep-learning models in Keras is done by clipping together compatible layers to form useful data-transformation pipelines. The notion of layer compatibility here refers specifically to the fact that every layer will only accept input tensors of a certain shape and will return output tensors of a certain shape. Consider the following example:
+![](https://sds-aau.github.io/SDS-master/dl_layer_illu.png){.img}
+
+* You can think of layers as the LEGO bricks of deep learning, a metaphor that is made explicit by frameworks like `Keras`. 
+* Building deep-learning models in Keras is done by clipping together compatible layers to form useful data-transformation pipelines. 
+* The notion of layer compatibility here refers specifically to the fact that every layer will only accept input tensors of a certain shape and will return output tensors of a certain shape. Consider the example above.
 
 
 
+## Activation functions
 
+* Lets take first a step back. Every cell gets `inputs` from the connected other cells on lower layers which are activated, where the intensity of the input is scaled by the weight of the connection. 
+* If the cell gets activated on its own is determined by its **activation function**, a mathematical transformation of its inputs, where the cell (usually) activates above a certain threshhold. This can be done in different ways, eg, a **rectified linear unit** (ReLU) or a **sigmoid**, which we already know from logistic regression models. 
+
+
+---- 
+
+* Back to our network: Here, each neural layer from our first network example transforms its input data as follows:
+
+`output = relu(dot(W, input) + b)`
+
+* In this expression, `W` and `b` are tensors that are attributes of the layer. 
+* They're called the weights or trainable parameters of the layer (the kernel and bias attributes, respectively). 
+* These weights contain the information learned by the network from exposure to training data. 
+* The activation of every cell in the layer is therefore dependent on the multiplication of 
+   1. the corresponding input and weight tensor (`dot(W, input)`)
+   2. the bias (`b`), a constant which influences the tendency to activate.
 
 

@@ -3127,7 +3127,7 @@ slide:not(.current) .plotly.html-widget{
       <h1 data-config-title><!-- populated from slide_config.json --></h1>
       
       <p data-config-presenter><!-- populated from slide_config.json --></p>
-            <p style="margin-top: 6px; margin-left: -2px;">Updated November 16, 2020</p>
+            <p style="margin-top: 6px; margin-left: -2px;">Updated November 17, 2020</p>
           </hgroup>
   </slide>
 
@@ -3155,32 +3155,128 @@ slide:not(.current) .plotly.html-widget{
 
 </article></slide><slide class=""><hgroup><h2>Tensors</h2></hgroup><article  id="tensors">
 
-<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/dl_tensors_funny.jpg' title=''/>
-
 <ul>
 <li>Most current DL frameworks use <strong>tensors</strong> as their basic data structure.</li>
 <li>Tensors are fundamental to the field-so fundamental that Google’s <strong>TensorFlow</strong> was named after them. So what’s a tensor?</li>
-<li>Tensors are a generalization of vectors and matrices to an arbitrary number of dimensions (note that in the context of tensors, a dimension is often called an axis).</li>
-</ul>
-
-</article></slide><slide class=""><hgroup><h2>Key tensor-attributes</h2></hgroup><article  id="key-tensor-attributes">
-
-<p>A tensor is defined by three key attributes:</p>
+<li>Tensors are a generalization of vectors and matrices to an arbitrary number of dimensions (note that in the context of tensors, a dimension is often called an axis). * A tensor is defined by three key attributes:
 
 <ol>
 <li><strong>Number of axes</strong> (rank): For instance, a 3D tensor has three axes, and a matrix has two axes.</li>
 <li><strong>Shape:</strong> This is an integer vector that describes how many dimensions the tensor has along each axis.</li>
 <li><strong>Data type:</strong> This is the type of the data contained in the tensor; for instance, a tensor’s type could be integer or double. On rare occasions, you may see a character tensor.</li>
-</ol>
+</ol></li>
+</ul>
 
 </article></slide><slide class=""><hgroup><h2>Tensors and dimensionality</h2></hgroup><article  id="tensors-and-dimensionality">
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/dl_tensors_funny.jpg' title=''/>
 
 <ul>
 <li><strong>Scalars (0D tensors):</strong> A tensor that contains only one number is called a scalar (or scalar tensor, or zero-dimensional tensor, or 0D tensor).</li>
 <li><strong>Vectors (1D tensors):</strong> A one-dimensional array of numbers is called a vector, or 1D tensor. A 1D tensor is said to have exactly one axis.</li>
+<li><strong>Matrices (2D tensors):</strong> A two-dimensional array of numbers is a matrix.</li>
+<li><strong>Arrays (3D and higher-dimensional tensors):</strong> If you pack such matrices in a new array, you obtain a 3D tensor. If you stack these arrays into another one, then you get a 4d tensor, and so forth…</li>
 </ul>
 
-<pre >FALSE [1] 12  3  6 14 10</pre></article></slide>
+</article></slide><slide class=""><hgroup><h2>Tensor examples 2d</h2></hgroup><article  id="tensor-examples-2d">
+
+</article></slide><slide class=""><hgroup><h2>Higher-dimensional tensors</h2></hgroup><article  id="higher-dimensional-tensors">
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_tensor_3d.jpg' title=''/>
+
+</center>
+
+<ul>
+<li>Tensors of 3+d are used for many advanced applications, eg. timeseries, language and image processing. For example, in the case before, we where working with 3d tensors, where the first two where a (greyscale pixel) matrix, and the third the different observations (samples) stacked on each others.</li>
+<li>However, this greyscale raster matrix is somewhat a special case. Images typically have three dimensions: height, width, and color. Therefore, a 2d image would therefore still represent a 3d tensor, and a bunch of them together a 4d tensor. For example, a batch of 128 RGB-color images could be stored in a 4d tensor of shape <code>(128, 256, 256, 3)</code></li>
+<li>3d tensors are also often used for time series. Whenever time matters in your data (or the notion of sequence order), it makes sense to store it in a 3D tensor with an explicit time axis. Each sample can be encoded as a sequence of vectors (a 2D tensor), and thus a batch of data will be encoded as a 3D tensor.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_tensor_4d.jpg' title=''/>
+
+</center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_vector_1.jpg' title=''/>
+
+<ul>
+<li>You might already see it coming…. colored videoes represent a time series of images, therefore would be a 5d tensor.</li>
+<li>Videos can be seen as series of frames, where each frame can be stored in a 3D tensor <code>(height, width, color_depth)</code>, their sequence in a 4D tensor <code>(frames, height, width, color_depth)</code>, and thus a batch of different videos in a 5D tensor of shape <code>(samples, frames, height, width, color_depth)</code>.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Geometric interpretation of tensor operations</h2></hgroup><article  id="geometric-interpretation-of-tensor-operations">
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_vector_2.jpg' title=''/>
+
+<ul>
+<li>Because the contents of the tensors manipulated by tensor operations can be interpreted as coordinates of points in some geometric space, all tensor operations have a geometric interpretation. For instance, let’s consider addition.
+
+<ul>
+<li>We’ll start with the following vector: <code>A = [0.5, 1.0]</code>. It’s a point in a 2D space, but can also be under stood as a vector leading from the origin to this point.</li>
+<li>Let’s consider a new point, <code>B = [1, 0.25]</code>, which we will add to the previous one. This is done geometrically by chaining together the vector arrows, with the resulting location being the vector representing the sum of the previous two vectors</li>
+</ul></li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<p><img src='https://sds-aau.github.io/SDS-master/00_media/DL_linear_algebra.jpg' title=''/>{img.}</p>
+
+<ul>
+<li>In general, elementary geometric operations such as transformations, rotations, scaling, and so on can be expressed as tensor operations. For instance, a rotation of a 2D vector by an angle <code>theta</code> can be achieved via a dot product with a 2x2 matrix <code>R = [u, v]</code>, where <code>u</code> and <code>v</code> are both vectors of the plane: <code>u = [cos(theta), sin(theta)]</code> and <code>v = [-sin(theta), cos(theta)]</code>.</li>
+<li>Some linear, vector and matrix algebra knowledge might light up again in your brain, right? Good! While for many out-of-the box &ldquo;run-this-model&rdquo; operations on tabular data, you might not need it, it will be necessary in case you need to tinker and customize a bit at your models to squeeze out a bit more accuracy.</li>
+</ul>
+
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Building blocks of networks</h2></hgroup><article  id="building-blocks-of-networks">
+
+</article></slide><slide class=""><hgroup><h2>Layers: the building blocks of deep learning</h2></hgroup><article  id="layers-the-building-blocks-of-deep-learning">
+
+<ul>
+<li>A layer is a data-processing module that takes as input one or more tensors and that outputs one or more tensors.</li>
+<li>Some layers are stateless, but more frequently layers have a state: the layer’s weights, one or several tensors learned with stochastic gradient descent, which together contain the network’s knowledge.</li>
+<li>Different layers are appropriate for different tensor formats and different types of data processing. For instance, simple vector data, stored in 2D tensors of shape <code>(samples, features)</code>, is often processed by <strong>densely connected layers</strong>, also called fully connected or dense layers (the <code>layer_dense</code> function in Keras). * Sequence data, stored in 3D tensors of shape (samples, timesteps, features), is typically processed by recurrent layers such as <code>layer_lstm</code>. Image data, stored in 4D tensors, is usually processed by 2D convolution layers (<code>layer_conv_2d</code>). All that will be introduced in later sessions.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/dl_layer_illu.png' title=''/>
+
+<ul>
+<li>You can think of layers as the LEGO bricks of deep learning, a metaphor that is made explicit by frameworks like <code>Keras</code>.</li>
+<li>Building deep-learning models in Keras is done by clipping together compatible layers to form useful data-transformation pipelines.</li>
+<li>The notion of layer compatibility here refers specifically to the fact that every layer will only accept input tensors of a certain shape and will return output tensors of a certain shape. Consider the example above.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2>Activation functions</h2></hgroup><article  id="activation-functions">
+
+<ul>
+<li>Lets take first a step back. Every cell gets <code>inputs</code> from the connected other cells on lower layers which are activated, where the intensity of the input is scaled by the weight of the connection.</li>
+<li>If the cell gets activated on its own is determined by its <strong>activation function</strong>, a mathematical transformation of its inputs, where the cell (usually) activates above a certain threshhold. This can be done in different ways, eg, a <strong>rectified linear unit</strong> (ReLU) or a <strong>sigmoid</strong>, which we already know from logistic regression models.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
+
+<ul>
+<li>Back to our network: Here, each neural layer from our first network example transforms its input data as follows:</li>
+</ul>
+
+<p><code>output = relu(dot(W, input) + b)</code></p>
+
+<ul>
+<li>In this expression, <code>W</code> and <code>b</code> are tensors that are attributes of the layer.</li>
+<li>They’re called the weights or trainable parameters of the layer (the kernel and bias attributes, respectively).</li>
+<li>These weights contain the information learned by the network from exposure to training data.</li>
+<li>The activation of every cell in the layer is therefore dependent on the multiplication of
+
+<ol>
+<li>the corresponding input and weight tensor (<code>dot(W, input)</code>)</li>
+<li>the bias (<code>b</code>), a constant which influences the tendency to activate.</li>
+</ol></li>
+</ul></article></slide>
 
 
   <slide class="backdrop"></slide>
