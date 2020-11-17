@@ -315,7 +315,7 @@ tensorboard("logs/run_a")
 set.seed(1337)
 hist_drop_stop <- model_dropout  %>% fit(x = x_train, 
                                          y = y_train, 
-                                         epochs = 100, # How often shall we re-run the model on the whole sample
+                                         epochs = 500, # How often shall we re-run the model on the whole sample
                                          batch_size = 128, # How many observations should be included in every batch
                                          validation_split = 0.25, # If we want to do a  cross-validation in the training
                                          callbacks = list(
