@@ -4,7 +4,8 @@
 
 ## Part I: Introduction to Artificial Neural Networks & Deep Learning
 
-* Theory: Introduction to Artificial Neural Networks (ANNs) & Deep Learning (DL): [Video](https://www.loom.com/share/418cea49ec694fe4b42e99088bfdbb84) [Slides](https://sds-aau.github.io/SDS-master/M3/notebooks/ANN_intro.html) 
+* Theory 1: Introduction to Artificial Neural Networks (ANNs) & Deep Learning (DL): [Video](https://www.loom.com/share/418cea49ec694fe4b42e99088bfdbb84) [Slides](https://sds-aau.github.io/SDS-master/M3/notebooks/ANN_intro.html) 
+* Theory 2: Architecture and learning of ANNs): [Video commin soon](xxxxxxx) [Slides](https://sds-aau.github.io/SDS-master/M3/notebooks/ANN_learning.html) 
 
 ## Simple feed-forward networks (ANNs)
 * Application: Python multiclass with Penguins [Video](https://www.loom.com/share/cab10cb936294618a43fce5e8e30a51c) [Colab](https://nbviewer.jupyter.org/github/SDS-AAU/SDS-master/blob/master/M3/notebooks/M3_ANN_Python_Intro.ipynb)
