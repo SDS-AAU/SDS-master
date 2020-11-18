@@ -114,7 +114,7 @@ In this session, we will will:
 ----
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/DL_vector_1.jpg){.img_tiny}
+![](https://sds-aau.github.io/SDS-master/00_media/DL_vector_2.jpg){.img_tiny}
 </center>
 
 * Let's consider a new point, `B = [1, 0.25]`, which we will add to the previous one. This is done geometrically by chaining together the vector arrows, with the resulting location being the vector representing the sum of the previous two vectors
