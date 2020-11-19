@@ -131,25 +131,26 @@ model %>% compile(optimizer = 'adam',
  
 ```{r}
 # train the model on the new data for a few epochs
-model %>% fit_generator(...)
+model %>% fit_generator(
+  train_image_array_gen,
+  steps_per_epoch = 800,
+  epochs = 2, 
+  verbose = FALSE,
+  )
 ```
 
- 
+* at this point, the top layers are well trained and we can start fine-tuning convolutional layers. 
+* We will freeze the bottom N layers nd train the remaining top layers. 
+
 ```{r}
-# at this point, the top layers are well trained and we can start fine-tuning
-# convolutional layers from inception V3. We will freeze the bottom N layers
-# and train the remaining top layers.
- 
-# let's visualize layer names and layer indices to see how many layers
-# we should freeze:
+# let's visualize layer names and layer indices to see how many layers we should freeze:
 layers <- base_model$layers
 for (i in 1:length(layers))
   cat(i, layers[[i]]$name, "\n")
 ```
 
 ```{r}
-# we chose to train the top 2 inception blocks, i.e. we will freeze
-# the first 172 layers and unfreeze the rest:
+# we chose to train the top 2 inblocks, i.e. we will freeze the first layers and unfreeze the rest:
 for (i in 1:172)
   layers[[i]]$trainable <- FALSE
 for (i in 173:length(layers))
@@ -158,18 +159,30 @@ for (i in 173:length(layers))
  
 ```{r}
 # we need to recompile the model for these modifications to take effect
-# we use SGD with a low learning rate
-model %>% compile(
-  optimizer = optimizer_sgd(lr = 0.0001, momentum = 0.9), 
-  loss = 'categorical_crossentropy'
-)
+model %>% compile(optimizer = 'adam', 
+                  loss = 'binary_crossentropy',
+                  metric = 'accuracy')
 ```
 
 ```{r}
-# we train our model again (this time fine-tuning the top 2 inception blocks
+# we train our model again (this time fine-tuning the top 2  blocks
 # alongside the top Dense layers
-model %>% fit_generator(...)
+# train the model on the new data for a few epochs
+model %>% fit_generator(
+  train_image_array_gen,
+  steps_per_epoch = 800,
+  epochs = 2, 
+  verbose = FALSE,
+  )
 ```
+
+# Evaluation returns loss and accuracy
+
+```{r}
+model %>% evaluate_generator(test_image_array_gen, steps=500)
+```
+
+
  
 
  
