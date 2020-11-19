@@ -1,0 +1,44 @@
+---
+title: 'Neural Networks Application: Transfer learning with CNNs (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+
+```{r}
+library(tidyverse)
+library(magrittr)
+
+library(keras)
+```
+
+# Using large pretrained models as your foundation
+
+* This notebook is based on https://www.learnopencv.com/keras-tutorial-fine-tuning-using-pre-trained-models/
+* Training large CNNs is costly (compute, time) and often we don't have enough data to bring these models to reasonable performance levels. This is where transfer-learning comes in.
+* Assuming that the early layers of a CNN learn very basic features (edges, lines etc.) we can consider a strategy, where we take a large pretrained model, discard the last couple of layers (where we would assume the more abstract information) and train it with our new data.
+* This is how you, for instance, could fine-tune a CNN model to some very specific medical imaging data where you simply cannot have so many examples.

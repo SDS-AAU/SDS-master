@@ -279,7 +279,7 @@ model %>% compile(
 
 ## Train the network
 
-# And now we can train the network
+* And now we can train the network
 
 ```{r}
 set.seed(1337)
