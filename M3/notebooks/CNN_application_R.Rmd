@@ -88,7 +88,7 @@ Now think, you are a computer and need to classify that. :-O
 I first define a few other parameters in the beginning to make adapting as easy as possible.
 
 ```{r}
-# list of fruits to modle
+# list of outcome classes
 class_list <- c('cats', 'dogs')
 
 # number of output classes (i.e. fruits)

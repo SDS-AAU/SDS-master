@@ -32,7 +32,6 @@ knitr::opts_chunk$set(warning=FALSE,
 ```{r}
 library(tidyverse)
 library(magrittr)
-
 library(keras)
 ```
 
@@ -42,3 +41,118 @@ library(keras)
 * Training large CNNs is costly (compute, time) and often we don't have enough data to bring these models to reasonable performance levels. This is where transfer-learning comes in.
 * Assuming that the early layers of a CNN learn very basic features (edges, lines etc.) we can consider a strategy, where we take a large pretrained model, discard the last couple of layers (where we would assume the more abstract information) and train it with our new data.
 * This is how you, for instance, could fine-tune a CNN model to some very specific medical imaging data where you simply cannot have so many examples.
+
+# Load the data
+
+It's the same cats&dog data...
+
+```{r}
+# Let's start by downloading and exploring the data
+temp <- tempfile()
+download.file('https://storage.googleapis.com/sds-file-transfer/dataset.zip',temp)
+unzip(temp)
+unlink(temp)
+```
+
+# Preprocessing
+
+Same as in the former notebook
+
+```{r}
+# list of outcome classes
+class_list <- c('cats', 'dogs')
+
+# number of output classes (i.e. fruits)
+output_n <- length(class_list)
+
+# image size to scale down to (original images are 100 x 100 px)
+img_width <- 64
+img_height <- 64
+target_size <- c(img_width, img_height)
+
+# RGB = 3 channels
+channels <- 3
+
+# path to image folders
+train_files_path <- 'dataset/training_set'
+test_iles_path <- 'dataset/test_set'
+```
+
+
+
+
+
+## Image augmentation
+
+Another thing that we also will do is "image augmentation". 
+
+> Image Augmentations techniques are methods of artificially increasing the variations of images in our data-set by using horizontal/vertical flips, rotations, variations in brightness of images, horizontal/vertical shifts etc.
+
+You can read more on that and in general about generators [here](https://medium.com/@arindambaidya168/https-medium-com-arindambaidya168-using-keras-imagedatagenerator-b94a87cdefad).
+
+![](https://cdn-images-1.medium.com/max/1600/1*rZRYWg0ve6bZv2-ctEtVXg.png)
+
+![](https://cdn-images-1.medium.com/max/1600/1*0aMp3TW3rxCUL1JFmeJj9Q.png)
+* The handy `image_data_generator()` and `flow_images_from_directory()` functions can be used to load images from a directory. 
+* If you want to use data augmentation, you can directly define how and in what way you want to augment your images
+
+```{r}
+# optional data augmentation
+train_data_gen = image_data_generator(
+  rescale = 1/255, #,
+  shear_range = 0.2,
+  zoom_range = 0.2,
+  horizontal_flip = TRUE,
+  #fill_mode = "nearest",
+  #rotation_range = 40,
+  #width_shift_range = 0.2,
+  #height_shift_range = 0.2
+)
+
+# Validation data shouldn't be augmented! But it should also be scaled.
+test_data_gen <- image_data_generator(
+  rescale = 1/255
+  )  
+```
+
+Now we load the images into memory and resize them.
+
+```{r}
+# training images
+train_image_array_gen <- flow_images_from_directory(train_files_path, 
+                                          train_data_gen,
+                                          target_size = target_size,
+                                          class_mode = "binary",
+                                          classes = class_list,
+                                          batch_size = 32,
+                                          seed = 1337)
+
+# validation images
+test_image_array_gen <- flow_images_from_directory(test_files_path, 
+                                          test_data_gen,
+                                          target_size = target_size,
+                                          class_mode = "binary",
+                                          classes = class_list,
+                                          batch_size = 32,
+                                          seed = 1337)
+```
+
+# Loading pretrained model
+
+Keras has some great built-in applications - basically pretrained models with some nice functional overhead. We will start by loadeing VGG16 (a rather large model with many many many layers that has been trained on imagenet)
+
+
+application_vgg16(
+  include_top = TRUE,
+  weights = "imagenet",
+  input_tensor = NULL,
+  input_shape = NULL,
+  pooling = NULL,
+  classes = 1000
+)
+
+```{r}
+VGG16(weights='imagenet', include_top=False, input_shape=(image_size, image_size, 3))
+```
+
+
