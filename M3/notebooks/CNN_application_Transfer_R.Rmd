@@ -151,9 +151,9 @@ for (i in 1:length(layers))
 
 ```{r}
 # we chose to train the top 2 inblocks, i.e. we will freeze the first layers and unfreeze the rest:
-for (i in 1:172)
+for (i in 1:18)
   layers[[i]]$trainable <- FALSE
-for (i in 173:length(layers))
+for (i in 19:length(layers))
   layers[[i]]$trainable <- TRUE
 ```
  
