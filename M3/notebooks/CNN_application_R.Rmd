@@ -337,6 +337,13 @@ library(magick) # For reading and working with images
 image_read('dataset/single_prediction/cat_or_dog_1.jpg') %>% as.raster() %>% plot()
 ```
 
+Ok, now we can delete all the images again...
+
+```{r}
+# unlink("dataset", recursive = TRUE)
+```
+
+
 # Your turn:
 
 ![alt text](https://cdn-images-1.medium.com/max/2000/1*zlkcoZ6TfAnnv78eOlLnpw.jpeg)
@@ -344,6 +351,22 @@ image_read('dataset/single_prediction/cat_or_dog_1.jpg') %>% as.raster() %>% plo
 [Build a hotdog-not-hotdog classifier](https://www.kaggle.com/dansbecker/hot-dog-not-hot-dog)
 
 You can get the data here: https://storage.googleapis.com/sds-file-transfer/hot-dog-not-hot-dog.zip a bit faster...
+
+
+# Endnotes
+
+### References
+
+### More info
+You can find more info about:
+
+* `keras` [here](https://keras.rstudio.com/)
+
+### Session info
+
+```{r}
+sessionInfo()
+```
 
 
 
