@@ -1,0 +1,77 @@
+---
+title: 'Neural Networks Application: Convolutional Neural Networks for Image data (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+
+```{r}
+library(tidyverse)
+library(magrittr)
+
+library(keras)
+```
+
+# On Cats, Dogs and Hotdogs
+
+## Intro to Convolutional Neural Networks and Computer Vision
+
+In this notebook you will learn about the different building blocks that form a convolutional neural net as well as how we can build one using Keras. CNNs are the kind of neural networks that really require computational resources and therefore, you should consider using Colab/Kaggle with GPU (or TPU support if you can figure it out) support to run that. If you run it on your own computer without a GPU things will take a lot of time...like a lot!
+
+### Building a cats and dogs classifier
+
+```{r}
+# Let's start by downloading and exploring the data
+temp <- tempfile()
+download.file('https://storage.googleapis.com/sds-file-transfer/dataset.zip',temp)
+unzip(temp)
+unlink(temp)
+```
+
+```{r}
+list.files(path = "dataset", include.dirs = TRUE) 
+```
+
+```{r}
+list.files(path = "dataset/single_prediction") %>% head()
+```
+
+The data is actually a folder with 3 folders inside it. A *training_set*, a *test_set* and another one for try-outs
+
+In each the training and test_set folders we have 2 folders again. One for cats and one for dogs.
+
+```{r}
+list.files(path = "dataset/training_set/cats") %>% head()
+list.files(path = "dataset/training_set/dogs") %>% head()
+```
+
+Here some examples:
+
+![](https://source.unsplash.com/7AIDE8PrvA0/200x300)
+![](https://source.unsplash.com/h7VBJRBcieM/200x300)
+
+Now think, you are a computer and need to classify that. :-O
