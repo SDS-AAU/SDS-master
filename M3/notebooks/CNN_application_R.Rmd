@@ -282,13 +282,15 @@ model %>% compile(
 # And now we can train the network
 
 ```{r}
+set.seed(1337)
 # And now we can train the network
 hist <- model %>% fit_generator(
   train_image_array_gen,
   steps_per_epoch = 800,
   epochs = 2, 
   validation_data = test_image_array_gen,
-  validation_steps = 100
+  validation_steps = 100,
+  verbose = FALSE,
   )
 ```
 
@@ -300,6 +302,48 @@ hist %>% plot()
 ```{r}
 model %>% evaluate_generator(test_image_array_gen, steps = 500)
 ```
+
+# Try out predicting new images
+
+* Here we have two tryout images...
+
+```{r}
+list.files(path = "dataset/single_prediction") 
+```
+
+```{r}
+img <- image_load('dataset/single_prediction/cat_or_dog_1.jpg', target_size = target_size)
+```
+
+
+```{r}
+img %<>%
+  image_to_array() %>% 
+  array_reshape(c(1, dim(.)))
+```
+
+```{r}
+res <- predict(model, img)
+```
+
+```{r}
+ifelse(res == 0, 'cat', 'dog')
+```
+
+Lets plot the image and see if we where right
+
+```{r}
+library(magick) # For reading and working with images
+image_read('dataset/single_prediction/cat_or_dog_1.jpg') %>% as.raster() %>% plot()
+```
+
+# Your turn:
+
+![alt text](https://cdn-images-1.medium.com/max/2000/1*zlkcoZ6TfAnnv78eOlLnpw.jpeg)
+
+[Build a hotdog-not-hotdog classifier](https://www.kaggle.com/dansbecker/hot-dog-not-hot-dog)
+
+You can get the data here: https://storage.googleapis.com/sds-file-transfer/hot-dog-not-hot-dog.zip a bit faster...
 
 
 
