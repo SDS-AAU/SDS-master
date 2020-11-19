@@ -182,6 +182,11 @@ model %>% fit_generator(
 model %>% evaluate_generator(test_image_array_gen, steps=500)
 ```
 
+Ok, now we can delete all the images again...
+
+```{r}
+# unlink("dataset", recursive = TRUE)
+```
 
  
 
