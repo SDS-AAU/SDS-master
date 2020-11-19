@@ -67,19 +67,39 @@ target_size <- c(img_width, img_height)
 channels <- 3
 train_files_path <- 'dataset/training_set'
 test_files_path <- 'dataset/test_set'
+batch_size <- 32
 ```
+
+```{r}
+# how much data?
+train_size <- c(list.files(path = 'dataset/training_set/cats'), list.files(path = 'dataset/training_set/dogs')) %>% length()
+test_size <- c(list.files(path = 'dataset/test_set/cats'), list.files(path = 'dataset/test_set/dogs')) %>% length()
+```
+
 
 ```{r}
 train_data_gen = image_data_generator(rescale = 1/255, shear_range = 0.2, zoom_range = 0.2, horizontal_flip = TRUE)
 test_data_gen <- image_data_generator(rescale = 1/255)  
 ```
 
-```{r}
-train_image_array_gen <- flow_images_from_directory(train_files_path, train_data_gen, target_size = target_size, class_mode = "binary", 
-                                                    classes = class_list,batch_size = 32, seed = 1337)
 
-test_image_array_gen <- flow_images_from_directory(test_files_path, test_data_gen, target_size = target_size, class_mode = "binary",
-                                          classes = class_list, batch_size = 32, seed = 1337)
+```{r}
+train_image_array_gen <- flow_images_from_directory(
+  train_files_path, 
+  train_data_gen, 
+  target_size = target_size, 
+  class_mode = "binary",  
+  classes = class_list,
+  batch_size = batch_size, 
+  seed = 1337)
+
+test_image_array_gen <- flow_images_from_directory(test_files_path, 
+                                                   test_data_gen, 
+                                                   target_size = target_size, 
+                                                   class_mode = "binary", 
+                                                   classes = class_list, 
+                                                   batch_size = batch_size, 
+                                                   seed = 1337)
 ```
 
 # Loading pretrained model
@@ -101,9 +121,11 @@ base_model <- application_vgg16(
 
 ```{r}
 predictions <- base_model$output %>% 
-  layer_global_average_pooling_2d() %>% 
-  layer_dense(units = 1024, activation = 'relu') %>% 
-  layer_dense(units = 1, activation = 'sigmoid')
+  layer_flatten(trainable = T) %>%
+  layer_dense(1024, activation = 'relu', trainable = T) %>%
+  layer_dropout(0.4, trainable = T) %>%
+  layer_dense(84, activation = 'relu', trainable=T) %>%  
+  layer_dense(units = 1, activation = 'sigmoid', trainable=T)
 ```
 
 
@@ -133,7 +155,7 @@ model %>% compile(optimizer = 'adam',
 # train the model on the new data for a few epochs
 model %>% fit_generator(
   train_image_array_gen,
-  steps_per_epoch = 800,
+  steps_per_epoch = as.integer((train_size / batch_size) ),
   epochs = 2, 
   verbose = FALSE,
   )
@@ -151,9 +173,9 @@ for (i in 1:length(layers))
 
 ```{r}
 # we chose to train the top 2 inblocks, i.e. we will freeze the first layers and unfreeze the rest:
-for (i in 1:18)
+for (i in 1:17)
   layers[[i]]$trainable <- FALSE
-for (i in 19:length(layers))
+for (i in 18:length(layers))
   layers[[i]]$trainable <- TRUE
 ```
  
@@ -168,13 +190,21 @@ model %>% compile(optimizer = 'adam',
 # we train our model again (this time fine-tuning the top 2  blocks
 # alongside the top Dense layers
 # train the model on the new data for a few epochs
-model %>% fit_generator(
+hist <- model %>% fit_generator(
   train_image_array_gen,
-  steps_per_epoch = 800,
-  epochs = 2, 
+  steps_per_epoch = as.integer((train_size / batch_size) ),
+  epochs = 5, 
   verbose = FALSE,
+  validation_data = test_image_array_gen,
+  validation_steps = as.integer((test_size / batch_size) ),
+  verbose = FALSE
   )
 ```
+
+```{r}
+hist %>% plot()
+```
+
 
 # Evaluation returns loss and accuracy
 
