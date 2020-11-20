@@ -352,7 +352,7 @@ terms of other, simpler factors of variation (i.e. edges, corners, contours, obj
 ----
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/DL_gradient_1.jpg){.img}
+![](https://sds-aau.github.io/SDS-master/00_media/DL_gradient_1.jpg){.img_tiny}
 </center>
 
 * For every differentiable function `f(x)`, there exists a derivative function `f'(x)` that maps values of `x` to the slope of the local linear approximation of `f` in those points. 
@@ -555,7 +555,7 @@ where $\epsilon$ is the \underline{learning rate}, a positive scalar determining
 
 ----
 
-* On each step of the algorithm, we can sample a **minibatch** of examples $\mathbb{B} = \{x^{(1)},...,x^{(m')}}$ drawn uniformly from the training set (i.e. small number of examples, a few hundred max)
+* On each step of the algorithm, we can sample a **minibatch** of examples $\mathbb{B} = \{x^{(1)},...,x^{(m')}\}$ drawn uniformly from the training set (i.e. small number of examples, a few hundred max)
 * The estimate of the gradient is formed as:
 
 $g = \frac{1}{m'} \nabla_{\theta} \sum_{i = 1}^{m'} L(x^{(i)}, y^{(i)}, \theta)$
@@ -573,34 +573,30 @@ $\theta \leftarrow  \theta - \epsilon g$
 
 * We can now generalize to a network with more neurons
 * The cost $J(\theta)$ can still be defined as a function of the parameters of the network (many more now)
-
-----
 * The cost for a single training example is defined as:
 
 $J_1 =  \sum_{j = 1}^{n_L} (h_j^{(L)} - y_j)^2$
 
-Note that:
+* Note that:
 
-$z_j^{(L)} = w_{j1}^{(L)} h_{1}^{(L-1)} + w_{j2}^{(L)} h_{2}^{(L-1)} + w_{j3}^{(L)} h_{3}^{(L-1)} + b_{j}^{(L)}$
-
-and 
-
-$h_{j}^{(L)} = g(z_j^{(L)}) $
+$z_j^{(L)} = w_{j1}^{(L)} h_{1}^{(L-1)} + w_{j2}^{(L)} h_{2}^{(L-1)} + w_{j3}^{(L)} h_{3}^{(L-1)} + b_{j}^{(L)}$, and: $h_{j}^{(L)} = g(z_j^{(L)})$
 
 ----
 
 * Again, we can use the chain rule to figure out how sensitive the cost is to variations in a specific weight $w_{jk}$:
 
-$\frac{\partial J_1}{\partial w_{jk}^{(L)}} = \frac{\partial z^{(L)}}{\partial w_{jk}^{(L)}} \cdot \frac{\partial h^{(L)}}{\partial z^{(L)}} \cdot \frac{\partial J_1}{\partial h^{(L)}} $
+$\frac{\partial J_1}{\partial w_{jk}^{(L)}} = \frac{\partial z^{(L)}}{\partial w_{jk}^{(L)}} \cdot \frac{\partial h^{(L)}}{\partial z^{(L)}} \cdot \frac{\partial J_1}{\partial h^{(L)}}$
 
 * We can repeat this process for all weights and biases feeding in a given layer; these partial derivatives determine the component of the gradient
 * What is changing here is the $\frac{\partial J_1}{\partial h^{(L-1)}}$, since neurons influence the cost function through multiple paths. Formally:
 
-$	\frac{\partial J_1}{\partial h_{k}^{(L-1)}} = \sum_{j = 1}^{n_L} \frac{\partial z_{j}^{(L)}}{\partial h_{k}^{(L-1)}} \cdot \frac{\partial h_{j}^{(L)}}{\partial z_{j}^{(L)}} \cdot \frac{\partial J_1}{\partial h_{j}^{(L)}} $
+$\frac{\partial J_1}{\partial h_{k}^{(L-1)}} = \sum_{j = 1}^{n_L} \frac{\partial z_{j}^{(L)}}{\partial h_{k}^{(L-1)}} \cdot \frac{\partial h_{j}^{(L)}}{\partial z_{j}^{(L)}} \cdot \frac{\partial J_1}{\partial h_{j}^{(L)}}$
 
 * Finally, the generic expression to update a weight in the layer $\ell$ can be written as:
 
-$\frac{\partial J_1}{\partial w_{jk}^{(\ell)}} &= h_{k}^{(\ell-1)} \cdot g'(z_{j}^{(\ell)}) \cdot \frac{\partial J_1}{\partial h_{j}^{(\ell)}}$
+$\frac{\partial J_1}{\partial w_{jk}^{(\ell)}}$
+
+$= h_{k}^{(\ell-1)} \cdot g'(z_{j}^{(\ell)}) \cdot \frac{\partial J_1}{\partial h_{j}^{(\ell)}}$
 
 $= h_{k}^{(\ell-1)} \cdot g'(z_{j}^{(\ell)}) \cdot \sum_{j = 1}^{n_{\ell+1}} w_{jk}^{(\ell+1)} \cdot g'(z_{j}^{(\ell+1)}) \cdot \frac{\partial J_1}{\partial h_{j}^{(\ell+1)}}$
 
@@ -613,7 +609,9 @@ $= h_{k}^{(\ell-1)} \cdot g'(z_{j}^{(\ell)}) \cdot \sum_{j = 1}^{n_{\ell+1}} w_{
 * We can consider an additional hidden layer and adjust its weights\footnote{Biases have been omitted from this network}
 * We obtain:
 
-$	\frac{\partial J_1}{\partial w_{11}^{(L-1)}} &= h_{1}^{(L-2)} \cdot g'(z_{1}^{(L-1)}) \cdot \frac{\partial J_1}{\partial h_{1}^{(L-1)}}$
+$\frac{\partial J_1}{\partial w_{11}^{(L-1)}}$ 
+
+$= h_{1}^{(L-2)} \cdot g'(z_{1}^{(L-1)}) \cdot \frac{\partial J_1}{\partial h_{1}^{(L-1)}}$
 
 $= h_{1}^{(L-2)} \cdot g'(z_{1}^{(L-1)}) \cdot \sum_{j = 1}^{n_{L}} w_{j1}^{(L)} \cdot g'(z_{j}^{(L)}) \cdot \frac{\partial J_1}{\partial h_{j}^{(L)}}$
 

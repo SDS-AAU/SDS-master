@@ -3146,7 +3146,7 @@ slide:not(.current) .plotly.html-widget{
 }
 </style>
 
-<slide class=""><hgroup><h2>This session</h2></hgroup><article  class="smaller bigger" id="this-session">
+<slide class=""><hgroup><h2>This session</h2></hgroup><article  id="this-session" class="smaller bigger">
 
 <p>In this session, we will will:</p>
 
@@ -3156,9 +3156,9 @@ slide:not(.current) .plotly.html-widget{
 <li>Get an insights how neural networks learn</li>
 </ol>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Data representations for neural networks</h2></hgroup><article  class="smaller " id="data-representations-for-neural-networks">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Data representations for neural networks</h2></hgroup><article  id="data-representations-for-neural-networks" class="smaller ">
 
-</article></slide><slide class=""><hgroup><h2>Tensors</h2></hgroup><article  class="smaller " id="tensors">
+</article></slide><slide class=""><hgroup><h2>Tensors</h2></hgroup><article  id="tensors" class="smaller ">
 
 <ul>
 <li>Most current DL frameworks use <strong>tensors</strong> as their basic data structure.</li>
@@ -3172,7 +3172,7 @@ slide:not(.current) .plotly.html-widget{
 </ol></li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Tensors and dimensionality</h2></hgroup><article  class="smaller " id="tensors-and-dimensionality">
+</article></slide><slide class=""><hgroup><h2>Tensors and dimensionality</h2></hgroup><article  id="tensors-and-dimensionality" class="smaller ">
 
 <center>
 
@@ -3187,7 +3187,7 @@ slide:not(.current) .plotly.html-widget{
 <li><strong>Arrays (3D and higher-dimensional tensors):</strong> If you pack such matrices in a new array, you obtain a 3D tensor. If you stack these arrays into another one, then you get a 4d tensor, and so forth…</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Higher-dimensional tensors</h2></hgroup><article  class="smaller " id="higher-dimensional-tensors">
+</article></slide><slide class=""><hgroup><h2>Higher-dimensional tensors</h2></hgroup><article  id="higher-dimensional-tensors" class="smaller ">
 
 <center>
 
@@ -3217,7 +3217,7 @@ slide:not(.current) .plotly.html-widget{
 <li>Videos can be seen as series of frames, where each frame can be stored in a 3D tensor <code>(height, width, color_depth)</code>, their sequence in a 4D tensor <code>(frames, height, width, color_depth)</code>, and thus a batch of different videos in a 5D tensor of shape <code>(samples, frames, height, width, color_depth)</code>.</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Geometric interpretation of tensor operations</h2></hgroup><article  class="smaller " id="geometric-interpretation-of-tensor-operations">
+</article></slide><slide class=""><hgroup><h2>Geometric interpretation of tensor operations</h2></hgroup><article  id="geometric-interpretation-of-tensor-operations" class="smaller ">
 
 <center>
 
@@ -3255,9 +3255,9 @@ slide:not(.current) .plotly.html-widget{
 <li>Some linear, vector and matrix algebra knowledge might light up again in your brain, right? Good! While for many out-of-the box &ldquo;run-this-model&rdquo; operations on tabular data, you might not need it, it will be necessary in case you need to tinker and customize a bit at your models to squeeze out a bit more accuracy.</li>
 </ul>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Building blocks of networks</h2></hgroup><article  class="smaller " id="building-blocks-of-networks">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Building blocks of networks</h2></hgroup><article  id="building-blocks-of-networks" class="smaller ">
 
-</article></slide><slide class=""><hgroup><h2>Overview</h2></hgroup><article  class="smaller " id="overview">
+</article></slide><slide class=""><hgroup><h2>Overview</h2></hgroup><article  id="overview" class="smaller ">
 
 <center>
 
@@ -3265,7 +3265,7 @@ slide:not(.current) .plotly.html-widget{
 
 </center>
 
-</article></slide><slide class=""><hgroup><h2>Layers: the building blocks of deep learning</h2></hgroup><article  class="smaller " id="layers-the-building-blocks-of-deep-learning">
+</article></slide><slide class=""><hgroup><h2>Layers: the building blocks of deep learning</h2></hgroup><article  id="layers-the-building-blocks-of-deep-learning" class="smaller ">
 
 <ul>
 <li>A layer is a data-processing module that takes as input one or more tensors and that outputs one or more tensors.</li>
@@ -3288,7 +3288,7 @@ slide:not(.current) .plotly.html-widget{
 <li>The notion of layer compatibility here refers specifically to the fact that every layer will only accept input tensors of a certain shape and will return output tensors of a certain shape. Consider the example above.</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Activation functions</h2></hgroup><article  class="smaller " id="activation-functions">
+</article></slide><slide class=""><hgroup><h2>Activation functions</h2></hgroup><article  id="activation-functions" class="smaller ">
 
 <center>
 
@@ -3351,7 +3351,7 @@ slide:not(.current) .plotly.html-widget{
 
 </center>
 
-</article></slide><slide class=""><hgroup><h2>Output (last layer activation)</h2></hgroup><article  class="smaller " id="output-last-layer-activation">
+</article></slide><slide class=""><hgroup><h2>Output (last layer activation)</h2></hgroup><article  id="output-last-layer-activation" class="smaller ">
 
 <ul>
 <li>The feedforward NN provides a set of hidden features defined by \(h = f(x); \theta)\). The output layer provides some <em>additional transformation</em> from the features to complete the task that the network must perform<br/></li>
@@ -3386,7 +3386,7 @@ slide:not(.current) .plotly.html-widget{
 
 <p>\(\text{softmax}(z)_i = \frac{\text{exp}(z_i)}{\sum_j \text{exp}(z_j)}\)</p>
 
-</article></slide><slide class=""><hgroup><h2>Loss functions</h2></hgroup><article  class="smaller " id="loss-functions">
+</article></slide><slide class=""><hgroup><h2>Loss functions</h2></hgroup><article  id="loss-functions" class="smaller ">
 
 <ul>
 <li>Another important element is the <strong>loss function</strong>, the quantity we want to minimize during the network training.</li>
@@ -3431,7 +3431,7 @@ slide:not(.current) .plotly.html-widget{
 
 </center>
 
-</article></slide><slide class=""><hgroup><h2>Summary</h2></hgroup><article  class="smaller " id="summary">
+</article></slide><slide class=""><hgroup><h2>Summary</h2></hgroup><article  id="summary" class="smaller ">
 
 <center>
 
@@ -3443,7 +3443,7 @@ slide:not(.current) .plotly.html-widget{
 <li>A little helper from my side ;). Works in most cases, at least for feedfoorward ANNs</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Neural Network architecturas design</h2></hgroup><article  class="smaller " id="neural-network-architecturas-design">
+</article></slide><slide class=""><hgroup><h2>Neural Network architecturas design</h2></hgroup><article  id="neural-network-architecturas-design" class="smaller ">
 
 <ul>
 <li><strong>Architecture</strong> refers to the overall structure of the network: how many units it should have and how these units should be connected to each other</li>
@@ -3489,9 +3489,9 @@ slide:not(.current) .plotly.html-widget{
 <li>Empirical results showing that increasing the number of parameters in layers of convolutional neural networks without increasing their depth is not effective for increasing test set performance.</li>
 </ul>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Learning in Neural Networks</h2></hgroup><article  class="smaller " id="learning-in-neural-networks">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Learning in Neural Networks</h2></hgroup><article  id="learning-in-neural-networks" class="smaller ">
 
-</article></slide><slide class=""><hgroup><h2>The learning problem</h2></hgroup><article  class="smaller " id="the-learning-problem">
+</article></slide><slide class=""><hgroup><h2>The learning problem</h2></hgroup><article  id="the-learning-problem" class="smaller ">
 
 <ul>
 <li><p>So, now we know what the <em>deep</em> means, and how such a deep neutwork is structured. However, we still do not know so much about the <em>learning</em>.</p></li>
@@ -3521,7 +3521,7 @@ slide:not(.current) .plotly.html-widget{
 <li>Lets take a step back…</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Refresher What’s a derivative?</h2></hgroup><article  class="smaller " id="refresher-whats-a-derivative">
+</article></slide><slide class=""><hgroup><h2>Refresher What’s a derivative?</h2></hgroup><article  id="refresher-whats-a-derivative" class="smaller ">
 
 <ul>
 <li>Consider a continuous, smooth function <code>f(x) = y</code>, mapping a real number <code>x</code> to a new real number <code>y</code>.</li>
@@ -3545,7 +3545,7 @@ slide:not(.current) .plotly.html-widget{
 
 <center>
 
-<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_gradient_1.jpg' title=''/>
+<img class="img_tiny" src='https://sds-aau.github.io/SDS-master/00_media/DL_gradient_1.jpg' title=''/>
 
 </center>
 
@@ -3557,7 +3557,7 @@ slide:not(.current) .plotly.html-widget{
 <li>Btw: The curvature of <code>f(x)</code> is found in its second derivative, <code>f&#39;&#39;(x)</code>.</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Derivative of a tensor operation: the gradient</h2></hgroup><article  class="smaller " id="derivative-of-a-tensor-operation-the-gradient">
+</article></slide><slide class=""><hgroup><h2>Derivative of a tensor operation: the gradient</h2></hgroup><article  id="derivative-of-a-tensor-operation-the-gradient" class="smaller ">
 
 <ul>
 <li>A <strong>gradient</strong> is the derivative of a tensor operation. Consider an input vector <code>x</code>, a matrix <code>W</code>, a target <code>y</code>, and a loss function <code>loss</code>.</li>
@@ -3574,7 +3574,7 @@ slide:not(.current) .plotly.html-widget{
 </ul></li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Stochastic gradient descent</h2></hgroup><article  class="smaller " id="stochastic-gradient-descent">
+</article></slide><slide class=""><hgroup><h2>Stochastic gradient descent</h2></hgroup><article  id="stochastic-gradient-descent" class="smaller ">
 
 <center>
 
@@ -3632,7 +3632,7 @@ slide:not(.current) .plotly.html-widget{
 <li>There are many different ways to tinker with things like the learning rate and momentum (we call these ways of defining the learning function to find the global optimum <em>optimizer</em>), which influence how efficient the process leads (or not) to a global optimum.</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>The Backpropagation algorithm: Chaining derivatives</h2></hgroup><article  class="smaller " id="the-backpropagation-algorithm-chaining-derivatives">
+</article></slide><slide class=""><hgroup><h2>The Backpropagation algorithm: Chaining derivatives</h2></hgroup><article  id="the-backpropagation-algorithm-chaining-derivatives" class="smaller ">
 
 <ul>
 <li>So, now we are almost there. We know now how to minimize the <code>loss function</code> within a layer.</li>
@@ -3662,9 +3662,9 @@ slide:not(.current) .plotly.html-widget{
 <li>Sounds like a hell to calculate by hand, right? Would be, but dont worry, you will not have to.</li>
 </ul>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Summary: The parts of a deep learning model</h2></hgroup><article  class="smaller " id="summary-the-parts-of-a-deep-learning-model">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Summary: The parts of a deep learning model</h2></hgroup><article  id="summary-the-parts-of-a-deep-learning-model" class="smaller ">
 
-</article></slide><slide class=""><hgroup><h2>Overview</h2></hgroup><article  class="smaller " id="overview-1">
+</article></slide><slide class=""><hgroup><h2>Overview</h2></hgroup><article  id="overview-1" class="smaller ">
 
 <center>
 
@@ -3686,9 +3686,9 @@ slide:not(.current) .plotly.html-widget{
 <li>The optimizer uses this loss value to update the network’s weights.</li>
 </ul>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Appendix: Gradient Descent formulaic</h2></hgroup><article  class="smaller " id="appendix-gradient-descent-formulaic">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Appendix: Gradient Descent formulaic</h2></hgroup><article  id="appendix-gradient-descent-formulaic" class="smaller ">
 
-</article></slide><slide class=""><hgroup><h2>Backpropagation formulaic</h2></hgroup><article  class="smaller " id="backpropagation-formulaic">
+</article></slide><slide class=""><hgroup><h2>Backpropagation formulaic</h2></hgroup><article  id="backpropagation-formulaic" class="smaller ">
 
 <ul>
 <li>Weight matrices are filled with small random values (a step called random initialization)</li>
@@ -3791,7 +3791,7 @@ slide:not(.current) .plotly.html-widget{
 <li>If we had more layers, we will keep repeating this idea by moving back into the network…</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Gradient descent formulaic</h2></hgroup><article  class="smaller " id="gradient-descent-formulaic">
+</article></slide><slide class=""><hgroup><h2>Gradient descent formulaic</h2></hgroup><article  id="gradient-descent-formulaic" class="smaller ">
 
 <ul>
 <li>The gradient gives us the direction of fastest increase of the function \(J\) at a point \(\theta\)</li>
@@ -3823,7 +3823,7 @@ slide:not(.current) .plotly.html-widget{
 </article></slide><slide class=""><hgroup><h2></h2></hgroup><article  class="smaller">
 
 <ul>
-<li>On each step of the algorithm, we can sample a <strong>minibatch</strong> of examples \(\mathbb{B} = \{x^{(1)},...,x^{(m&#39;)}}\) drawn uniformly from the training set (i.e. small number of examples, a few hundred max)</li>
+<li>On each step of the algorithm, we can sample a <strong>minibatch</strong> of examples \(\mathbb{B} = \{x^{(1)},...,x^{(m&#39;)}\}\) drawn uniformly from the training set (i.e. small number of examples, a few hundred max)</li>
 <li>The estimate of the gradient is formed as:</li>
 </ul>
 
@@ -3847,48 +3847,39 @@ slide:not(.current) .plotly.html-widget{
 <ul>
 <li>We can now generalize to a network with more neurons</li>
 <li>The cost \(J(\theta)\) can still be defined as a function of the parameters of the network (many more now)</li>
+<li>The cost for a single training example is defined as:</li>
 </ul>
 
-<table class = 'rmdtable'>
-<col width="6.944444%" />
-<tr class="odd">
-<td align="left">* The cost for a single training example is defined as:</td>
-</tr>
-<tr class="even">
-<td align="left">\(J_1 = \sum_{j = 1}^{n_L} (h_j^{(L)} - y_j)^2\)</td>
-</tr>
-<tr class="odd">
-<td align="left">Note that:</td>
-</tr>
-<tr class="even">
-<td align="left">\(z_j^{(L)} = w_{j1}^{(L)} h_{1}^{(L-1)} + w_{j2}^{(L)} h_{2}^{(L-1)} + w_{j3}^{(L)} h_{3}^{(L-1)} + b_{j}^{(L)}\)</td>
-</tr>
-<tr class="odd">
-<td align="left">and</td>
-</tr>
-<tr class="even">
-<td align="left">$h_{j}^{(L)} = g(z_j^{(L)}) $</td>
-</tr>
-</table>
+<p>\(J_1 = \sum_{j = 1}^{n_L} (h_j^{(L)} - y_j)^2\)</p>
+
+<ul>
+<li>Note that:</li>
+</ul>
+
+<p>\(z_j^{(L)} = w_{j1}^{(L)} h_{1}^{(L-1)} + w_{j2}^{(L)} h_{2}^{(L-1)} + w_{j3}^{(L)} h_{3}^{(L-1)} + b_{j}^{(L)}\), and: \(h_{j}^{(L)} = g(z_j^{(L)})\)</p>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article  class="smaller">
 
 <ul>
 <li>Again, we can use the chain rule to figure out how sensitive the cost is to variations in a specific weight \(w_{jk}\):</li>
 </ul>
 
-<p>$ =    $</p>
+<p>\(\frac{\partial J_1}{\partial w_{jk}^{(L)}} = \frac{\partial z^{(L)}}{\partial w_{jk}^{(L)}} \cdot \frac{\partial h^{(L)}}{\partial z^{(L)}} \cdot \frac{\partial J_1}{\partial h^{(L)}}\)</p>
 
 <ul>
 <li>We can repeat this process for all weights and biases feeding in a given layer; these partial derivatives determine the component of the gradient</li>
 <li>What is changing here is the \(\frac{\partial J_1}{\partial h^{(L-1)}}\), since neurons influence the cost function through multiple paths. Formally:</li>
 </ul>
 
-<p>$  = _{j = 1}^{n_L}    $</p>
+<p>\(\frac{\partial J_1}{\partial h_{k}^{(L-1)}} = \sum_{j = 1}^{n_L} \frac{\partial z_{j}^{(L)}}{\partial h_{k}^{(L-1)}} \cdot \frac{\partial h_{j}^{(L)}}{\partial z_{j}^{(L)}} \cdot \frac{\partial J_1}{\partial h_{j}^{(L)}}\)</p>
 
 <ul>
 <li>Finally, the generic expression to update a weight in the layer \(\ell\) can be written as:</li>
 </ul>
 
-<p>\(\frac{\partial J_1}{\partial w_{jk}^{(\ell)}} &amp;= h_{k}^{(\ell-1)} \cdot g&#39;(z_{j}^{(\ell)}) \cdot \frac{\partial J_1}{\partial h_{j}^{(\ell)}}\)</p>
+<p>\(\frac{\partial J_1}{\partial w_{jk}^{(\ell)}}\)</p>
+
+<p>\(= h_{k}^{(\ell-1)} \cdot g&#39;(z_{j}^{(\ell)}) \cdot \frac{\partial J_1}{\partial h_{j}^{(\ell)}}\)</p>
 
 <p>\(= h_{k}^{(\ell-1)} \cdot g&#39;(z_{j}^{(\ell)}) \cdot \sum_{j = 1}^{n_{\ell+1}} w_{jk}^{(\ell+1)} \cdot g&#39;(z_{j}^{(\ell+1)}) \cdot \frac{\partial J_1}{\partial h_{j}^{(\ell+1)}}\)</p>
 
@@ -3905,7 +3896,9 @@ slide:not(.current) .plotly.html-widget{
 <li>We obtain:</li>
 </ul>
 
-<p>$  &amp;= h_{1}^{(L-2)} g’(z_{1}^{(L-1)}) $</p>
+<p>\(\frac{\partial J_1}{\partial w_{11}^{(L-1)}}\)</p>
+
+<p>\(= h_{1}^{(L-2)} \cdot g&#39;(z_{1}^{(L-1)}) \cdot \frac{\partial J_1}{\partial h_{1}^{(L-1)}}\)</p>
 
 <p>\(= h_{1}^{(L-2)} \cdot g&#39;(z_{1}^{(L-1)}) \cdot \sum_{j = 1}^{n_{L}} w_{j1}^{(L)} \cdot g&#39;(z_{j}^{(L)}) \cdot \frac{\partial J_1}{\partial h_{j}^{(L)}}\)</p>
 
