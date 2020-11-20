@@ -284,9 +284,6 @@ $H(\text{x}) = \mathbb{E}_{\text{x} \sim P} [I(x)] = - \mathbb{E}_{\text{x} \sim
 * The **universal approximation theorem** states that a feedforward NN with a single hidden layer containing a finite number of units can approximate any continuous functions on compact subsets of $\mathbb{R}^n$
 * We are not guaranteed, however, that the training algorithm will be able to learn that function (optimization, overfitting)
 * To represent any function the hidden layer may be infeasibly large, hence using deeper models can reduce the number of units required to represent the desired function
-    
-----    
-
 * Choosing deep models (instead of shallow networks) encodes a general belief that the function we want to learn can be viewed as a composition of several simpler functions
 * We believe the learning problem consists of discovering a set of underlying factors of variation that can in turn be described in
 terms of other, simpler factors of variation (i.e. edges, corners, contours, object parts, etc.)
@@ -319,7 +316,7 @@ terms of other, simpler factors of variation (i.e. edges, corners, contours, obj
 
 * Initially, these weight matrices are filled with small random values (a step called *random initialization*).
 * Of course, there is no reason to expect that `relu(dot(W, input) + b)`, when `W` and `b` are random, will yield any useful representations.
-* What comes next is to gradually adjust these weights, based on some feedback signal (provided by the *loss function dicussed later*). 
+* What comes next is to gradually adjust these weights, based on some feedback signal (provided by the *loss function*). 
 
 ----
 
@@ -355,7 +352,7 @@ terms of other, simpler factors of variation (i.e. edges, corners, contours, obj
 ----
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/DL_gradient_1.jpg){.img_tiny}
+![](https://sds-aau.github.io/SDS-master/00_media/DL_gradient_1.jpg){.img}
 </center>
 
 * For every differentiable function `f(x)`, there exists a derivative function `f'(x)` that maps values of `x` to the slope of the local linear approximation of `f` in those points. 
@@ -376,11 +373,13 @@ terms of other, simpler factors of variation (i.e. edges, corners, contours, obj
 ## Stochastic gradient descent
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/DL_gradient_2.jpg?dl=1){.img_tiny}
-<7center>
+![](https://sds-aau.github.io/SDS-master/00_media/DL_gradient_2.jpg){.img_small}
+</center>
 
-* Since `f'(x)==0`indicates a local minimum, to find the global one we "only" need to identify all `f'(x)==0` regions and check which has the lowest `f(x)`. Applied to a neural network, that means finding analytically the combination of weight values that yields the smallest possible `loss`. 
-* To do so, we use the four-step algorithm outlined earlier: modify the parameters little by little based on the current loss value on a random batch of data. Because you're dealing with a differentiable function, you can compute its gradient, which gives you an efficient way to implement step 4. 
+* Since `f'(x)==0`indicates a local minimum, to find the global one we "only" need to identify all `f'(x)==0` regions and check which has the lowest `f(x)`. 
+* Applied to a neural network, that means finding analytically the combination of weight values that yields the smallest possible `loss`. 
+* To do so, we use the four-step algorithm outlined earlier: modify the parameters little by little based on the current loss value on a random batch of data. 
+* Because you're dealing with a differentiable function, you can compute its gradient, which gives you an efficient way to implement step 4. 
 
 ----
 
@@ -415,9 +414,9 @@ If you update the weights in the opposite direction from the gradient, the `loss
 ## The Backpropagation algorithm: Chaining derivatives
 
 * So, now we are almost there. We know now how to minimize the `loss function` within a layer.
-* However, the issue with deep learning is... well... that you hve **many** layers. 
+* However, the issue with deep learning is... well... that you have **many** layers. 
 * How do we move on from here? Indeed, the rise of deep learning had to wait till the implementation of a efficient way to train multi-layered networks.
-* Luckily, we now have it, and its called **backpropagation**. And its actually pretty simple. While an enourmeous task in terms of number of calculations, the math behind it chould be acessible by highschool students. 
+* Luckily, we now have it, and its called **backpropagation**. And its actually pretty simple. While an enormous task in terms of number of calculations, the math behind it chould be acessible by highschool students. 
 
 ----
 
@@ -460,14 +459,12 @@ If you update the weights in the opposite direction from the gradient, the `loss
 * Weight matrices are filled with small random values (a step called random initialization)
 * The training loop consists of a gradual adjustment of the weights:
    * Draw a batch of training examples $x$ and corresponding targets $y$
-   * Run the network on $\bm{x}$ (a step called the forward pass) to obtain predictions $\hat{y}$
+   * Run the network on $x$ (a step called the forward pass) to obtain predictions $\hat{y}$
    * Compute the loss of the network on the batch, a measure of the mismatch between $\hat{y}$ and $y$
    * Update all weights of the network in a way that slightly reduces the loss on this batch}
    * Given an individual weight coefficient in the network, how can we compute whether the coefficient should be increased or decreased, and by how much?
 
------
-
-## Back-Propagation
+### Back-Propagation
 
 * Back-propagation is very often misunderstood as meaning the whole learning algorithm for deep NNs !!
 * Backprop refers **only** to the method for computing the gradient, while another algorithm (e.g. stochastic gradient descent) is used to perform learning using this gradient
@@ -504,24 +501,30 @@ $\frac{\partial J}{\partial w^{(L)}}	= \frac{1}{n} \sum_{i = 1}^{n} \frac{\parti
 
 * The above expression is just a component of the \textit{gradient vector}, which is composed of all partial derivatives of the cost function w.r.t. all weights and biases of the network:
 
-$ \nabla_{\bm{\theta}}J(\bm{\theta}) =  \Big[\frac{\partial J}{\partial w^{(1)}} \ \ \frac{\partial J}{\partial b^{(1)}} \ \  \frac{\partial J}{\partial w^{(2)}} \ \ \frac{\partial J}{\partial b^{(2)}} \ \ \frac{\partial J}{\partial w^{(3)}} \ \ \frac{\partial J}{\partial b^{(3)}} \Big]^T$
+$\nabla_{\theta}J(\theta) =  \Big[\frac{\partial J}{\partial w^{(1)}}  \frac{\partial J}{\partial b^{(1)}}   \frac{\partial J}{\partial w^{(2)}} \frac{\partial J}{\partial b^{(2)}}  \frac{\partial J}{\partial w^{(3)}}  \frac{\partial J}{\partial b^{(3)}} \Big]^T$
 
 ----
 
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/dl_backprop1a.JPG){.img_small}
-<7center>
+</center>
 
 * Adjusting the other weights is slightly more complicated
 * First, we need an expression that determines the sensitivity of the cost $J$ to the activation of the previous layer $h^{(L-1)}$, that is:
 
-$\frac{\partial J_1}{\partial h^{(L-1)}} &= \frac{\partial z^{(L)}}{\partial h^{(L-1)}} \cdot \frac{\partial h^{(L)}}{\partial z^{(L)}} \cdot \frac{\partial J_1}{\partial h^{(L)}}$
+$\frac{\partial J_1}{\partial h^{(L-1)}}$
+
+$= \frac{\partial z^{(L)}}{\partial h^{(L-1)}} \cdot \frac{\partial h^{(L)}}{\partial z^{(L)}} \cdot \frac{\partial J_1}{\partial h^{(L)}}$
 
 $= w^{(L)} \cdot \frac{\partial h^{(L)}}{\partial z^{(L)}} \cdot \frac{\partial J_1}{\partial h^{(L)}}$
 
+---- 
+
 * Second, we apply again the chain rule:
 
-$\frac{\partial J_1}{\partial w^{(L-1)}} &= \frac{\partial z^{(L-1)}}{\partial w^{(L-1)}} \cdot \frac{\partial h^{(L-1)}}{\partial z^{(L-1)}} \cdot \frac{\partial J_1}{\partial h^{(L-1)}} $
+$\frac{\partial J_1}{\partial w^{(L-1)}}$
+
+$= \frac{\partial z^{(L-1)}}{\partial w^{(L-1)}} \cdot \frac{\partial h^{(L-1)}}{\partial z^{(L-1)}} \cdot \frac{\partial J_1}{\partial h^{(L-1)}}$
 
 $= \frac{\partial z^{(L-1)}}{\partial w^{(L-1)}} \cdot \frac{\partial h^{(L-1)}}{\partial z^{(L-1)}} \cdot w^{(L)} \cdot \frac{\partial h^{(L)}}{\partial z^{(L)}} \cdot \frac{\partial J_1}{\partial h^{(L)}}$
 
@@ -543,13 +546,12 @@ where $\epsilon$ is the \underline{learning rate}, a positive scalar determining
 ![](https://sds-aau.github.io/SDS-master/00_media/dl_gradient_descent.JPG){.img_small}
 </center>
 
-* If $\epsilon$ is too small, the descent down the curve will take many iterations, and it could get stuck in a local minimum
+* If $\epsilon$ is too small, the descent will take many iterations, and it could get stuck in a local minimum
 * If $\epsilon$ is too large, the updates may end up taking us to completely random locations on the curve
-* Learning rate is one of the most difficult to set parameters because it affects model performance. There are several algorithms with **adaptive learning rates** (not in this course)
-
+* Learning rate is one of the most difficult to set parameters because it affects model performance. There are several algorithms with **adaptive learning rates**
 * As the training set size grows, the time to take a single gradient step may become prohibitively long!
-* Deep neural networks are powered by \underline{stochastic gradient descent} (SDG), essentially an extension of the gradient descent algorithm 
-*	The insight of SDG is that the gradient is an **expectation**, and this expectation can be approximately estimated using a small set of examples
+* Deep neural networks are powered by **stochastic gradient descent** (SDG), essentially an extension of the gradient descent algorithm 
+* The insight of SDG is that the gradient is an **expectation**, and this expectation can be approximately estimated using a small set of examples
 
 ----
 
@@ -561,12 +563,12 @@ $g = \frac{1}{m'} \nabla_{\theta} \sum_{i = 1}^{m'} L(x^{(i)}, y^{(i)}, \theta)$
 * ...using the examples in the minibatch $\mathbb{B}$
 * Then we follow the estimated gradient downhill, that is:
 
-$ \theta \leftarrow  \theta - \epsilon g$
+$\theta \leftarrow  \theta - \epsilon g$
 
 ----
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/dl_backprop2.JPG){.img_small}
+![](https://sds-aau.github.io/SDS-master/00_media/dl_backprop2.JPG){.img_tiny}
 </center>
 
 * We can now generalize to a network with more neurons

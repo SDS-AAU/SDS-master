@@ -1,0 +1,101 @@
+---
+title: 'Introduction to Recurrent Neural Networks (RNN & LSTM)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  ioslides_presentation:
+     widescreen: true
+     smaller: true
+#    css: '../../00_notebooks/css_style_ioslides.css'
+   
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+knitr::opts_chunk$set(
+  echo = FALSE,
+  comment = FALSE,
+  warning = FALSE
+  )
+
+# Load packages
+library(tidyverse)
+library(magrittr)
+library(knitr)
+library(kableExtra)
+```
+
+
+<style type="text/css">
+  .img_small{
+    width: 50%;
+  }
+.img{
+  width: 75%;
+}
+.img_big{
+  width: 100%;
+}
+</style>
+
+## This session 
+
+In this session, you will:
+
+1. xxxxx
+
+# Introduction to time series and sequential approaches to neural Neutworks
+
+## What's different?
+
+A major characteristic of all neural networks you haveve seen so far, such as **densely connected** networks and **convnets,** is that they have no memory. Each input shown to them is processed independently, with no state kept in between inputs. This is fine for cross-sectional prediction problems such as identifying cats and dogs on pictures. However, many interesting real-life problems such as predicting stock prices, biofunctions, or the next word in a text are based on time-series or other types of sequential data. Here, the ability to incorporate information on past states of the outcome and/or other features often greatly enhances the performance of our predictions, since these past states carry relevant information for future development.
+
+## Sequential prediction problems
+
+Using neural networks for such sequential problems, in order to process a sequence or a temporal series of data points, you have to show the entire sequence to the network at once: turn it into a single data point. Therefore, often we would like to operate over sequences of vectors: Sequences in the input, the output, or in the most general case both. A few examples may make this more concrete:
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/DL_lstm_1.jpeg){.img}
+</center>
+
+
+Sounds way more interesting, right? So. how do we do that? Lets find out!
+
+
+## Working with sequential data
+
+Within human reasoning, we utulize information on past states naturally all the time. As you're reading (or listening) the present sentence, you’re processing it word by word—or rather, eye saccade by eye saccade—while keeping memories of what came before; this gives you a fluid representation of the meaning conveyed by this sentence. Biological intelligence processes information incrementally while maintaining an internal model of what it’s processing, built from past information and constantly updated as new information comes in. Our thoughts have persistence.
+
+Traditional neural networks can’t do this, and it seems like a major shortcoming. For example, imagine you want to classify what kind of event is happening at every point in a movie. Or a moving stock on the market, predicted just with a snapshot of its indicators at one point in time. It’s unclear how a traditional neural network could use its reasoning about previous events to inform later ones. 
+
+**Recurrent neural networks** (RNN) address this issue in a very simplified way. They are networks with loops in them, allowing information to persist.
+
+MOre precisely, it processes sequences by iterating through the sequence elements and maintaining a **state** containing information relative to what it has seen so far. In effect, an RNN is a type of neural network that has an internal loop The state of the RNN is reset between processing two different, independent sequences, so you still consider one sequence a single data point: a single input to the network. What changes is that this data point is no longer processed in a single step; rather, the network internally loops over sequence elements.
+
+## Loops
+
+To make these notions of **loop** and **state** clear, let’s implement the **forward pass** of a toy RNN in `R`. This RNN takes as input a sequence of vectors, which you’ll encode as a 2D tensor of size (`timesteps`, `input_features`). It loops over timesteps, and at each timestep, it considers its current state at `t` and the input at `t` (of shape (`input_features`), and combines them to obtain the output at `t`. You’ll then set the state for the next step to be this previous output. For the first timestep, the previous output isn’t defined; hence, there is no current state. So, you’ll initialize the state as an all-zero vector called the initial state of the network.
+
+In pseudocode, this is the RNN.
+
+```{reval=FALSE, include=TRUE}
+state_t = 0    
+# the state as t
+for (input_t in input_sequence) {
+  output_t <- f(input_t, state_t)
+  state_t <- output_t                   
+}
+```
+
+----
+
+You can even flesh out the function `f`: the transformation of the input and state into an output will be parameterized by two matrices, `W` and `U`, and a bias vector `b`. It’s similar to the transformation operated by a densely connected layer in a feedforward network, right?
+
+```{r,eval=FALSE, include=TRUE}
+state_t <- 0
+
+for (input_t in input_sequence) {
+  output_t <- activation(dot(W, input_t) + dot(U, state_t) + b)
+  state_t <- output_t
+}
+```
