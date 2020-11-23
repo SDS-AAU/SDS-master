@@ -29,9 +29,13 @@ library(tidymodels)
 
 
 <style type="text/css">
-  .img_smallest{
+  .img_tiny{
+    width: 25%;
+  }
+  .img_smaller{
     width: 30%;
   }
+  
   .img_small{
     width: 50%;
   }
@@ -55,7 +59,7 @@ Welcome all to this introduction to machine learning (ML). In this session we wi
 
 # Introduction 
 
-## What is ML?
+## What is ML? {.smaller}
 
 As with any concept, machine learning may have a slightly different definition, depending on whom you ask. A little compilation of definitions by academics and practioneers alike:
 
@@ -156,7 +160,7 @@ data %<>%
 ```
 
 
-```{r, echo = FALSE, message = FALSE, warning=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = hp, y = mpg)) +  
   geom_point() 
 ```
@@ -165,7 +169,7 @@ data %>% ggplot(aes(x = hp, y = mpg)) +
 
 ----
 
-```{r, echo = FALSE, message = FALSE, warning=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = hp, y = mpg)) +
   geom_point() +
   geom_smooth(method = 'lm', se = FALSE)
@@ -175,7 +179,7 @@ data %>% ggplot(aes(x = hp, y = mpg)) +
 
 ----
 
-```{r, echo = FALSE, message = FALSE, warning=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = hp, y = mpg)) +
   geom_smooth(method = "lm", se = FALSE) +  
   geom_segment(aes(xend = hp, yend = predicted), alpha = .2) + 
@@ -188,11 +192,12 @@ data %>% ggplot(aes(x = hp, y = mpg)) +
 ## Regression Example
 
 ```{r}
+set.seed(1337)
 data <- tibble(x = runif(500, min = 0, max = 100), 
                y = 15 + (x*0.3) + rnorm(500, sd = 5))
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = x, y = y)) + 
   geom_point() +
   geom_rug(size = 0.1, alpha = 0.75) 
@@ -220,7 +225,7 @@ fit_lm %>% stargazer(type='html')
 ----
 
 
-```{r,echo=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = x, y = y)) + 
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x, se = TRUE)
@@ -239,7 +244,7 @@ data %<>%
          residuals = fit_lm %>% residuals())
 ```
 
-```{r, echo = FALSE, message = FALSE, warning=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = x, y = y)) +
   geom_segment(aes(xend = x, yend = predicted), alpha = .2) + 
   geom_point(alpha = 0.5) +
@@ -265,7 +270,7 @@ sqrt(mean(error ^ 2)) # Calculate RMSE
 
 ----
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 error %>% as_tibble() %>%
   ggplot(aes(x = value)) + 
   geom_histogram() 
@@ -288,7 +293,7 @@ data %>% head()
 
 ----
 
-```{r,echo=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>%
   ggplot(aes(x = x, y = y)) +
   geom_point(alpha = 0.5)
@@ -298,21 +303,20 @@ data %>%
 
 ----
 
-```{r,echo=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = x, y = y)) + 
   geom_point(alpha = 0.5) +
   geom_smooth(method = "lm", formula = y ~ x, se = TRUE)
 ```
 
-* We can obviously fit a linear model on it. 
-* What do the predicted values mean then? 
+* We can obviously fit a linear model on it, but what do the predicted values mean then? 
 * We could intrpet them as `probability: y=TRUE`
 * However, how does the model fit the data?
 
 ---- 
 
 
-```{r,echo=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = x, y = y)) + 
   geom_point(alpha = 0.5) +
   geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE) 
@@ -328,10 +332,12 @@ fit_log <- data %>%
   glm(formula = y ~ x, family = 'binomial')
 ```
 
+<center>
 ```{r, results='asis'}
 library(stargazer)
 fit_log %>% stargazer(type='html')
 ```
+</center>
 
 * How do we do that?
 * The easiest way is to use a `glm`, where we just change the distribution from `gaussian` to `binomial`
@@ -346,7 +352,7 @@ data %<>%
          residuals = fit_log %>% residuals())
 ```
 
-```{r, echo = FALSE, message = FALSE, warning=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = x, y = y)) +
   geom_segment(aes(xend = x, yend = predicted), alpha = 0.2) + 
   geom_point(alpha = 0.5, col = 'green') +
@@ -354,12 +360,13 @@ data %>% ggplot(aes(x = x, y = y)) +
   geom_point(aes(y = predicted_class), col = 'red', shape = 21)  + 
   geom_hline(yintercept = 0.5)
 ```
+
 * Based on this model we can now also carry out predictions
 
 ## Model metrics for classification problems {.smaller}
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/ml_metrics1.png){.img_small}
+![](https://sds-aau.github.io/SDS-master/00_media/ml_metrics1.png){.img_smaller}
 </center>
 
 ## The Confusion matrix
@@ -381,11 +388,14 @@ It is the 2x2 matrix with the following cells:
 
 * Just remember, We describe predicted values as **Positive** and **Negative** and actual values as **True** and **False**. 
 * Out of combinations of these values, we dan derive a set of different quality measures.
+* The simplest one is the models accuracy, the share of correct predictions in all predictions
+
+**Accuracy** (ACC) 
+
+$$ {ACC} ={\frac {\mathrm {TP} + \mathrm {TN} }{P+N}} $$
 
 ## Summary of Metrics {.smaller}
 
-**Accuracy** (ACC)
-$$ {ACC} ={\frac {\mathrm {TP} + \mathrm {TN} }{P+N}} $$
 
 **Sensitivity** also called recall, hit rate, or true positive rate (TPR)
 $$ {TPR} ={\frac {\mathrm {TP} }{P}}={\frac {\mathrm {TP} }{\mathrm {TP} +\mathrm {FN} }}$$
@@ -399,7 +409,7 @@ $$ {PPV} ={\frac {\mathrm {TP} }{\mathrm {TP} +\mathrm {FP} }} $$
 **F1 score**: weighted average of the true positive rate (recall) and precision.
 $$ F_{1}={\frac {2\mathrm {TP} }{2\mathrm {TP} +\mathrm {FP} +\mathrm {FN} }} $$
 
-## Creating a confusion matrix
+## Creating a confusion matrix {.smaller}
 
 ```{r}
 
@@ -419,50 +429,41 @@ res_log <- tibble(
 cm_log <- res_log %>% yardstick::conf_mat(y, y_pred)
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 cm_log %>% autoplot(type = "heatmap")
 ```
-Steps
 
 1. Put real and predicted values side-by-side
 2. Aggregate on Truth-Prediction level
 3. Create the confusion matrix and calculate th corresponding values
 
-----
 
-```{r}
-cm_log %>% summary() %>% mutate(.estimate = .estimate %>% round(3)) %>% select(-.estimator)
-```
-
-## ROC and AUC
-* An ROC curve (receiver operating characteristic curve, weird name, i know. Comes originally from signal processing) is a derivative of the confusion matrix and predicted class-probabilities.
-* The curve plots true positive rate (sensitivity) agains the false positives rate (1-specificity)
-* It tells us how sensitive our classification is to 
-* The area-under-the-curve (AUC) also good and balanced indicator of a models predictive power.
+## ROC and AUC {.smaller}
 
 ```{r}
 roc_log <- res_log %>% 
   roc_curve(y, y_pred_prob, event_level = 'second') 
-
-roc_log %>% head()
 ```
 
-----
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 roc_log %>% autoplot()
 ```
 
-* Steeper = Better
+
+* An ROC curve is a derivative of the confusion matrix and predicted class-probabilities.
+* The curve plots true positive rate (sensitivity) against the false positives rate (1-specificity)
+* The area-under-the-curve (AUC) also good and balanced indicator of a models predictive power.
+
 
 
 # Generalization in ML models
 
 ## Generalization via "Out-of-Sample-Testing" {.smaller}
 
-With so much freedom wrt. feature selection, functional form ect., models are prone to over-fitting. And no constraints by asymptotic properties, causality and so forth, how can we generalize anything?
-
-In ML, generalization is not achived by statistical derivatives and theoretical argumentation, but rather by answering the practical question: **How well would my model perform with new data?** To answer this question, **Out-of-Sample-Testing** is usually taken as solution. Here, you do the following
+* With so much freedom wrt. feature selection, functional form ect., models are prone to over-fitting. And no constraints by asymptotic properties, causality and so forth, how can we generalize anything?
+* In ML, generalization is not achived by statistical derivatives and theoretical argumentation, but rather by answering the practical question: **How well would my model perform with new data?** 
+ To answer this question, **Out-of-Sample-Testing** is usually taken as solution. Here, you do the following
 
 1. Split the dataset in a training and a test sample.
 2. Fit you regression (train your model) on one dataset
@@ -470,10 +471,9 @@ In ML, generalization is not achived by statistical derivatives and theoretical 
      * Optimal: Retrain final model configuration on whole training set
 3. Finally, evaluate predictive power on test sample, on which model is not fitted.
 			
-An advanced version is a **N-fold-Crossvalidation**, where this process is repeated several time during the **hyperparameter-tuning** phase (more on that later).
+An advanced version is a **N-fold-Crossvalidation**, where this process is repeated several time during the **hyperparameter-tuning** phase.
 
-----
-
+## N-fold-Crossvalidation
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/ml_cv_steps.png){.img}
 </center>
@@ -499,7 +499,8 @@ Generally, we call this tension the **bias-variance tradeoff**, which we can dec
 
 $${\displaystyle \operatorname {E} {\Big [}{\big (}y-{\hat {f}}(x){\big )}^{2}{\Big ]}={\Big (}\operatorname {Bias} {\big [}{\hat {f}}(x){\big ]}{\Big )}^{2}+\operatorname {Var} {\big [}{\hat {f}}(x){\big ]}+\sigma ^{2}}$$
 
-Note
+Note:
+
 * Bias and variance are reducible errors which decline when using a more suitable model to model the underlying relationships in the data
 * $\sigma^2$ denotes the unreducible complexity caused by random noise, measurement errors, or missing variables, which represent a boundary to our ability to predict given the data at hand.
 
@@ -511,7 +512,7 @@ data <- tibble(x = runif(50, min = 0, max = 3.14),
                y = sin(x) )
 ```
 
-```{r,echo=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = x, y = y)) + 
   geom_point()
 ```
@@ -521,12 +522,12 @@ data %>% ggplot(aes(x = x, y = y)) +
 ## Example {.smaller}
 
 ```{r}
-set.seed(1337)
+set.seed(1338)
 error <- rnorm(n = 50, mean = 0, sd = 0.05)
 data %<>% mutate(y_e = y + error)
 ```
 
-```{r,echo=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = x, y = y_e)) + 
   geom_point()
 ```
@@ -544,7 +545,7 @@ Lets see how models with different levels of complexity would interpret the reæ
 
 ----
 
-```{r,echo=FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE, fig.align='center'}
 data %>% ggplot(aes(x = x, y = y_e)) + 
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x, 
