@@ -1,0 +1,309 @@
+---
+title: 'Neural Networks Application: Recurrent Neural Networks (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+
+```{r}
+library(tidyverse)
+library(magrittr)
+
+library(keras)
+```
+
+# Recurrent Neural Networks (a text example)
+
+So, lets start applying a first RNN, and since you are already warmed up, we do it with text data. It is not hard to see why for making sense of text data, sequential models would be a good idea. 
+
+## The IMDB dataset
+
+You’ll work with the IMDB dataset: a set of 50,000 highly polarized movie reviews from the Internet Movie Database, labeled by sentiment (positive/negative). They’re split into 25,000 reviews for training and 25,000 reviews for testing, each set consisting of 50% negative and 50% positive reviews. Read more details [here](https://keras.io/datasets/#imdb-movie-reviews-sentiment-classification). in case you are interested.
+
+Just like the MNIST dataset, the IMDB dataset comes packaged with `Keras`, and is already neathly preprocessed. Each review is encoded as a **sequence** of word indexes (integers), where each integer stands for a specific word in a dictionary. For convenience, words are indexed by overall frequency in the dataset, so that for instance the integer `3` encodes the 3rd most frequent word in the data. This allows for quick filtering operations such as: "only consider the top `10,000` most common words, but eliminate the top `20` most common words" (Note: `0` is the encoding for unknown words). 
+
+### Load the data
+
+```{r}
+imdb <- dataset_imdb(num_words = 10000)
+```
+
+```{r}
+#c(c(train_data, train_labels), c(test_data, test_labels)) %<-% imdb
+```
+
+
+**Note:** The datasets built into Keras are all nested lists of training and test data. Here, we use the multi-assignment operator `%<-%` from the `zeallot` package to unpack the list into a set of distinct variables. This is only a convenience function, and could equally be written as follows:
+
+```{r}
+train_data <- imdb$train$x
+train_labels <- imdb$train$y
+
+test_data <- imdb$test$x
+test_labels <- imdb$test$y
+```
+
+The argument `num_words = 10000` means we keep only the top 10,000 most frequently occurring words in the training data. Rare words will be discarded. This allows you to work with vector data of a manageable size.
+
+The variables `train_data` and `test_data` are lists of reviews; each review is a list of word indices (encoding a sequence of words). `train_labels` and `test_labels` are lists of 0s and 1s, where `0` stands for negative and `1` stands for positive:
+
+```{r}
+glimpse(train_labels[1:5])
+```
+
+```{r}
+glimpse(train_data[1:5])
+```
+
+Because you’re restricting yourself to the top 10,000 most frequent words, no word index will exceed 10,000:
+
+```{r}
+train_data %>% map_int(max) %>% max()
+```
+
+Sidenote: Notice that all words are not appearing anymore as strings, but as a numeric index. This is very pratical to do as preprocesing of text data before using them for ML workflows. However, we cannot read the reviews anymore manyally. Only for fun, here’s how you can quickly decode one of these reviews back to English words:
+
+```{r}
+word_index <- dataset_imdb_word_index() # word_index is a named list mapping words to an integer index.
+```
+
+```{r}
+word_index %>% head()
+```
+
+```{r}
+word_index %>% as_tibble() %>%
+  pivot_longer(everything())
+```
+
+
+```{r}
+# lets do it the other way around
+reverse_word_index <- names(word_index)
+names(reverse_word_index) <- word_index
+```
+
+```{r}
+reverse_word_index %>% head()
+```
+
+
+```{r}
+# Reverses it, mapping integer indices to word
+decoded_review <- sapply(train_data[[1]], function(index) {                # Decodes the review
+  word <- if (index >= 3) reverse_word_index[[as.character(index - 3)]]
+  if (!is.null(word)) word else "?"
+})
+# Note that the indices are offset by 3 because 0, 1, and 2 are reserved indices for “padding,” “start of sequence,” and “unknown.”
+```
+
+```{r}
+decoded_review
+```
+
+
+```{r,include=FALSE}
+rm(word_index, reverse_word_index, decoded_review)
+```
+
+
+### Preprocessing
+
+So, we have our data ready. However, we cannot can’t feed lists of integers (keep in mind, they are supposed to not represent numbers but words) into a neural network. You have to turn your lists into tensors. There are two ways to do that:
+
+1. **One-hot encode** your lists to turn them into vectors of 0s and 1s. This would mean, for instance, turning the sequence `[3, 5]` into a 10,000-dimensional vector that would be all 0s except for indices `3` and `5`, which would be `1`. Then you could use as the first layer in your network a dense layer, capable of handling floating-point vector data.
+2. **Pad** your lists so that they all have the same length, turn them into an integer tensor of shape `(samples, word_indices)`, and then use as the first layer in your network a layer capable of handling such integer tensors (the “embedding” layer, comming soon).
+
+While the first approach sounds computationally very inefficient, it is also the most intuitive to operationalize in terms of data-munging.  Let’s warm up with this first solution and vectorize the data, which we will do manually for maximum clarity.
+
+```{r}
+# Again, a small function that creates a 0-matrix, and replaces the corresponding words with 1.
+vectorize_sequences <- function(sequences, dimension) {
+  results <- matrix(0, nrow = length(sequences), ncol = dimension) # Creates an all-zero matrix of shape (length(sequences), dimension)
+  for(i in 1:length(sequences)){
+    results[i, sequences[[i]]] <- 1 # Sets specific indices of results[i] to 1s
+  }
+  return(results)
+}
+```
+
+```{r}
+x_train <- train_data %>% vectorize_sequences(dimension = 10000) 
+x_test <- test_data %>% vectorize_sequences(dimension = 10000) 
+```
+
+
+Here’s what the samples look like now:
+
+```{r}
+str(x_train[1,])
+```
+
+**Hint:** The `keras` function `to_categorical()`, which does exactly the same more convenient when the data is in a dataframe shape.
+
+We now only recode the outcomes as numerical.
+
+```{r}
+y_train <- as.numeric(train_labels)
+y_test <- as.numeric(test_labels)
+```
+
+Now the data is ready to be fed into a neural network.
+
+**Note:** This was only 
+
+## A baseline feed-forward ANN
+
+So far so good, let's run a "normal" feed-forward ANN to predict the review sentiment. We do so, just to warm up and get a sense how good it performs. A little reminder, to build and run a `Keras` model, you need to:
+
+1: Define the architecture (Layers, shape & activation)
+2: Compile the model (choosing optimizer, loss function, and metric)
+3: Run the model
+
+### MOdel architecture
+
+We use, like before, a simple feed forward architecture with an input layer of shape 10.000 (number of words in our review vector), 2 inetrmediate hidden layers with 16 units each, and an ouput layer with only 1 unit (since we perform a binary classification). For the hidden layers, we use the standard `relu` activation function, for the output we use `sigmoid`, as common for binary classification. Note that all architecture choices in this example are standard, but not necessarily informed by our data. Just a good rule-of-thumb starting point.
+
+```{r}
+model <- keras_model_sequential() %>%
+  layer_dense(units = 16, activation = "relu", input_shape = c(10000)) %>%
+  layer_dense(units = 16, activation = "relu") %>%
+  layer_dense(units = 1, activation = "sigmoid")
+```
+
+Finally, you need to choose a loss function and an optimizer. Because you’re facing a binary classification problem and the output of your network is a probability (you end your network with a single-unit layer with a sigmoid activation), it’s best to use the `binary_crossentropy` loss. It isn’t the only viable choice: you could use, for instance, `mean_squared_error`. But crossentropy is usually the best choice when you’re dealing with models that output probabilities. Crossentropy is a quantity from the field of Information Theory that measures the distance between probability distributions or, in this case, between the ground-truth distribution and your predictions. For the optimizer we go for the allrounder `rmsprop`, since we in this case have no reason to believe otherwise.
+
+```{r}
+model %>% compile(
+  optimizer = "rmsprop",
+  loss = "binary_crossentropy",
+  metrics = "accuracy"
+)
+```
+
+So, we are pretty much done. Due to the big fiorst layer, we have a lot of parameter, but otherwise nothing extraordinary happening yet.
+
+```{r}
+summary(model)
+```
+
+Lets run it!
+
+```{r}
+history <- model %>% fit(
+  x_train,
+  y_train,
+  epochs = 10,
+  batch_size = 512,
+  validation_split = 0.25
+)
+```
+
+And lets take a look how the accuracy and loss developed over the epocs.
+
+```{r}
+plot(history)
+```
+
+Ok, agaion we see that we are overfitting. While accuracy and loss as in most cases further increases during the epocs, we see after 3 epocs the metrics to decline on our validation data. At one point we have to deal with that, but not now.
+
+Lets just sum up: 
+
+* We created a one-hot-encoding term-document matrix for the most 10.000 frequent terms used in Imdb reviews, and used that to predict if the review had a positive or negative sentiment.
+* We did so by feeding this 10.000 dimensional vector as a 2d tensor of shape `(sample, features)` to a simple feed-forward network with pretty standard architecture
+* We got an accuracy somewhere between 85-90% in the validation sample.
+
+I would say, not too bad at all. However, represenmting a review as a 10.000 dimensional vector of one-hot encodings of word occurence appears pretty blunt. There must be something better, right? 
+
+
+## A Recurrent Neural Network Approach to text data in `Keras`
+
+So, now that we tried a pretty naive model as baseline, lets move on.
+
+
+### Preprocessing
+
+In our first baseline model, we used a document-term matrix as inputs for training, with one-hot-encodings (= dummy variables) for the 10.000 most popular terms. This has a couple of disadvantages. Besides being a very large and sparse vector for every review, as a "bag-of-words", it did not take the word-order (sequence) into account. 
+
+This time, we use a different approach, therefore also need a different input data-structure. We now use `pad_sequences()` to create a integer tensor of shape `(samples, word_indices)`. However, reviews vary in lenght, which is a problem since `Keras` reqieres the inputs to have the same shape across the whole sample. Therefore, we use the `maxlen = 500` argument, to restrict ourselves to the first 500 words in every review.
+
+As a consequence, longer reviews will be cut at 500 words, and shorter reviews will be filled up with 0 values.
+
+```{r}
+x_train <- pad_sequences(train_data, maxlen = 500)
+x_test <- pad_sequences(test_data, maxlen = 500)
+```
+
+Lets take a look:
+
+```{r}
+glimpse(x_train)
+```
+
+We see that we indeed end up with word sequences. However, also notice that we have quite a bunch of `0`s, representing unknown words.
+
+Lets set up our model. as discussed, we will first use a `layer_embedding` to compress our initial one-hot-encoding vector of lenght 10.000 to a "meaning-vector" (=embedding) of the lower dimensionality of 32. We did not talk about that too much, but the next session will dig deeper into that. Just take it for now...
+
+Then we add a `layer_simple_rnn` on top, and finally a `layer_dense` for the binary prediction of review sentiment.
+
+```{r}
+model <- keras_model_sequential() %>%
+  layer_embedding(input_dim = 10000, output_dim = 32) %>%
+  layer_simple_rnn(units = 32, activation = "tanh") %>%
+  layer_dense(units = 1, activation = "sigmoid")
+```
+
+```{r}
+summary(model)
+```
+
+THe further parameters are quite conventional and by now well-known.
+
+```{r}
+model %>% compile(
+  optimizer = "rmsprop",
+  loss = "binary_crossentropy",
+  metrics = "accuracy"
+)
+```
+
+And we already run the model:
+
+```{r}
+history <- model %>% fit(
+  x_train, y_train,
+  epochs = 10,
+  batch_size = 128,
+  validation_split = 0.2
+)
+```
+
+Yes, I know, this one takes a while...
+
+In adittion, the model performs quite dissapointing. After about 4 periods, it starts overfitting, as often. However, the highest validation accuracy we get during the epochs is slightly higher than 85%, which is no improvement compared to our baseling. Part of the problem is that your inputs only consider the first 500 words, rather than full sequences—hence, the RNN has access to less information than the earlier baseline model. 
+
+The insight of the problem is that `layer_simple_rnn` isn’t good at processing long sequences, such as 500+ words review text. The reason is that words often derive their meaning not only from the one word before, but a longer sequence, eg. the whole sentence in which they occur. For such settings, other types of recurrent layers perform much better. Let’s go on exploring.

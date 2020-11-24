@@ -474,6 +474,7 @@ roc_log %>% autoplot()
 An advanced version is a **N-fold-Crossvalidation**, where this process is repeated several time during the **hyperparameter-tuning** phase.
 
 ## N-fold-Crossvalidation
+
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/ml_cv_steps.png){.img}
 </center>
@@ -569,7 +570,7 @@ data %>% ggplot(aes(x = x, y = y_e)) +
 ## Regularization {.smaller}
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/ml_complexity_error.png){.img}
+![](https://sds-aau.github.io/SDS-master/00_media/ml_complexity_error.png){.img_small}
 </center>
 
 *  The process of minimizing bias and variance errors is called **regularization** (inpractice also refered to as **hyperparameter-tuning**)
@@ -593,19 +594,6 @@ $$minimize \underbrace{\sum_{i=1}^{n}L(f(x_i),y_i),}_{in-sample~loss} ~ over \ov
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/ml_hyperparam1.png){.img_big}
 </center>
-
-----
-
-## Crossvalidation {.smaller}
-
-1. Split the dataset in a training and a test sample.
-2. Fit you regression (train your model) on one dataset
-     * Optimal: Tune hyperparameters by minimizing loss in a validation set. 
-     * Optimal: Retrain final model configuration on whole training set
-3. Finally, evaluate predictive power on test sample, on which model is not fitted.
-			
-An advanced version is a **N-fold-Crossvalidation**, where this process is repeated several time during the **hyperparameter-tuning** phase.
-
 
 ## Tune Grids
 

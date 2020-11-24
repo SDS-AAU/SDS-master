@@ -3127,11 +3127,14 @@ slide:not(.current) .plotly.html-widget{
       <h1 data-config-title><!-- populated from slide_config.json --></h1>
       
       <p data-config-presenter><!-- populated from slide_config.json --></p>
-            <p style="margin-top: 6px; margin-left: -2px;">Updated November 20, 2020</p>
+            <p style="margin-top: 6px; margin-left: -2px;">Updated November 24, 2020</p>
           </hgroup>
   </slide>
 
 <style type="text/css">
+  .img_tiny{
+    width: 25%;
+  }
   .img_small{
     width: 50%;
   }
@@ -3143,7 +3146,7 @@ slide:not(.current) .plotly.html-widget{
 }
 </style>
 
-<slide class=""><hgroup><h2>This session</h2></hgroup><article  class="smaller " id="this-session">
+<slide class=""><hgroup><h2>This session</h2></hgroup><article  id="this-session" class="smaller ">
 
 <p>In this session, you will:</p>
 
@@ -3151,15 +3154,19 @@ slide:not(.current) .plotly.html-widget{
 <li>xxxxx</li>
 </ol>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Introduction to time series and sequential approaches to neural Neutworks</h2></hgroup><article  class="smaller " id="introduction-to-time-series-and-sequential-approaches-to-neural-neutworks">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Introduction to time series and sequential approaches to neural Neutworks</h2></hgroup><article  id="introduction-to-time-series-and-sequential-approaches-to-neural-neutworks" class="smaller ">
 
-</article></slide><slide class=""><hgroup><h2>What’s different?</h2></hgroup><article  class="smaller " id="whats-different">
+</article></slide><slide class=""><hgroup><h2>What’s different?</h2></hgroup><article  id="whats-different" class="smaller ">
 
-<p>A major characteristic of all neural networks you haveve seen so far, such as <strong>densely connected</strong> networks and <strong>convnets,</strong> is that they have no memory. Each input shown to them is processed independently, with no state kept in between inputs. This is fine for cross-sectional prediction problems such as identifying cats and dogs on pictures. However, many interesting real-life problems such as predicting stock prices, biofunctions, or the next word in a text are based on time-series or other types of sequential data. Here, the ability to incorporate information on past states of the outcome and/or other features often greatly enhances the performance of our predictions, since these past states carry relevant information for future development.</p>
+<ul>
+<li>A major characteristic of all neural networks you have seen so far, such as <strong>densely connected</strong> networks and <strong>convnets,</strong> is that they have no memory.</li>
+<li>Each input shown to them is processed independently, with no state kept in between inputs.</li>
+<li>This is fine for cross-sectional prediction problems such as identifying cats and dogs on pictures.</li>
+<li>However, many interesting real-life problems such as predicting stock prices, biofunctions, or the next word in a text are based on time-series or other types of sequential data.</li>
+<li>Here, the ability to incorporate information on past states of the outcome and/or other features often greatly enhances the performance of our predictions, since these past states carry relevant information for future development.</li>
+</ul>
 
-</article></slide><slide class=""><hgroup><h2>Sequential prediction problems</h2></hgroup><article  class="smaller " id="sequential-prediction-problems">
-
-<p>Using neural networks for such sequential problems, in order to process a sequence or a temporal series of data points, you have to show the entire sequence to the network at once: turn it into a single data point. Therefore, often we would like to operate over sequences of vectors: Sequences in the input, the output, or in the most general case both. A few examples may make this more concrete:</p>
+</article></slide><slide class=""><hgroup><h2>Sequential prediction problems</h2></hgroup><article  id="sequential-prediction-problems" class="smaller ">
 
 <center>
 
@@ -3167,32 +3174,204 @@ slide:not(.current) .plotly.html-widget{
 
 </center>
 
-<p>Sounds way more interesting, right? So. how do we do that? Lets find out!</p>
+<ul>
+<li>Using neural networks for such sequential problems, in order to process a sequence or a temporal series of data points, you have to show the entire sequence to the network at once: turn it into a single data point.</li>
+<li>Therefore, often we would like to operate over sequences of vectors: Sequences in the input, the output, or in the most general case both.</li>
+</ul>
 
-</article></slide><slide class=""><hgroup><h2>Working with sequential data</h2></hgroup><article  class="smaller " id="working-with-sequential-data">
+</article></slide><slide class=""><hgroup><h2>Working with sequential data</h2></hgroup><article  id="working-with-sequential-data" class="smaller ">
 
-<p>Within human reasoning, we utulize information on past states naturally all the time. As you’re reading (or listening) the present sentence, you’re processing it word by word—or rather, eye saccade by eye saccade—while keeping memories of what came before; this gives you a fluid representation of the meaning conveyed by this sentence. Biological intelligence processes information incrementally while maintaining an internal model of what it’s processing, built from past information and constantly updated as new information comes in. Our thoughts have persistence.</p>
+<ul>
+<li>Within human reasoning, we utulize information on past states naturally all the time. As you’re reading (or listening) the present sentence, you’re processing it word by word—or, keeping memories of what came before; this gives you a fluid representation of the meaning conveyed by this sentence.</li>
+<li>Biological intelligence processes information incrementally while maintaining an internal model of what it’s processing, built from past information and constantly updated as new information comes in. Our thoughts have persistence.</li>
+<li>Traditional neural networks can’t do this, and it seems like a major shortcoming. For example, imagine you want to classify what kind of event is happening at every point in a movie.</li>
+<li>Or a moving stock on the market, predicted just with a snapshot of its indicators at one point in time. It’s unclear how a traditional neural network could use its reasoning about previous events to inform later ones.</li>
+</ul>
 
-<p>Traditional neural networks can’t do this, and it seems like a major shortcoming. For example, imagine you want to classify what kind of event is happening at every point in a movie. Or a moving stock on the market, predicted just with a snapshot of its indicators at one point in time. It’s unclear how a traditional neural network could use its reasoning about previous events to inform later ones.</p>
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Recurrent Neural Networks</h2></hgroup><article  id="recurrent-neural-networks" class="smaller ">
 
-<p><strong>Recurrent neural networks</strong> (RNN) address this issue in a very simplified way. They are networks with loops in them, allowing information to persist.</p>
+</article></slide><slide class=""><hgroup><h2>Intuition behind RNNs</h2></hgroup><article  id="intuition-behind-rnns" class="smaller ">
 
-<p>MOre precisely, it processes sequences by iterating through the sequence elements and maintaining a <strong>state</strong> containing information relative to what it has seen so far. In effect, an RNN is a type of neural network that has an internal loop The state of the RNN is reset between processing two different, independent sequences, so you still consider one sequence a single data point: a single input to the network. What changes is that this data point is no longer processed in a single step; rather, the network internally loops over sequence elements.</p>
+<ul>
+<li><strong>Recurrent neural networks</strong> (RNN) address this issue in a very simplified way. They are networks with loops in them, allowing information to persist.</li>
+<li>it processes sequences by iterating through the sequence elements and maintaining a <strong>state</strong> containing information relative to what it has seen so far.</li>
+<li>In effect, an RNN is a type of neural network that has an <strong>internal loop</strong></li>
+<li>The state of the RNN is reset between processing two different, independent sequences, so you still consider one sequence a single data point: a single input to the network.</li>
+<li>What changes is that this data point is no longer processed in a single step; rather, the network internally loops over sequence elements.</li>
+</ul>
 
-</article></slide><slide class=""><hgroup><h2>Loops</h2></hgroup><article  class="smaller " id="loops">
+</article></slide><slide class=""><hgroup><h2>Loops</h2></hgroup><article  id="loops" class="smaller ">
 
-<p>To make these notions of <strong>loop</strong> and <strong>state</strong> clear, let’s implement the <strong>forward pass</strong> of a toy RNN in <code>R</code>. This RNN takes as input a sequence of vectors, which you’ll encode as a 2D tensor of size (<code>timesteps</code>, <code>input_features</code>). It loops over timesteps, and at each timestep, it considers its current state at <code>t</code> and the input at <code>t</code> (of shape (<code>input_features</code>), and combines them to obtain the output at <code>t</code>. You’ll then set the state for the next step to be this previous output. For the first timestep, the previous output isn’t defined; hence, there is no current state. So, you’ll initialize the state as an all-zero vector called the initial state of the network.</p>
+<pre >state_t = 0 # the state as t
 
-<p>In pseudocode, this is the RNN.</p>
-
-<pre >state_t = 0    
-# the state as t
-for (input_t in input_sequence) {        # Iterates over sequence elements
-  output_t &lt;- f(input_t, state_t)
-  state_t &lt;- output_t                    # The previous output becomes the state for the next iteration.
+for (input_t in input_sequence) {
+  output_t = f(input_t, state_t)
+  state_t = output_t                   
 }</pre>
 
-<p>You can even flesh out the function <code>f</code>: the transformation of the input and state into an output will be parameterized by two matrices, <code>W</code> and <code>U</code>, and a bias vector <code>b</code>. It’s similar to the transformation operated by a densely connected layer in a feedforward network, right?</p></article></slide>
+<ul>
+<li>To make these notions of <strong>loop</strong> and <strong>state</strong> clear, let’s implement the <strong>forward pass</strong> of a toy RNN .</li>
+<li>This RNN takes as input a sequence of vectors, which you’ll encode as a 2D tensor of size (<code>timesteps</code>, <code>input_features</code>).</li>
+<li>It loops over timesteps, and at each timestep, it considers its current state at <code>t</code> and the input at <code>t</code> (of shape (<code>input_features</code>), and combines them to obtain the output at <code>t</code>.</li>
+<li>You’ll then set the state for the next step to be this previous output.</li>
+<li>For the first timestep, the previous output isn’t defined; hence, there is no current state. So, you’ll initialize the state as an all-zero vector called the initial state of the network.</li>
+</ul>
+
+</article></slide><slide class=""><hgroup><h2></h2></hgroup><article  class="smaller">
+
+<ul>
+<li>You can even flesh out the function <code>f</code>: the transformation of the input and state into an output will be parameterized by two matrices, <code>W</code> and <code>U</code>, and a bias vector <code>b</code>.</li>
+<li>It’s similar to the transformation operated by a densely connected layer in a feedforward network, right?</li>
+</ul>
+
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Long Short Term Memory networks</h2></hgroup><article  id="long-short-term-memory-networks" class="smaller ">
+
+</article></slide><slide class=""><hgroup><h2>Intuition LTM</h2></hgroup><article  id="intuition-ltm" class="smaller ">
+
+<p>One of the appeals of RNNs is the idea that they might be able to connect previous information to the present task, such as using previous word sequences might inform the understanding of the present word in context. If RNNs could do this, they’d be extremely useful. We already saw in the example before, that going one step back is often not good enough, since meaning in some cases unfolds over a long sequence.</p>
+
+<p>So, could we just stack several <code>layer_simple_rnn</code>on top of each other to capture the information contained in long sequences? Kind of, but there is a probhlem…</p>
+
+<p>In theory, RNNs are absolutely capable of handling such &ldquo;long-term dependencies.&rdquo; A human could carefully pick parameters for them to solve toy problems of this form. Sadly, in practice, RNNs don’t seem to be able to learn them. The problem was explored in depth by Hochreiter (1991, in German) and Bengio, et al. (1994)[^1], who found some pretty fundamental reasons why it might be difficult. First and foremost, the <strong>valishing gradient</strong> problem.</p>
+
+</article></slide><slide class=""><hgroup><h2>Backpropagation Through Time (BPTT) and the Vanishing (Exploding) Gradient</h2></hgroup><article  id="backpropagation-through-time-bptt-and-the-vanishing-exploding-gradient" class="smaller ">
+
+<p>Remember, the purpose of RNNs is to accurately classify sequential input. We rely on the backpropagation of error and gradient descent to do so. RNNs rely on an extension of backpropagation called <strong>backpropagation through time</strong>, or BPTT. Time, in this case, is simply expressed by a well-defined, ordered series of calculations linking one time step to the next, which is all backpropagation needs to work. Remember, neural networks, whether they are recurrent or not, are simply nested composite functions like <code>f(g(h(x)))</code>. Adding a time element only extends the series of functions for which we calculate derivatives with the chain rule.</p>
+
+<p>This is partially because the information flowing through neural nets passes through many stages of multiplication. Because the layers and time steps of deep neural networks relate to each other through multiplication, derivatives are susceptible to vanishing or exploding. This is an effect that is similar to what is observed with non-recurrent networks (feedforward networks) that are many layers deep: as you keep adding layers to a network, the network eventually becomes untrainable.</p>
+
+<p>Exploding gradients treat every weight as though it were the proverbial butterfly whose flapping wings cause a distant hurricane. Those weights’ gradients become saturated on the high end; i.e. they are presumed to be too powerful. But exploding gradients can be solved relatively easily, because they can be truncated or squashed. Vanishing gradients can become too small for computers to work with or for networks to learn – a harder problem to solve.</p>
+
+<p>Below you see the effects of applying a sigmoid function over and over again. The data is flattened until, for large stretches, it has no detectable slope. This is analogous to a gradient vanishing as it passes through many layers.</p>
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_vanishing_gradient.png' title=''/>
+
+</center>
+
+</article></slide><slide class=""><hgroup><h2>Long Short-Term Memory Units (LSTMs)</h2></hgroup><article  id="long-short-term-memory-units-lstms" class="smaller ">
+
+<h3>Introduction</h3>
+
+<p>Long Short Term Memory networks – usually just called &ldquo;LSTMs&rdquo; – are a special kind of RNN, capable of learning long-term dependencies. They were were introduced by Hochreiter &amp; Schmidhuber (1997)[^2], and represent the cunnulation of their work on the vanishing gradient problem. They work tremendously well on a large variety of problems, and are now widely used.</p>
+
+<p>After all, their idea was simple: They introduced a variant of <code>layer_simple_rnn</code>; it adds a way to carry information across many timesteps. Imagine a conveyor belt running parallel to the sequence you’re processing. Information from the sequence can jump onto the conveyor belt at any point, be transported to a later timestep, and jump off, intact, when you need it.</p>
+
+<p>This is essentially what LSTM does: it saves information for later, thus preventing older signals from gradually vanishing during processing. Remembering information for long periods of time is practically their default behavior, not something they struggle to learn!</p>
+
+<p>All recurrent neural networks have the form of a chain of repeating modules of neural network. In standard RNNs, this repeating module will have a very simple structure, such as a single <code>tanh()</code> layer. It takes (differently) weighted input from the cells in the layer below, as well as of the <strong>state</strong>, which is just the &ldquo;saved&rdquo;/&ldquo;remembered&rdquo; layer below how it was one time-step earlier (at t-1). THen, with the <code>tanh()</code>, it squisches all the weights together to an output bounded between <code>[-1,1]</code>.</p>
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_LSTM1.png' title=''/>
+
+</center>
+
+<h3>The structure of LSTMs</h3>
+
+<p>LSTMs also have this chain like structure, but the repeating module has a different structure. Instead of having a single neural network layer, there are four, interacting in a very special way. In adittion to the layer with the <code>tanh()</code> activation function that produces <code>[-1,1]</code> outputs, we see adittional <code>sigmoid()</code> layers that produce output between <code>[0,1]</code></p>
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_LSTM2.png' title=''/>
+
+</center>
+
+<p>Don’t worry about the details of what’s going on. We will do that one step by step. Lets rget first comfortable with the notation:</p>
+
+<center>
+
+<img width="750px" src='https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_notation.png?dl=1' title=''/>
+
+</center>
+
+<p>In the above diagram, each line carries an entire vector, from the output of one node to the inputs of others.</p>
+
+<ul>
+<li>Pink circles represent pointwise operations, like vector addition</li>
+<li>Yellow boxes are learned neural network layers.</li>
+<li>Lines merging denote concatenation</li>
+<li>Line forking denote its content being copied and the copies going to different locations.</li>
+</ul>
+
+<center>
+
+<p><img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_LSTM3.png' title=''/> </cnter></p>
+
+<p>The key to LSTMs is the cell <strong>state</strong>, the horizontal line running through the top of the diagram. The cell state is kind of like a conveyor belt. It runs straight down the entire chain, with only some minor linear interactions. It’s very easy for information to just flow along it unchanged.</p>
+
+<p>The LSTM does have the ability to remove or add information to the cell state, carefully regulated by structures called <strong>gates</strong>. Gates are a way to optionally let information through. They are composed out of a sigmoid neural net layer and a pointwise multiplication operation.</p>
+
+<p>The sigmoid layer outputs numbers between zero and one, describing how much of each component should be let through. A value of zero means &ldquo;let nothing through,&rdquo; while a value of one means &ldquo;let everything through!&rdquo; An LSTM has three of these gates, to protect and control the cell state.</p>
+
+<ol>
+<li>The Forget Gate</li>
+<li>The Input gate</li>
+<li>The Output Gate</li>
+</ol>
+
+<p>Conceptually, that is how an LSTM learns to remember as well as to forget. Lets inspect these layers more in detail.</p>
+
+<h4>1: The Forget Gate Layer</h4>
+
+<p>The first step in our LSTM is to decide what information we’re going to throw away from the cell state. This decision is made by a <code>sigmoid</code> layer called the **forget gate layer.*”** A <code>1</code> represents &ldquo;completely keep this&rdquo; while a <code>0</code> represents &ldquo;completely get rid of this.&rdquo;</p>
+
+<p>Let’s go back to our example of a language model trying to predict the next word based on all the previous ones. In such a problem, the cell state might include the gender of the present subject, so that the correct pronouns can be used. When we see a new subject, we want to forget the gender of the old subject.</p>
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_G1.png' title=''/>
+
+</center>
+
+<h4>2: The Input Gate Layer</h4>
+
+<p>The next step is to decide what new information we’re going to store in the cell state. This has two parts. First, a <code>sigmoid</code> layer called the <strong>input gate layer</strong> decides which values we’ll update. Next, a <code>tanh</code> layer creates a vector of new candidate values, <code>Ct</code>, that could be added to the state. In the next step, we’ll combine these two to create an update to the state.</p>
+
+<p>In the example of our language model, we’d want to add the gender of the new subject to the cell state, to replace the old one we’re forgetting.</p>
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_G2.png?dl=1' title=''/>
+
+</center>
+
+<p>It’s now time to update the old cell state, <code>Ct−1</code>, into the new cell state <code>Ct</code>. The previous steps already decided what to do, we just need to actually do it. We multiply the old state by <code>ft</code>, forgetting the things we decided to forget earlier. Then we add <code>it∗Ct</code>. This is the new candidate values, scaled by how much we decided to update each state value.</p>
+
+<p>In the case of the language model, this is where we’d actually drop the information about the old subject’s gender and add the new information, as we decided in the previous steps.</p>
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_G3.png' title=''/>
+
+</center>
+
+<h4>3: The Output Gate Layer</h4>
+
+<p>Finally, we need to decide what we’re going to output. This output will be based on our cell state, but will be a filtered version. First, we run a <code>sigmoid</code> layer which decides what parts of the cell state we’re going to output. Then, we put the cell state through <code>tanh</code> (to push the values to be between [−1,1]) and multiply it by the output of the <code>sigmoid</code> gate, so that we only output the parts we decided to.</p>
+
+<p>For the language model example, since it just saw a subject, it might want to output information relevant to a verb, in case that’s what is coming next. For example, it might output whether the subject is singular or plural, so that we know what form a verb should be conjugated into if that’s what follows next.</p>
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_G4.png' title=''/>
+
+</center>
+
+<h4>Summary</h4>
+
+<p>And, thats pretty much it. Sounds complicated, and to some extent it is. However, the concept is pretty straightforward. In order to exploit the information of multiple recurrent layers, we have to find a way to train the weights while avoiding the vanishing gradient problem.</p>
+
+<p>Therefore we introduce gates, through which previous states can pass through quasi unaltered. However, not every information from previous sequences is useful for us. Indeed, too much information could be a curse rather than a blessing for our model. Therefore, we have to introduce further gates that decide which information from previous stages to remember, and which to forget.</p>
+
+<p>Inj <code>Keras</code> we can envision the architectur of an LSTM as follows:</p>
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_architecture.png' title=''/>
+
+</center></article></slide>
 
 
   <slide class="backdrop"></slide>

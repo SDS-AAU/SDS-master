@@ -4052,7 +4052,7 @@ Akaike Inf. Crit.
 
 <center>
 
-<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/ml_complexity_error.png' title=''/>
+<img class="img_small" src='https://sds-aau.github.io/SDS-master/00_media/ml_complexity_error.png' title=''/>
 
 </center>
 
@@ -4082,23 +4082,6 @@ Akaike Inf. Crit.
 <img class="img_big" src='https://sds-aau.github.io/SDS-master/00_media/ml_hyperparam1.png' title=''/>
 
 </center>
-
-</article></slide><slide class=""><hgroup><h2></h2></hgroup><article >
-
-</article></slide><slide class=""><hgroup><h2>Crossvalidation</h2></hgroup><article  class="smaller" id="crossvalidation">
-
-<ol>
-<li>Split the dataset in a training and a test sample.</li>
-<li>Fit you regression (train your model) on one dataset
-
-<ul>
-<li>Optimal: Tune hyperparameters by minimizing loss in a validation set.</li>
-<li>Optimal: Retrain final model configuration on whole training set</li>
-</ul></li>
-<li>Finally, evaluate predictive power on test sample, on which model is not fitted.</li>
-</ol>
-
-<p>An advanced version is a <strong>N-fold-Crossvalidation</strong>, where this process is repeated several time during the <strong>hyperparameter-tuning</strong> phase.</p>
 
 </article></slide><slide class=""><hgroup><h2>Tune Grids</h2></hgroup><article  id="tune-grids">
 
