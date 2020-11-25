@@ -120,7 +120,6 @@ for (i in 1:nrow(inputs)) {
 glimpse(output_sequence)
 ```
 
-
 **Note:**  In `U %*% state_t`, the `%*%` operator performs a real matrix multiplication (every element of `U` gets multiplied with every element of `state_t`), not the dotproduct (cell-wise multiplication), as `U * state_t` would.
 
 Easy enough: in summary, an RNN is an neural network application of a `for()` (reuses values computed during the previous iteration of the loop), nothing more. Of course, there are many different RNNs fitting this definition that you could build—this example is one of the simplest RNN formulations. Anyhow, In case we would not have to train the weights, we are done by here.
@@ -254,38 +253,29 @@ word_index %>% head()
 ```
 
 ```{r}
-word_index %>% as_tibble() %>%
+word_index %<>% as_tibble() %>%
   pivot_longer(everything())
 ```
 
 
 ```{r}
-# lets do it the other way around
-reverse_word_index <- names(word_index)
-names(reverse_word_index) <- word_index
-```
-
-```{r}
-reverse_word_index %>% head()
+word_index %>% head()
 ```
 
 
+
 ```{r}
-# Reverses it, mapping integer indices to word
-decoded_review <- sapply(train_data[[1]], function(index) {                # Decodes the review
-  word <- if (index >= 3) reverse_word_index[[as.character(index - 3)]]
-  if (!is.null(word)) word else "?"
-})
-# Note that the indices are offset by 3 because 0, 1, and 2 are reserved indices for “padding,” “start of sequence,” and “unknown.”
+review_words <- train_data[[1]] %>% as_tibble() %>%
+  left_join(word_index, by = 'value')
 ```
 
 ```{r}
-decoded_review
+review_words %>% pull(name) %>% paste(collapse = ' ')
 ```
 
 
 ```{r,include=FALSE}
-rm(word_index, reverse_word_index, decoded_review)
+rm(word_index, review_words)
 ```
 
 
@@ -332,7 +322,6 @@ y_test <- as.numeric(test_labels)
 
 Now the data is ready to be fed into a neural network.
 
-**Note:** This was only 
 
 ## A baseline feed-forward ANN
 
@@ -357,7 +346,7 @@ Finally, you need to choose a loss function and an optimizer. Because you’re f
 
 ```{r}
 model %>% compile(
-  optimizer = "rmsprop",
+  optimizer = "adam",
   loss = "binary_crossentropy",
   metrics = "accuracy"
 )
@@ -372,7 +361,7 @@ summary(model)
 Lets run it!
 
 ```{r}
-history <- model %>% fit(
+history_ann <- model %>% fit(
   x_train,
   y_train,
   epochs = 10,
@@ -384,7 +373,7 @@ history <- model %>% fit(
 And lets take a look how the accuracy and loss developed over the epocs.
 
 ```{r}
-plot(history)
+plot(history_ann)
 ```
 
 Ok, agaion we see that we are overfitting. While accuracy and loss as in most cases further increases during the epocs, we see after 3 epocs the metrics to decline on our validation data. At one point we have to deal with that, but not now.
@@ -401,7 +390,6 @@ I would say, not too bad at all. However, represenmting a review as a 10.000 dim
 ## A Recurrent Neural Network Approach to text data in `Keras`
 
 So, now that we tried a pretty naive model as baseline, lets move on.
-
 
 ### Preprocessing
 
@@ -456,13 +444,18 @@ history_rnn <- model_rnn %>% fit(
   x_train, y_train,
   epochs = 10,
   batch_size = 128,
-  validation_split = 0.2
+  validation_split = 0.25
 )
 ```
 
 Yes, I know, this one takes a while...
 
-In adittion, the model performs quite dissapointing. After about 4 periods, it starts overfitting, as often. However, the highest validation accuracy we get during the epochs is slightly higher than 85%, which is no improvement compared to our baseling. Part of the problem is that your inputs only consider the first 500 words, rather than full sequences—hence, the RNN has access to less information than the earlier baseline model. 
+```{r}
+history_rnn %>% plot()
+```
+
+
+In adittion, the model performs quite dissapointing. After a couple of epochs, it starts overfitting, as often. However, the highest validation accuracy we get during the epochs is slightly higher than 85%, which is no improvement compared to our baseling. Part of the problem is that your inputs only consider the first 500 words, rather than full sequences—hence, the RNN has access to less information than the earlier baseline model. 
 
 The insight of the problem is that `layer_simple_rnn` isn’t good at processing long sequences, such as 500+ words review text. The reason is that words often derive their meaning not only from the one word before, but a longer sequence, eg. the whole sentence in which they occur. For such settings, other types of recurrent layers perform much better. Let’s go on exploring.
 
@@ -486,25 +479,25 @@ model_lstm %>% compile(
 ```
 
 ```{r}
-summary(model)
+summary(model_lstm)
 ```
 
 Lets run it!
 
 ```{r}
-#history_lstm <- model_lstm %>% fit(
-#  x_train,
-#  y_train,
-#  epochs = 5,
-#  batch_size = 512,
-#  validation_split = 0.25
-#)
+history_lstm <- model_lstm %>% fit(
+  x_train,
+  y_train,
+  epochs = 5,
+  batch_size = 512,
+  validation_split = 0.25
+  )
 ```
 
 And lets take a look how the accuracy and loss developed over the epocs.
 
 ```{r}
-#plot(history_lstm)
+plot(history_lstm)
 ```
 
 Well...
