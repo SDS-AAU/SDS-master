@@ -43,9 +43,13 @@ library(kableExtra)
 
 ## This session 
 
-In this session, you will:
+In this session, we will:
 
-1. xxxxx
+1. Reflect on sequential data and prediction problems.
+2. Reviewing loops, and how they can be used to pass on information over time.
+3. Introduce to Recurrent Neural Networks
+4. Discuss their limits and the vanishing gradient problem
+5. Introduce Long-short Term Menory  (LSTM) Units 
 
 # Introduction to time series and sequential approaches to neural Neutworks
 
@@ -76,7 +80,6 @@ In this session, you will:
 # Recurrent Neural Networks 
 
 ## Intuition behind RNNs
-
 
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/DL_rnn_0.png){.img}
@@ -165,7 +168,7 @@ for (input_t in input_sequence) {
 ----
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/DL_vanishing_gradient.png){.img}
+![](https://sds-aau.github.io/SDS-master/00_media/DL_vanishing_gradient.png){.img_small}
 </center>
 
 * Here you see the effects of applying a sigmoid function over and over again. 
@@ -300,9 +303,6 @@ In `Keras` we can envision the architectur of an LSTM as follows:
 ![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_architecture.png){.img_small}
 </center>
 
-# Summary
-
-## Summing up
 
 ## References
 

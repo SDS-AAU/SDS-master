@@ -3146,17 +3146,21 @@ slide:not(.current) .plotly.html-widget{
 }
 </style>
 
-<slide class=""><hgroup><h2>This session</h2></hgroup><article  id="this-session" class="smaller ">
+<slide class=""><hgroup><h2>This session</h2></hgroup><article  class="smaller " id="this-session">
 
-<p>In this session, you will:</p>
+<p>In this session, we will:</p>
 
 <ol>
-<li>xxxxx</li>
+<li>Reflect on sequential data and prediction problems.</li>
+<li>Reviewing loops, and how they can be used to pass on information over time.</li>
+<li>Introduce to Recurrent Neural Networks</li>
+<li>Discuss their limits and the vanishing gradient problem</li>
+<li>Introduce Long-short Term Menory (LSTM) Units</li>
 </ol>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Introduction to time series and sequential approaches to neural Neutworks</h2></hgroup><article  id="introduction-to-time-series-and-sequential-approaches-to-neural-neutworks" class="smaller ">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Introduction to time series and sequential approaches to neural Neutworks</h2></hgroup><article  class="smaller " id="introduction-to-time-series-and-sequential-approaches-to-neural-neutworks">
 
-</article></slide><slide class=""><hgroup><h2>What’s different?</h2></hgroup><article  id="whats-different" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>What’s different?</h2></hgroup><article  class="smaller " id="whats-different">
 
 <ul>
 <li>A major characteristic of all neural networks you have seen so far, such as <strong>densely connected</strong> networks and <strong>convnets,</strong> is that they have no memory.</li>
@@ -3166,7 +3170,7 @@ slide:not(.current) .plotly.html-widget{
 <li>Here, the ability to incorporate information on past states of the outcome and/or other features often greatly enhances the performance of our predictions, since these past states carry relevant information for future development.</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Sequential prediction problems</h2></hgroup><article  id="sequential-prediction-problems" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>Sequential prediction problems</h2></hgroup><article  class="smaller " id="sequential-prediction-problems">
 
 <center>
 
@@ -3179,7 +3183,7 @@ slide:not(.current) .plotly.html-widget{
 <li>Therefore, often we would like to operate over sequences of vectors: Sequences in the input, the output, or in the most general case both.</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Working with sequential data</h2></hgroup><article  id="working-with-sequential-data" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>Working with sequential data</h2></hgroup><article  class="smaller " id="working-with-sequential-data">
 
 <ul>
 <li>Within human reasoning, we utulize information on past states naturally all the time. As you’re reading (or listening) the present sentence, you’re processing it word by word—or, keeping memories of what came before; this gives you a fluid representation of the meaning conveyed by this sentence.</li>
@@ -3188,9 +3192,15 @@ slide:not(.current) .plotly.html-widget{
 <li>Or a moving stock on the market, predicted just with a snapshot of its indicators at one point in time. It’s unclear how a traditional neural network could use its reasoning about previous events to inform later ones.</li>
 </ul>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Recurrent Neural Networks</h2></hgroup><article  id="recurrent-neural-networks" class="smaller ">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Recurrent Neural Networks</h2></hgroup><article  class="smaller " id="recurrent-neural-networks">
 
-</article></slide><slide class=""><hgroup><h2>Intuition behind RNNs</h2></hgroup><article  id="intuition-behind-rnns" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>Intuition behind RNNs</h2></hgroup><article  class="smaller " id="intuition-behind-rnns">
+
+<center>
+
+<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_rnn_0.png' title=''/>
+
+</center>
 
 <ul>
 <li><strong>Recurrent neural networks</strong> (RNN) address this issue in a very simplified way. They are networks with loops in them, allowing information to persist.</li>
@@ -3200,7 +3210,7 @@ slide:not(.current) .plotly.html-widget{
 <li>What changes is that this data point is no longer processed in a single step; rather, the network internally loops over sequence elements.</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Loops</h2></hgroup><article  id="loops" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>Loops</h2></hgroup><article  class="smaller " id="loops">
 
 <pre >state_t = 0 # the state as t
 
@@ -3231,7 +3241,7 @@ for (input_t in input_sequence) {
 <li>It’s similar to the transformation operated by a densely connected layer in a feedforward network, right?</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>The structure of RNNs</h2></hgroup><article  id="the-structure-of-rnns" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>The structure of RNNs</h2></hgroup><article  class="smaller " id="the-structure-of-rnns">
 
 <center>
 
@@ -3246,9 +3256,9 @@ for (input_t in input_sequence) {
 <li>THen, with the <code>tanh()</code>, it squisches all the weights together to an output bounded between <code>[-1,1]</code>.</li>
 </ul>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Limits of RNNs</h2></hgroup><article  id="limits-of-rnns" class="smaller ">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Limits of RNNs</h2></hgroup><article  class="smaller " id="limits-of-rnns">
 
-</article></slide><slide class=""><hgroup><h2>Long-term Dependencies</h2></hgroup><article  id="long-term-dependencies" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>Long-term Dependencies</h2></hgroup><article  class="smaller " id="long-term-dependencies">
 
 <ul>
 <li><p>One of the appeals of RNNs is the idea that they might be able to connect previous information to the present task.</p></li>
@@ -3258,7 +3268,7 @@ for (input_t in input_sequence) {
 <li><p>Sadly, in practice, RNNs don’t seem to be able to learn them. The problem was explored in depth by Hochreiter (1991, in German) and Bengio, et al. (1994)[^1], who found some pretty fundamental reasons why it might be difficult. First and foremost, the <strong>valishing gradient</strong> problem.</p></li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>Backpropagation Through Time (BPTT)</h2></hgroup><article  id="backpropagation-through-time-bptt" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>Backpropagation Through Time (BPTT)</h2></hgroup><article  class="smaller " id="backpropagation-through-time-bptt">
 
 <ul>
 <li>Remember, the purpose of RNNs is to accurately classify sequential input.</li>
@@ -3269,7 +3279,7 @@ for (input_t in input_sequence) {
 <li>Adding a time element only extends the series of functions for which we calculate derivatives with the chain rule.</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>The Vanishing (Exploding) Gradient</h2></hgroup><article  id="the-vanishing-exploding-gradient" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>The Vanishing (Exploding) Gradient</h2></hgroup><article  class="smaller " id="the-vanishing-exploding-gradient">
 
 <ul>
 <li>Information flowing through neural nets passes through many stages of multiplication.<br/></li>
@@ -3284,7 +3294,7 @@ for (input_t in input_sequence) {
 
 <center>
 
-<img class="img" src='https://sds-aau.github.io/SDS-master/00_media/DL_vanishing_gradient.png' title=''/>
+<img class="img_small" src='https://sds-aau.github.io/SDS-master/00_media/DL_vanishing_gradient.png' title=''/>
 
 </center>
 
@@ -3294,9 +3304,9 @@ for (input_t in input_sequence) {
 <li>This is analogous to a gradient vanishing as it passes through many layers.</li>
 </ul>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Long Short-Term Memory Units (LSTMs)</h2></hgroup><article  id="long-short-term-memory-units-lstms" class="smaller ">
+</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Long Short-Term Memory Units (LSTMs)</h2></hgroup><article  class="smaller " id="long-short-term-memory-units-lstms">
 
-</article></slide><slide class=""><hgroup><h2>LSTM introduction</h2></hgroup><article  id="lstm-introduction" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>LSTM introduction</h2></hgroup><article  class="smaller " id="lstm-introduction">
 
 <ul>
 <li>Long Short Term Memory networks – usually just called &ldquo;LSTMs&rdquo; – are a special kind of RNN, capable of learning long-term dependencies.</li>
@@ -3307,7 +3317,7 @@ for (input_t in input_sequence) {
 <li>Remembering information for long periods of time is practically their default behavior, not something they struggle to learn!</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>The structure of LSTMs</h2></hgroup><article  id="the-structure-of-lstms" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>The structure of LSTMs</h2></hgroup><article  class="smaller " id="the-structure-of-lstms">
 
 <center>
 
@@ -3375,7 +3385,7 @@ for (input_t in input_sequence) {
 <li>Conceptually, that is how an LSTM learns to remember as well as to forget. Lets inspect these layers more in detail.</li>
 </ul>
 
-</article></slide><slide class=""><hgroup><h2>1: The Forget Gate Layer</h2></hgroup><article  id="the-forget-gate-layer" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>1: The Forget Gate Layer</h2></hgroup><article  class="smaller " id="the-forget-gate-layer">
 
 <center>
 
@@ -3390,7 +3400,7 @@ for (input_t in input_sequence) {
 
 <p>Let’s go back to our example of a language model trying to predict the next word based on all the previous ones. In such a problem, the cell state might include the gender of the present subject, so that the correct pronouns can be used. When we see a new subject, we want to forget the gender of the old subject.</p>
 
-</article></slide><slide class=""><hgroup><h2>2: The Input Gate Layer</h2></hgroup><article  id="the-input-gate-layer" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>2: The Input Gate Layer</h2></hgroup><article  class="smaller " id="the-input-gate-layer">
 
 <center>
 
@@ -3423,7 +3433,7 @@ for (input_t in input_sequence) {
 
 <p>In the case of the language model, this is where we’d actually drop the information about the old subject’s gender and add the new information, as we decided in the previous steps.</p>
 
-</article></slide><slide class=""><hgroup><h2>3: The Output Gate Layer</h2></hgroup><article  id="the-output-gate-layer" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>3: The Output Gate Layer</h2></hgroup><article  class="smaller " id="the-output-gate-layer">
 
 <center>
 
@@ -3439,7 +3449,7 @@ for (input_t in input_sequence) {
 
 <p>For the language model example, since it just saw a subject, it might want to output information relevant to a verb, in case that’s what is coming next. For example, it might output whether the subject is singular or plural, so that we know what form a verb should be conjugated into if that’s what follows next.</p>
 
-</article></slide><slide class=""><hgroup><h2>Summary</h2></hgroup><article  id="summary" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>Summary</h2></hgroup><article  class="smaller " id="summary">
 
 <ul>
 <li>And, thats pretty much it. Sounds complicated, and to some extent it is. However, the concept is pretty straightforward.</li>
@@ -3459,11 +3469,7 @@ for (input_t in input_sequence) {
 
 </center>
 
-</article></slide><slide class="segue dark nobackground level1"><hgroup class = 'auto-fadein'><h2>Summary</h2></hgroup><article  id="summary-1" class="smaller ">
-
-</article></slide><slide class=""><hgroup><h2>Summing up</h2></hgroup><article  id="summing-up" class="smaller ">
-
-</article></slide><slide class=""><hgroup><h2>References</h2></hgroup><article  id="references" class="smaller ">
+</article></slide><slide class=""><hgroup><h2>References</h2></hgroup><article  class="smaller " id="references">
 
 <ul>
 <li>Yoshua Bengio, Patrice Simard, and Paolo Frasconi, &ldquo;Learning Long-Term Dependencies with Gradient Descent Is Difficult,&rdquo; IEEE Transactions on Neural Networks 5, no. 2 (1994).</li>
