@@ -36,6 +36,164 @@ library(magrittr)
 library(keras)
 ```
 
+# RNN basics
+
+## Loops
+
+To make these notions absolutely unambiguous, let’s write a naive `R` implementation of the forward pass of the simple RNN.
+
+```{r}
+# We define a function that produces a "random" array
+random_array <- function(dim) {
+  array(runif(prod(dim)), dim = dim)
+}
+```
+
+```{r}
+# We define some constants as arguments for the functions to come
+timesteps <- 100 # Number of timesteps in the input sequence
+input_features <- 32 # Dimensionality of the input feature space
+output_features <- 64 # Dimensionality of the output feature space
+```
+
+```{r}
+# We create the initial inputs
+inputs <- random_array(dim = c(timesteps, input_features)) # Input data: random noise for the sake of the example
+state_t <- rep_len(0, length = c(output_features)) # Initial state t: an all-zero vector
+```
+
+```{r}
+# We create some random matrices for W, U, b
+W <- random_array(dim = c(output_features, input_features)) # Creates random weight matrices: W
+U <- random_array(dim = c(output_features, output_features)) # Creates random weight matrices: U
+b <- random_array(dim = c(output_features, 1)) # Creates random weight matrices: b
+```
+
+```{r}
+# We create an empty array for the output sequence
+output_sequence <- array(0, dim = c(timesteps, output_features))
+```
+
+```{r}
+dim(output_sequence)
+```
+
+```{r}
+head(output_sequence[,1:5])
+```
+
+So, we just made up an random `inputs` array, lets take a little look:
+
+```{r}
+dim(inputs)
+```
+
+```{r}
+head(inputs[,1:5])
+```
+
+There we go. We created an 2d tensor, where we have an vector of 32 features over 100 timesteps. Likewise, we created a random weight matrix `W` (weights for `t`) and `U` (weights for `t-1`) of dimensionality 64x32 (we want 64 outputs), and a bias vector of lenght 64.
+
+```{r}
+dim(W)
+```
+
+```{r}
+head(W[,1:5])
+```
+
+
+All set up, lets run a loop, where we apply some activation function (here `tanh()`) on the weighted `input_t`, but we add the (in another way) weighted `state_t` (the lagged value of `input_t` $\rightarrow$ `input_t-1`).
+
+**Note:**  I use `tanh()` just as an example for whatever activation function you might want to apply to your inputs. `tanh()` (hyperbolic  tangent) is popular for RNNs, since it squishes input values between a range of `[-1,1]`
+
+```{r}
+for (i in 1:nrow(inputs)) {
+  input_t <- inputs[i,]                                                # input_t is a vector of shape (input_features)
+  output_t <- tanh(as.numeric((W %*% input_t) + (U %*% state_t) + b))  # Combines the input with the current state (the previous output) 
+  output_sequence[i,] <- as.numeric(output_t)                          # Updates the result matrix
+  state_t <- output_t                                                  # Updates the state of the network for the next timestep
+}
+```
+
+```{r}
+glimpse(output_sequence)
+```
+
+
+**Note:**  In `U %*% state_t`, the `%*%` operator performs a real matrix multiplication (every element of `U` gets multiplied with every element of `state_t`), not the dotproduct (cell-wise multiplication), as `U * state_t` would.
+
+Easy enough: in summary, an RNN is an neural network application of a `for()` (reuses values computed during the previous iteration of the loop), nothing more. Of course, there are many different RNNs fitting this definition that you could build—this example is one of the simplest RNN formulations. Anyhow, In case we would not have to train the weights, we are done by here.
+
+RNNs are characterized by their step function, such as the following function in this case
+
+```{r}
+output_t <- tanh(as.numeric((W %*% input_t) + (U %*% state_t) + b))
+```
+
+```{r}
+glimpse(output_t)
+```
+
+
+So, that's pretty much how to construct a recurrent layer "by hand". Most probably you will never have to, but I like to believe it demystifies the whole process.Moving on...
+
+
+## Recurrent Layers in `Keras`
+
+The process you just naively implemented in `R` corresponds to an actual `Keras` layer: `layer_simple_rnn`
+
+```{r}
+layer_simple_rnn(units = 32)
+```
+
+Like all recurrent layers in `Keras`, `layer_simple_rnn` can be run in two different modes: 
+
+1. it can return either the full sequences of successive outputs for each timestep (a 3D tensor of shape `(batch_size, timesteps, output_features)`) 
+2. or only the last output for each input sequence (a 2D tensor of shape `(batch_size, output_features)`). 
+
+These two modes are controlled by the `return_sequences` constructor argument. Let’s look at an example that uses `layer_simple_rnn` and returns only the output at the last timestep:
+
+```{r}
+model <- keras_model_sequential() %>%
+  layer_embedding(input_dim = 10000, output_dim = 32) %>% # About this type of layer, we talk later
+  layer_simple_rnn(units = 32)
+```
+
+```{r}
+summary(model)
+```
+
+
+The following example in turn returns the full state sequence (`return_sequences = TRUE`):
+
+```{r}
+model_sequence <- keras_model_sequential() %>%
+  layer_embedding(input_dim = 10000, output_dim = 32) %>%
+  layer_simple_rnn(units = 32, return_sequences = TRUE)
+```
+
+```{r}
+summary(model_sequence)
+```
+
+It’s sometimes useful to stack several recurrent layers one after the other in order to increase the representational power of a network. In such a setup, you have to get all of the intermediate layers to return full sequences. More on that later.
+
+```{r}
+model_sequence_stacked <- keras_model_sequential() %>%
+  layer_embedding(input_dim = 10000, output_dim = 32) %>%
+  layer_simple_rnn(units = 32, return_sequences = TRUE) %>%
+  layer_simple_rnn(units = 32, return_sequences = FALSE)
+```
+
+```{r}
+summary(model_sequence_stacked)
+```
+
+```{r,include=FALSE}
+rm(list=ls())
+```
+
 # Recurrent Neural Networks (a text example)
 
 So, lets start applying a first RNN, and since you are already warmed up, we do it with text data. It is not hard to see why for making sense of text data, sequential models would be a good idea. 
@@ -184,7 +342,7 @@ So far so good, let's run a "normal" feed-forward ANN to predict the review sent
 2: Compile the model (choosing optimizer, loss function, and metric)
 3: Run the model
 
-### MOdel architecture
+### Model architecture
 
 We use, like before, a simple feed forward architecture with an input layer of shape 10.000 (number of words in our review vector), 2 inetrmediate hidden layers with 16 units each, and an ouput layer with only 1 unit (since we perform a binary classification). For the hidden layers, we use the standard `relu` activation function, for the output we use `sigmoid`, as common for binary classification. Note that all architecture choices in this example are standard, but not necessarily informed by our data. Just a good rule-of-thumb starting point.
 
@@ -271,7 +429,7 @@ Lets set up our model. as discussed, we will first use a `layer_embedding` to co
 Then we add a `layer_simple_rnn` on top, and finally a `layer_dense` for the binary prediction of review sentiment.
 
 ```{r}
-model <- keras_model_sequential() %>%
+model_rnn <- keras_model_sequential() %>%
   layer_embedding(input_dim = 10000, output_dim = 32) %>%
   layer_simple_rnn(units = 32, activation = "tanh") %>%
   layer_dense(units = 1, activation = "sigmoid")
@@ -284,8 +442,8 @@ summary(model)
 THe further parameters are quite conventional and by now well-known.
 
 ```{r}
-model %>% compile(
-  optimizer = "rmsprop",
+model_rnn %>% compile(
+  optimizer = "adam",
   loss = "binary_crossentropy",
   metrics = "accuracy"
 )
@@ -294,7 +452,7 @@ model %>% compile(
 And we already run the model:
 
 ```{r}
-history <- model %>% fit(
+history_rnn <- model_rnn %>% fit(
   x_train, y_train,
   epochs = 10,
   batch_size = 128,
@@ -307,3 +465,65 @@ Yes, I know, this one takes a while...
 In adittion, the model performs quite dissapointing. After about 4 periods, it starts overfitting, as often. However, the highest validation accuracy we get during the epochs is slightly higher than 85%, which is no improvement compared to our baseling. Part of the problem is that your inputs only consider the first 500 words, rather than full sequences—hence, the RNN has access to less information than the earlier baseline model. 
 
 The insight of the problem is that `layer_simple_rnn` isn’t good at processing long sequences, such as 500+ words review text. The reason is that words often derive their meaning not only from the one word before, but a longer sequence, eg. the whole sentence in which they occur. For such settings, other types of recurrent layers perform much better. Let’s go on exploring.
+
+                    
+## LSTM Application
+
+```{r}
+model_lstm <- keras_model_sequential() %>%
+  layer_embedding(input_dim = 10000, output_dim = 32) %>%
+  layer_lstm(units = 500, dropout = 0.25, recurrent_dropout = 0.25, return_sequences = FALSE) %>%
+  layer_dense(units = 1, activation = "sigmoid")
+```
+
+
+```{r}
+model_lstm %>% compile(
+  optimizer = "adam",
+  loss = "binary_crossentropy",
+  metrics = "accuracy"
+)
+```
+
+```{r}
+summary(model)
+```
+
+Lets run it!
+
+```{r}
+#history_lstm <- model_lstm %>% fit(
+#  x_train,
+#  y_train,
+#  epochs = 5,
+#  batch_size = 512,
+#  validation_split = 0.25
+#)
+```
+
+And lets take a look how the accuracy and loss developed over the epocs.
+
+```{r}
+#plot(history_lstm)
+```
+
+Well...
+
+
+# Endnotes
+
+### References
+
+[^1] Yoshua Bengio, Patrice Simard, and Paolo Frasconi, “Learning Long-Term Dependencies with Gradient Descent Is Difficult,” IEEE Transactions on Neural Networks 5, no. 2 (1994).
+
+[^2]Sepp Hochreiter and Jürgen Schmidhuber, “Long Short-Term Memory,” Neural Computation 9, no. 8 (1997).
+
+### More info
+You can find more info about:
+
+* `keras` [here](https://keras.rstudio.com/)
+
+### Session info
+```{r}
+sessionInfo()
+```

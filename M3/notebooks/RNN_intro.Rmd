@@ -77,6 +77,12 @@ In this session, you will:
 
 ## Intuition behind RNNs
 
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/DL_rnn_0.png){.img}
+</center>
+
+
 * **Recurrent neural networks** (RNN) address this issue in a very simplified way. They are networks with loops in them, allowing information to persist.
 * it processes sequences by iterating through the sequence elements and maintaining a **state** containing information relative to what it has seen so far. 
 * In effect, an RNN is a type of neural network that has an **internal loop**
@@ -85,7 +91,7 @@ In this session, you will:
 
 ## Loops 
 
-```{reval=FALSE, include=TRUE}
+```{}
 state_t = 0 # the state as t
 
 for (input_t in input_sequence) {
@@ -102,7 +108,7 @@ for (input_t in input_sequence) {
 
 ----
 
-```{r,eval=FALSE, include=TRUE}
+```{}
 state_t <- 0
 
 for (input_t in input_sequence) {
@@ -114,60 +120,87 @@ for (input_t in input_sequence) {
 * You can even flesh out the function `f`: the transformation of the input and state into an output will be parameterized by two matrices, `W` and `U`, and a bias vector `b`. 
 * It’s similar to the transformation operated by a densely connected layer in a feedforward network, right?
 
-
-# Long Short Term Memory networks
-
-## Intuition LTM
-
-One of the appeals of RNNs is the idea that they might be able to connect previous information to the present task, such as using previous word sequences might inform the understanding of the present word in context. If RNNs could do this, they’d be extremely useful. We already saw in the example before, that going one step back is often not good enough, since meaning in some cases unfolds over a long sequence. 
-
-So, could we just stack several `layer_simple_rnn`on top of each other to capture the information contained in long sequences? Kind of, but there is a probhlem...
-
-In theory, RNNs are absolutely capable of handling such “long-term dependencies.” A human could carefully pick parameters for them to solve toy problems of this form. Sadly, in practice, RNNs don’t seem to be able to learn them. The problem was explored in depth by Hochreiter (1991, in German) and Bengio, et al. (1994)[^1], who found some pretty fundamental reasons why it might be difficult. First and foremost, the **valishing gradient** problem.
-
-
-## Backpropagation Through Time (BPTT) and the Vanishing (Exploding) Gradient
-
-Remember, the purpose of RNNs is to accurately classify sequential input. We rely on the backpropagation of error and gradient descent to do so. RNNs rely on an extension of backpropagation called **backpropagation through time**, or BPTT. Time, in this case, is simply expressed by a well-defined, ordered series of calculations linking one time step to the next, which is all backpropagation needs to work. Remember, neural networks, whether they are recurrent or not, are simply nested composite functions like `f(g(h(x)))`. Adding a time element only extends the series of functions for which we calculate derivatives with the chain rule.
-
-This is partially because the information flowing through neural nets passes through many stages of multiplication.  Because the layers and time steps of deep neural networks relate to each other through multiplication, derivatives are susceptible to vanishing or exploding. This is an effect that is similar to what is observed with non-recurrent networks (feedforward networks) that are many layers deep: as you keep adding layers to a network, the network eventually becomes untrainable.
-
-Exploding gradients treat every weight as though it were the proverbial butterfly whose flapping wings cause a distant hurricane. Those weights’ gradients become saturated on the high end; i.e. they are presumed to be too powerful. But exploding gradients can be solved relatively easily, because they can be truncated or squashed. Vanishing gradients can become too small for computers to work with or for networks to learn – a harder problem to solve.
-
-Below you see the effects of applying a sigmoid function over and over again. The data is flattened until, for large stretches, it has no detectable slope. This is analogous to a gradient vanishing as it passes through many layers.
-
-<center>
-![](https://sds-aau.github.io/SDS-master/00_media/DL_vanishing_gradient.png){.img}
-</center>
-
-## Long Short-Term Memory Units (LSTMs)
-
-### Introduction
-
-Long Short Term Memory networks – usually just called “LSTMs” – are a special kind of RNN, capable of learning long-term dependencies. They were  were introduced by Hochreiter & Schmidhuber (1997)[^2], and represent the cunnulation of their work on the vanishing gradient problem. They work tremendously well on a large variety of problems, and are now widely used.
-
-After all, their idea was simple: They introduced a variant of `layer_simple_rnn`; it adds a way to carry information across many timesteps. Imagine a conveyor belt running parallel to the sequence you’re processing. Information from the sequence can jump onto the conveyor belt at any point, be transported to a later timestep, and jump off, intact, when you need it. 
-
-This is essentially what LSTM does: it saves information for later, thus preventing older signals from gradually vanishing during processing. Remembering information for long periods of time is practically their default behavior, not something they struggle to learn!
-
-All recurrent neural networks have the form of a chain of repeating modules of neural network. In standard RNNs, this repeating module will have a very simple structure, such as a single `tanh()` layer. It takes (differently) weighted input from the cells in the layer below, as well as of the **state**, which is just the "saved"/"remembered" layer below how it was one time-step earlier (at t-1). THen, with the `tanh()`, it squisches all the weights together to an output bounded between `[-1,1]`.
+## The structure of RNNs 
 
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM1.png){.img}
 </center>
 
-### The structure of LSTMs
+* Recurrent neural networks have the form of a chain of repeating modules of neural network. 
+* In standard RNNs, this repeating module will have a very simple structure, such as a single `tanh()` layer. 
+* It takes (differently) weighted input from the cells in the layer below, as well as of the **state**, which is just the "saved"/"remembered" layer below how it was one time-step earlier (at t-1). 
+* THen, with the `tanh()`, it squisches all the weights together to an output bounded between `[-1,1]`.
 
-LSTMs also have this chain like structure, but the repeating module has a different structure. Instead of having a single neural network layer, there are four, interacting in a very special way. In adittion to the layer with the `tanh()` activation function that produces `[-1,1]` outputs, we see adittional `sigmoid()` layers that produce output between `[0,1]`
 
+# Limits of RNNs
+
+## Long-term Dependencies
+
+* One of the appeals of RNNs is the idea that they might be able to connect previous information to the present task.
+* Yet, going one step back is often not good enough, since meaning in some cases unfolds over a long sequence. 
+* We just stack several `layer_simple_rnn`on top of each other to capture the information contained in long sequences? Kind of, but there is a probhlem...
+
+* In theory, RNNs are absolutely capable of handling such “long-term dependencies.” 
+* Sadly, in practice, RNNs don’t seem to be able to learn them. The problem was explored in depth by Hochreiter (1991, in German) and Bengio, et al. (1994)[^1], who found some pretty fundamental reasons why it might be difficult. First and foremost, the **valishing gradient** problem.
+
+
+## Backpropagation Through Time (BPTT) 
+
+* Remember, the purpose of RNNs is to accurately classify sequential input. 
+* We rely on the backpropagation of error and gradient descent to do so. 
+* RNNs rely on an extension of backpropagation called **backpropagation through time**, or BPTT. 
+* Time, in this case, is simply expressed by a well-defined, ordered series of calculations linking one time step to the next, which is all backpropagation needs to work.
+* Remember, neural networks, whether they are recurrent or not, are simply nested composite functions like `f(g(h(x)))`. 
+* Adding a time element only extends the series of functions for which we calculate derivatives with the chain rule.
+
+## The Vanishing (Exploding) Gradient
+
+* Information flowing through neural nets passes through many stages of multiplication.  
+* Because the layers and time steps of deep neural networks relate to each other through multiplication, derivatives are susceptible to *vanishing* or *exploding*. 
+* This is an effect that is similar to what is observed with non-recurrent networks (feedforward networks) that are many layers deep: as you keep adding layers to a network, the network eventually becomes untrainable.
+* Exploding gradients treat every weight as though it were the proverbial butterfly whose flapping wings cause a distant hurricane. 
+* Those weights’ gradients become saturated on the high end; i.e. they are presumed to be too powerful. 
+* But exploding gradients can be solved relatively easily, because they can be truncated or squashed. Vanishing gradients can become too small for computers to work with or for networks to learn – a harder problem to solve.
+
+----
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/DL_vanishing_gradient.png){.img}
+</center>
+
+* Here you see the effects of applying a sigmoid function over and over again. 
+* The data is flattened until, for large stretches, it has no detectable slope. 
+* This is analogous to a gradient vanishing as it passes through many layers.
+
+# Long Short-Term Memory Units (LSTMs)
+
+## LSTM introduction
+
+* Long Short Term Memory networks – usually just called “LSTMs” – are a special kind of RNN, capable of learning long-term dependencies. 
+* They were  were introduced by Hochreiter & Schmidhuber (1997)[^2], and represent the cunnulation of their work on the vanishing gradient problem. They work tremendously well on a large variety of problems, and are now widely used.
+* After all, their idea was simple: They introduced a variant of `layer_simple_rnn`; it adds a way to carry information across many timesteps. 
+*  Imagine a conveyor belt running parallel to the sequence you’re processing. Information from the sequence can jump onto the conveyor belt at any point, be transported to a later timestep, and jump off, intact, when you need it. 
+* This is essentially what LSTM does: it saves information for later, thus preventing older signals from gradually vanishing during processing. 
+* Remembering information for long periods of time is practically their default behavior, not something they struggle to learn!
+
+
+## The structure of LSTMs
 
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM2.png){.img}
 </center>
-Don’t worry about the details of what’s going on. We will do that one step by step. Lets rget first comfortable with the notation:
+
+* LSTMs also have this chain like structure, but the repeating module has a different structure. 
+* Instead of having a single neural network layer, there are four, interacting in a very special way. 
+* In adittion to the layer with the `tanh()` activation function that produces `[-1,1]` outputs, we see adittional `sigmoid()` layers that produce output between `[0,1]`
+
+----
+
+* Don’t worry about the details of what’s going on. 
+* We will do that one step by step. Lets rget first comfortable with the notation:
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_notation.png?dl=1){width=750px}
+![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_notation.png){width=750px}
 </center>
 
 In the above diagram, each line carries an entire vector, from the output of one node to the inputs of others. 
@@ -177,76 +210,101 @@ In the above diagram, each line carries an entire vector, from the output of one
 * Lines merging denote concatenation
 * Line forking denote its content being copied and the copies going to different locations.
 
+---- 
 
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM3.png){.img}
-</cnter>
+</center>
 
-The key to LSTMs is the cell **state**, the horizontal line running through the top of the diagram. The cell state is kind of like a conveyor belt. It runs straight down the entire chain, with only some minor linear interactions. It’s very easy for information to just flow along it unchanged.
+* The key to LSTMs is the cell **state**, the horizontal line running through the top of the diagram. 
+* The cell state is kind of like a conveyor belt. It runs straight down the entire chain, with only some minor linear interactions. 
+* It’s very easy for information to just flow along it unchanged.
+* The LSTM does have the ability to remove or add information to the cell state, carefully regulated by structures called **gates**.
 
-The LSTM does have the ability to remove or add information to the cell state, carefully regulated by structures called **gates**. Gates are a way to optionally let information through. They are composed out of a sigmoid neural net layer and a pointwise multiplication operation. 
+----
 
-The sigmoid layer outputs numbers between zero and one, describing how much of each component should be let through. A value of zero means “let nothing through,” while a value of one means “let everything through!” An LSTM has three of these gates, to protect and control the cell state.
+* Gates are a way to optionally let information through. 
+* They are composed out of a sigmoid neural net layer and a pointwise multiplication operation. 
+* The sigmoid layer outputs numbers between zero and one, describing how much of each component should be let through. 
+* A value of zero means “let nothing through,” while a value of one means “let everything through!” 
+* An LSTM has three of these gates, to protect and control the cell state.
+   1. The Forget Gate
+   2. The Input gate
+   3. The Output Gate
+* Conceptually, that is how an LSTM learns to remember as well as to forget. Lets inspect these layers more in detail.
 
-1. The Forget Gate
-2. The Input gate
-3. The Output Gate
 
-Conceptually, that is how an LSTM learns to remember as well as to forget. Lets inspect these layers more in detail.
-
-
-#### 1: The Forget Gate Layer
-
-The first step in our LSTM is to decide what information we’re going to throw away from the cell state. This decision is made by a `sigmoid` layer called the **forget gate layer.*”**  A `1` represents “completely keep this” while a `0` represents “completely get rid of this.”
-
-Let’s go back to our example of a language model trying to predict the next word based on all the previous ones. In such a problem, the cell state might include the gender of the present subject, so that the correct pronouns can be used. When we see a new subject, we want to forget the gender of the old subject.
-
+## 1: The Forget Gate Layer
 
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_G1.png){.img}
 </center>
 
+* The first step in our LSTM is to decide what information we’re going to throw away from the cell state. 
+* This decision is made by a `sigmoid` layer called the **forget gate layer.*”**  A `1` represents “completely keep this” while a `0` represents “completely get rid of this.”
 
-#### 2: The Input Gate Layer
+Let’s go back to our example of a language model trying to predict the next word based on all the previous ones. In such a problem, the cell state might include the gender of the present subject, so that the correct pronouns can be used. When we see a new subject, we want to forget the gender of the old subject.
 
-The next step is to decide what new information we’re going to store in the cell state. This has two parts. First, a `sigmoid` layer called the **input gate layer** decides which values we’ll update. Next, a `tanh` layer creates a vector of new candidate values, `Ct`, that could be added to the state. In the next step, we’ll combine these two to create an update to the state.
+## 2: The Input Gate Layer
+
+<center>
+![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_G2.png){.img}
+</center>
+
+* The next step is to decide what new information we’re going to store in the cell state. This has two parts. 
+* First, a `sigmoid` layer called the **input gate layer** decides which values we’ll update. 
+* Next, a `tanh` layer creates a vector of new candidate values, `Ct`, that could be added to the state. 
+* In the next step, we’ll combine these two to create an update to the state.
 
 In the example of our language model, we’d want to add the gender of the new subject to the cell state, to replace the old one we’re forgetting.
 
-<center>
-![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_G2.png?dl=1){.img}
-</center>
-
-
-It’s now time to update the old cell state, `Ct−1`, into the new cell state `Ct`. The previous steps already decided what to do, we just need to actually do it. We multiply the old state by `ft`, forgetting the things we decided to forget earlier. Then we add `it∗Ct`. This is the new candidate values, scaled by how much we decided to update each state value.
-
-In the case of the language model, this is where we’d actually drop the information about the old subject’s gender and add the new information, as we decided in the previous steps.
+----
 
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_G3.png){.img}
 </center>
 
+* It’s now time to update the old cell state, `Ct−1`, into the new cell state `Ct`. 
+* The previous steps already decided what to do, we just need to actually do it. We multiply the old state by `ft`, forgetting the things we decided to forget earlier. 
+* Then we add `it∗Ct`. This is the new candidate values, scaled by how much we decided to update each state value.
 
-#### 3: The Output Gate Layer
+In the case of the language model, this is where we’d actually drop the information about the old subject’s gender and add the new information, as we decided in the previous steps.
 
-Finally, we need to decide what we’re going to output. This output will be based on our cell state, but will be a filtered version. First, we run a `sigmoid` layer which decides what parts of the cell state we’re going to output. Then, we put the cell state through `tanh` (to push the values to be between [−1,1]) and multiply it by the output of the `sigmoid` gate, so that we only output the parts we decided to.
 
-For the language model example, since it just saw a subject, it might want to output information relevant to a verb, in case that’s what is coming next. For example, it might output whether the subject is singular or plural, so that we know what form a verb should be conjugated into if that’s what follows next.
+## 3: The Output Gate Layer
 
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_G4.png){.img}
 </center>
 
+* Finally, we need to decide what we’re going to output. This output will be based on our cell state, but will be a filtered version. 
+* First, we run a `sigmoid` layer which decides what parts of the cell state we’re going to output. T
+* hen, we put the cell state through `tanh` (to push the values to be between [−1,1]) and multiply it by the output of the `sigmoid` gate, so that we only output the parts we decided to.
 
-#### Summary 
+For the language model example, since it just saw a subject, it might want to output information relevant to a verb, in case that’s what is coming next. For example, it might output whether the subject is singular or plural, so that we know what form a verb should be conjugated into if that’s what follows next.
 
-And, thats pretty much it. Sounds complicated, and to some extent it is. However, the concept is pretty straightforward. In order to exploit the information of multiple recurrent layers, we have to find a way to train the weights while avoiding the vanishing gradient problem. 
 
-Therefore we introduce gates, through which previous states can pass through quasi unaltered. However, not every information from previous sequences is useful for us. Indeed, too much information could be a curse rather than a blessing for our model. Therefore, we have to introduce further gates that decide which information from previous stages to remember, and which to forget.
+## Summary 
 
-Inj `Keras` we can envision the architectur of an LSTM as follows:
+* And, thats pretty much it. Sounds complicated, and to some extent it is. However, the concept is pretty straightforward. 
+* In order to exploit the information of multiple recurrent layers, we have to find a way to train the weights while avoiding the vanishing gradient problem. 
+* Therefore we introduce gates, through which previous states can pass through quasi unaltered. 
+* However, not every information from previous sequences is useful for us. Indeed, too much information could be a curse rather than a blessing for our model. 
+* Therefore, we have to introduce further gates that decide which information from previous stages to remember, and which to forget.
+
+----
+
+In `Keras` we can envision the architectur of an LSTM as follows:
 
 <center>
-![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_architecture.png){.img}
+![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_architecture.png){.img_small}
 </center>
 
+# Summary
+
+## Summing up
+
+## References
+
+* Yoshua Bengio, Patrice Simard, and Paolo Frasconi, “Learning Long-Term Dependencies with Gradient Descent Is Difficult,” IEEE Transactions on Neural Networks 5, no. 2 (1994).
+* Sepp Hochreiter and Jürgen Schmidhuber, “Long Short-Term Memory,” Neural Computation 9, no. 8 (1997).
