@@ -23,7 +23,7 @@
 
 # Part III: Recurrent Neural Networks (RNNs & LSTMs)
 
-* Theory [Video (Comming soon)](XXXXX) [Slides](https://sds-aau.github.io/SDS-master/M3/notebooks/RNN_intro.html)
+* Theory [Video](https://www.loom.com/share/4f364594e2ea4bdcb6da5beac12f56f6) [Slides](https://sds-aau.github.io/SDS-master/M3/notebooks/RNN_intro.html)
 
 * Application R
    * Application - Basics & IMDB reviews [Video (Comming soon)](XXXXX)  [Html](https://sds-aau.github.io/SDS-master/M3/notebooks/CNN_application_R.nb.html) [Colab (Comming soon)](XXXXX) 
