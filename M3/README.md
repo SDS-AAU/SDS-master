@@ -26,7 +26,7 @@
 * Theory [Video](https://www.loom.com/share/d1b775f28a194fa7a6f6c62d037a9870) [Slides](https://sds-aau.github.io/SDS-master/M3/notebooks/RNN_intro.html)
 
 * Application R
-   * Application - Basics & IMDB reviews Video [1: Intro](https://www.loom.com/share/eaf2f07b85ef498fbf7a356ad25e9ee9) [2: RNN (Comming soon)](XXX)  [Html](https://sds-aau.github.io/SDS-master/M3/notebooks/RNN_application_R.nb.html) [Colab (Comming soon)](XXXXX) 
+   * Application - Basics & IMDB reviews Video [1: Intro](https://www.loom.com/share/eaf2f07b85ef498fbf7a356ad25e9ee9) [2: RNN (Comming soon)](https://www.loom.com/share/36ac6f7d36fa4c16b6df77dcdb2135b9)  [Html](https://sds-aau.github.io/SDS-master/M3/notebooks/RNN_application_R.nb.html) 
 
 # Further Resources
 
