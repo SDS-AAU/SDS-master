@@ -424,7 +424,7 @@ model_rnn <- keras_model_sequential() %>%
 ```
 
 ```{r}
-summary(model)
+summary(model_rnn)
 ```
 
 THe further parameters are quite conventional and by now well-known.
