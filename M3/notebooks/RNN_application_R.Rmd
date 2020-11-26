@@ -500,7 +500,9 @@ And lets take a look how the accuracy and loss developed over the epocs.
 plot(history_lstm)
 ```
 
-Well...
+Well... that takes forever. In this case, we also not exprience any particulr performance benefits... sadly we waited in vain this time... :( To be fair, we see the accuracy still improving, so if we might wait a it.... who knows...
+
+In case you have the GPU version of keras installed, you can actually get some real benefits if you use the [`layer_cudnn_gru()`](https://keras.rstudio.com/reference/layer_cudnn_gru.html) instead of the `layer_simple_rnn()`, and the [`layer_cudnn_lstm()`](https://keras.rstudio.com/reference/layer_cudnn_lstm.html) instead of the `layer_lstm`. Both are optimized for CUDA parallel processing on the GPU, and speed up the whole story quite a bit. Both can also be used on colab, since there is the GPU available.
 
 
 # Endnotes
@@ -509,7 +511,7 @@ Well...
 
 [^1] Yoshua Bengio, Patrice Simard, and Paolo Frasconi, “Learning Long-Term Dependencies with Gradient Descent Is Difficult,” IEEE Transactions on Neural Networks 5, no. 2 (1994).
 
-[^2]Sepp Hochreiter and Jürgen Schmidhuber, “Long Short-Term Memory,” Neural Computation 9, no. 8 (1997).
+[^2] Sepp Hochreiter and Jürgen Schmidhuber, “Long Short-Term Memory,” Neural Computation 9, no. 8 (1997).
 
 ### More info
 You can find more info about:
@@ -517,6 +519,7 @@ You can find more info about:
 * `keras` [here](https://keras.rstudio.com/)
 
 ### Session info
+
 ```{r}
 sessionInfo()
 ```
