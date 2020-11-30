@@ -1,0 +1,74 @@
+---
+title:  'Sequence-2-Sequence forecasting (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(keras)
+```
+
+```{r}
+# others
+library(tidyquant)
+library(tidymodels) # Or only load the 'rsample' on its own
+
+# Time Series
+library(forecast)
+library(tsibble)
+library(feasts)
+```
+
+# Load some data
+
+```{r}
+tickers = 
+            
+data_stocks <- tq_get(c("AAPL", "NFLX", "AMZN"),
+               from = "2000-01-01",
+               to = "2020-11-30",
+               get = "stock.prices")
+```
+
+```{r}
+data_stocks %>% head()
+```
+
+```{r}
+data_stocks %>%
+  ggplot(aes(x = date, y = adjusted)) +
+  geom_line() +
+  labs(x = 'Date',
+       y = "Adjusted Price",
+       title = "Apple price chart") +
+  scale_y_continuous(breaks = seq(0,300,10))
+```
+
+

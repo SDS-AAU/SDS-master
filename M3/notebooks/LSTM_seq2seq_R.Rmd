@@ -1,0 +1,397 @@
+---
+title:  'Sequence-2-Sequence forecasting (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(keras)
+```
+
+```{r}
+# others
+#library(tidyquant)
+library(tidymodels) # Or only load the 'rsample' on its own
+
+# Time Series
+library(forecast)
+library(tsibble)
+library(feasts)
+```
+
+
+# LSTMs for Forecasting
+
+Time series prediction has experienced dramatic improvements in predictive accuracy as a result of the data science machine learning and deep learning evolution. As these ML/DL tools have evolved, businesses and financial institutions are now able to forecast better by applying these new technologies to solve old problems. Particularly, LSTMs have here proven useful for problems involving sequences with autocorrelation. 
+
+Particularly challenging are predictions over multiple periods. When predictions are based on predictions, which are based on predictions, small errors amplify in every step. Furthermore, time series data that follows certain trends, such as stock market data, tends to follow cyclic trends. That means, knowing the current state of your future prediction target are not helpful without information on the current trend based on a series of previous states. Obviously, LSTMs are made for exactly such tasks. Lets get started!
+
+We will in the following take up two tasks:
+
+1. A Many-to-one prediction of the next value of a timeseries given its past states.
+2. A Many-to_many forecast of a future timeseries given its past states (outlook).
+
+## The `Sunspot` Dataset
+
+`Sunspots` is a famous data set included in `R` . The dataset tracks sunspots, which are the occurrence of a dark spot on the sun. Here’s an image from NASA showing the solar phenomenon. Pretty cool!
+
+![](https://www.dropbox.com/s/pjrqhaulc9rnzqa/random_sunspot_nasa.jpg?dl=1){width=750px}
+
+We now load `sunspot.month`. It’s a `ts` class for timeseries data (not tidy), which is used by many oldschool forecasting packages such as `forecast`.
+
+```{r}
+sun_spots <- datasets::sunspot.month
+```
+
+```{r}
+sun_spots %>% glimpse()
+```
+
+We see that the time series of recorder sunspots indeed starts in 1749, so we have more than 250 years of data. Cool!
+
+```{r}
+sun_spots %>% head(24)
+
+```
+
+```{r}
+sun_spots %>% tail(24)
+```
+
+We see the data is recorded monthly.
+
+Note that `ts` is not a tidy format. While useful with many of the oldschool timeseries packages, for our further workflow we would like to have a tidy timeseries instead. Here, we will use the `as_tsibble()` function to confert the `ts` into a tidy timeseries object `tsibble` from the package with the same name.
+
+```{r}
+data <- sun_spots %>%
+  as_tsibble()
+```
+
+```{r}
+data %>% head()
+```
+
+## Data Exploration & Visualization
+
+### Visualizing sunspot frequency over time
+
+Lets plot the sunspot pattern
+
+```{r, fig.width=12.5,fig.height=5}
+# Just for the optics, I will use the pretty theme and color palette from the tidyquant package
+data %>%
+  ggplot(aes(x = index, y = value)) +
+  geom_point(alpha = 0.25) +
+    labs(title = "Sunspots", 
+         subtitle = "From 1749 to 2013 (Full Data Set)")
+```
+This already gives us an idea that sunspot pattern indeed seem to be highly cyclic, with ups and downs round about every 10 years. This is good news for now!
+
+We can also zoom in a bit into a 50 year period to get a better glance of variations within the cycles.
+
+```{r, fig.width=12.5,fig.height=5}
+data %>%
+    filter(lubridate::year(index) <= 1800) %>%
+    ggplot(aes(index, value)) +
+    geom_line(alpha = 0.5) +
+    geom_point() +
+    geom_smooth(method = "loess", span = 0.2, se = FALSE) +
+    labs(title = "Sunspots", 
+         subtitle = "1749 to 1800 (Zoomed In To Show Cycle)")
+
+```
+
+At first glance, it looks like this series should be easy to predict. However, we can see that the cycle (10-year frequency) and amplitude (count of sunspots) seems to change at least between years 1780 and 1800. This creates some challenges.
+
+### Evaluating the Autocorrelation Function (AFC)
+
+The next thing we can do is determine whether or not an LSTM model may be a good approach. The LSTM based *only on past values* of sunspots will leverage **autocorrelation** to generate sequence predictions. 
+
+Our final goal is to produce a 10-year forecast using batch forecasting (a technique for creating a single forecast batch across the forecast region, which is in contrast to a single-prediction that is iteratively performed one or several steps into the future). The batch prediction will only work if the autocorrelation used is beyond ten years. Let’s inspect.
+
+First, we need to review the Autocorrelation Function (ACF), which is the correlation between the time series of interest in lagged versions of itself. The `ACF()` function from the `feasts` library returns the ACF values for each lag as a plot. 
+
+```{r, fig.width=12.5,fig.height=5}
+data %>% ACF() %>% autoplot()
+```
+
+This is good news. We have autocorrelation in excess of 0.5 beyond lagged values (in years) of more than 15 years . We can theoretically use one of the high autocorrelation lags to develop an LSTM model. Lets `filter` for the optimal lag (in month).
+
+
+##  Predictions
+
+### Getting the data ready
+
+#### Development of a Backtesting Strategy
+
+Cross validation is the process of developing models on sub-sampled data against a validation set with the goal of determining an expected accuracy level and error range. Time series is a bit different than non-sequential data when it comes to cross validation. Specifically, the time dependency on previous time samples must be preserved when developing a sampling plan. 
+
+We can create a cross validation sampling plan using by offsetting the window used to select sequential sub-samples. In finance, this type of analysis is often called **Backtesting**, which takes a time series and splits it into multiple uninterupted sequences offset at various windows that can be tested for strategies on both current and past observations.
+
+A recent development is the `rsample` package, which makes cross validation sampling plans very easy to implement. Further, the `rsample` package (as part of the `tidymodels` ecosystem) has Backtesting covered. The `vignette`, “Time Series Analysis Example”, describes a procedure that uses the `rolling_origin()` function to create samples designed for time series cross validation. We’ll use this approach.
+
+
+![](https://sds-aau.github.io/SDS-master/00_media/DL_LSTM_walkforward2.png){width=750px}
+
+The sampling plan we create uses:
+
+* 50 years (`initial = 12 * 50` samples) for the training set 
+* 10  years (`assess = 12 * 10`) for the testing (validation) set 
+
+We select a skip span of twenty years (`skip = 12 * 20`) to evenly distribute the samples into sets that span the entire 260 years of sunspots history. Last, we select `cumulative = FALSE` to allow the origin to shift which ensures that models on more recent data are not given an unfair advantage (more observations) that those on less recent data. The tibble return contains the `rolling_origin_resamples`.
+
+```{r}
+periods_train <- 12 * 50 # Training data
+periods_test  <- 12 * 10 # Test data
+skip_span     <- 12 * 20 # How many observations to skip 
+
+data_resamples <- data %>%
+  rolling_origin(
+    initial    = periods_train, # The number of samples used for analysis/modeling in the initial resample.
+    assess     = periods_test, # The number of samples used for each assessment resample.
+    cumulative = FALSE, #  A logical. Should the analysis resample grow beyond the size specified by initial at each resample?
+    skip       = skip_span # A integer indicating how many (if any) additional resamples to skip to thin the total amount of data points in the analysis resample.
+    )
+```
+
+```{r}
+data_resamples
+```
+
+
+```{r}
+data_resamples %>% glimpse()
+```
+
+```{r}
+data_resamples$splits[[1]]  %>% glimpse()
+```
+
+
+## A statefull LSTM in `Keras`
+
+
+To begin, we’ll develop a single Keras Stateful LSTM model on a single sample from the Backtesting Strategy. We’ll then scale the model to all samples to investigate/validate the modeling performance.
+
+### LSTM for singe prediction
+
+For the single LSTM model, we’ll only select the split for the most recent time sample/slice.
+
+```{r}
+period_select <- 11
+
+data_split  <- data_resamples$splits[[period_select]]
+split_id <- data_resamples$id[[period_select]]
+```
+
+
+#### Data Setup
+
+First, let’s combine the training and testing data sets into a single data set with a column key that specifies what set they came from (either `training` or `testing`). 
+
+```{r}
+test <- data_resamples$splits %>% training()
+```
+
+
+```{r}
+data_train <- data_split %>% training() 
+data_test <- data_split %>% testing() 
+```
+
+
+#### Preprocessing
+
+The LSTM algorithm requires the input data to be centered and scaled. We can preprocess the data using the `recipes` package.
+
+```{r}
+data_recipe <- data_train %>%
+  recipe(value ~ .) %>%
+    step_normalize(value) %>%
+    prep()
+```
+
+Next, let’s capture the center/scale history so we can invert the center and scaling after modeling. The square-root transformation can be inverted by squaring the inverted center/scale values.
+
+```{r}
+prep_history <- tibble(
+  mean = data_recipe$steps[[1]]$means["value"],
+  sds = data_recipe$steps[[1]]$sds["value"]
+)
+```
+
+```{r}
+prep_history
+```
+* We now create a x and y split. Since we here always predict the next observation, that's easy. We will just set y= lead(x, 1)
+* We therefore also delete the last observation in train and the first in test
+
+```{r}
+n_lag = 1
+```
+
+
+```{r}
+x_train <- data_recipe %>% 
+  juice() %>%  
+  slice(1:(n()-n_lag))
+```
+
+```{r}
+y_train <- data_recipe %>%  
+  juice() %>%
+  mutate(value = value %>% lead(1)) %>%
+  slice((n_lag+1):n())
+```
+
+And the same for the test data
+
+```{r}
+x_test <- data_recipe %>% 
+  bake(data_test) %>%  
+  slice(1:(n()-n_lag))
+
+y_test <- data_recipe %>%  
+  bake(data_test) %>%  
+  mutate(value = value %>% lead(1)) %>%
+  slice((n_lag+1):n())
+```
+
+
+###¤ LSTM plan
+
+We need a plan for building the LSTM. First, a couple PRO TIPS with LSTM’s:
+
+* **Tensor Format:**
+   * Predictors (X) must be a 3D Array with dimensions: `[samples, timesteps, features]`: The first dimension is the length of values, the second is the number of time steps (lags), and the third is the number of predictors (1 if univariate or n if multivariate)
+   * Outcomes/Targets (y) must be a 2D Array with dimensions: [samples, timesteps]: The first dimension is the length of values and the second is the number of time steps (lags)
+* **Training/Testing:**
+   * The training and testing length must be evenly divisible (e.g. training length / testing length must be a whole number)
+* **Batch Size:**
+   * The batch size is the number of training examples in one forward/backward pass of a RNN before a weight update
+   * The batch size must be evenly divisible into both the training an testing lengths (e.g. training length / batch size and testing length / batch size must both be whole numbers)
+* **Time Steps:**
+   * A time step is the number of lags included in the training/testing set
+   * For our example, our we use a single lag
+* **Epochs:**
+   * The epochs are the total number of forward/backward pass iterations. Typically more improves model performance unless overfitting occurs at which time the validation accuracy/loss will not improve
+   
+Taking this in, we can come up with a plan. We’ll select a prediction of window 120 months (10 years) or the length of our test set. The best correlation occurs at 125, but this is not evenly divisible by the forecasting range. We could increase the forecast horizon, but this offers a minimal increase in autocorrelation. We can select a batch size of 40 units which evenly divides into the number of testing and training observations. We select `time steps = 1`, which is because we are only using one lag. Finally, we set `epochs = 10`, but this will need to be adjusted to balance the bias/variance tradeoff.
+
+
+#### 2D and 3D TTrain/Test Arrays
+
+* We can then setup the training and testing sets in the correct format (arrays) as follows. 
+* Remember, LSTM’s need 3D arrays for predictors (X) and 2D arrays for outcomes/targets (y).
+
+```{r}
+x_train %<>% pull(value) %>% array_reshape(dim = c(length(.), 1, 1))
+x_test %<>% pull(value) %>% array_reshape(dim = c(length(.), 1, 1))
+```
+
+```{r}
+y_train %<>% pull(value) %>% array_reshape(dim = c(length(.), 1))
+y_test %<>% pull(value) %>% array_reshape(dim = c(length(.), 1))
+```
+
+
+#### Building the LSTM model
+
+* We’ll use two LSTM layers each with 50 units. 
+   1. The first LSTM layer takes the required input shape, which is the `[time steps, number of features]`. The batch size is just our batch size. We set the first layer to `return_sequences = TRUE` and `stateful = TRUE`. 
+   2. The second layer is the same with the exception of `batch_size`, which only needs to be specified in the first layer, and `return_sequences = FALSE` which does not return the time stamp dimension (2D shape is returned versus a 3D shape from the first LSTM). We here also add a bit of `dropout` and `recurrent_dropout` to fight overfitting.
+* We tack on a `layer_dense(units = 1),` which is the standard ending to a `keras` sequential model.
+
+
+To keep track, lets upfront define the model inputs:
+
+```{r}
+lag_setting  <- nrow(y_test)
+batch_size   <- 1
+train_length <- 440
+tsteps       <- 1
+epochs       <- 20
+```
+
+
+```{r}
+model <- keras_model_sequential() %>%
+  # # First LSTM Layer
+    layer_lstm(units            = 50, 
+               input_shape      = c(tsteps, 1), # timesteps, features
+               batch_size       = batch_size,
+               return_sequences = TRUE, 
+               stateful         = TRUE) %>% 
+  # Second LSTM Layer
+    layer_lstm(units            = 50, 
+               return_sequences = FALSE, 
+               dropout	        = 0.1,
+               recurrent_dropout= 0.1,
+               stateful         = TRUE) %>% 
+  # Final prediction layer
+    layer_dense(units = 1, activation = 'linear')
+
+
+# Compile model
+model %>% 
+    compile(loss = "mae", metric = 'mse', optimizer = "adam")
+```
+
+```{r}
+model %>% summary()
+```
+
+# Fitting the model
+
+* Next, we can fit our stateful LSTM using a for loop (we do this to manually reset states). 
+* We set `shuffle = FALSE` to preserve sequences
+* We manually reset the states after each epoch using `reset_states()`. Therefore we have to train the single epochs in loops. Otherwise, the states would be carried over between the epocs.
+
+
+```{r}
+for (i in 1:epochs) {
+    model %>% fit(x          = x_train, 
+                  y          = y_train, 
+                  batch_size = batch_size,
+                  epochs     = 1, 
+                  verbose    = 1, 
+                  shuffle    = FALSE)
+    
+    model %>% reset_states()
+    cat("Epoch: ", i)
+}
+```
+
+```{r}
+model %>% evaluate(x_test, y_test)
+```
+
+
+
