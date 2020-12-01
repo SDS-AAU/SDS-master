@@ -135,6 +135,7 @@ We only apply min-max scaling hee
 data_recipe <- data_train %>%
   recipe(value ~ .) %>% 
   step_range(value, min = -1, max = 1)  %>%
+  step_arrange(index) %>%
   prep()
 ```
 
@@ -164,21 +165,17 @@ n_lag = 1
 
 
 ```{r}
+# TRain data
 x_train <- data_recipe %>% 
   juice() %>%  
   slice(1:(n()-n_lag))
-```
 
-```{r}
 y_train <- data_recipe %>%  
   juice() %>%
   mutate(value = value %>% lead(1)) %>%
   slice((n_lag+1):n())
-```
 
-And the same for the test data
-
-```{r}
+# And the same for the test data
 x_test <- data_recipe %>% 
   bake(data_test) %>%  
   slice(1:(n()-n_lag))
@@ -192,13 +189,83 @@ y_test <- data_recipe %>%
 ## Transform to a 3d tensor for keras
 
 ```{r}
-x_train %<>% pull(value) %>% array_reshape(dim = c(length(.), 1, 1))
-x_test %<>% pull(value) %>% array_reshape(dim = c(length(.), 1, 1))
+x_train %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
+x_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
 
-y_train %<>% pull(value) %>% array_reshape(dim = c(length(.), 1))
-y_test %<>% pull(value) %>% array_reshape(dim = c(length(.), 1))
+y_train %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
+y_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
 ```
 
 # Setting up the LSTM
 
-Now its your turn.....
+
+# LSTM
+
+## Define model
+
+```{r}
+tsteps       <- 1
+batch_size   <- 1 # (nrow(x_train) / 10) %>% as.integer()
+train_length <- nrow(x_train)
+epochs       <- 10
+```
+
+
+```{r}
+model <- keras_model_sequential() %>%
+  # # First LSTM Layer
+  layer_lstm(units            = 32, 
+             batch_input_shape= c(batch_size, tsteps, 1), # timesteps, features
+             return_sequences = FALSE, 
+             stateful         = TRUE) %>% 
+  layer_dense(units = 32, activation = 'relu') %>%
+  # Second LSTM Layer
+  #layer_lstm(units            = 64, 
+  #           return_sequences = FALSE, 
+  #           dropout	        = 0.1,
+  #           recurrent_dropout= 0.1,
+  #           stateful         = TRUE) %>% 
+  # Final prediction layer
+  layer_dense(units = 1, activation = 'linear')
+
+
+# Compile model
+model %>% 
+  compile(loss = "mse", 
+          metric = 'mse', 
+          optimizer = "adam")
+```
+
+```{r}
+model %>% summary()
+```
+
+## Fitting the model
+
+* Next, we can fit our stateful LSTM using a for loop (we do this to manually reset states). 
+* We set `shuffle = FALSE` to preserve sequences
+* We manually reset the states after each epoch using `reset_states()`. Therefore we have to train the single epochs in loops. Otherwise, the states would be carried over between the epocs.
+
+
+```{r}
+for (i in 1:epochs) {
+  model %>% fit(x          = x_train, 
+                y          = y_train, 
+                epochs     = 1, 
+                verbose    = 1, 
+                shuffle    = FALSE)
+  
+  model %>% reset_states()
+  cat("Epoch: ", i)
+}
+```
+
+```{r}
+model %>% evaluate(x_test, y_test)
+```
+
+```{r}
+model_pred <- model %>% predict(y_test)
+```
+
+
