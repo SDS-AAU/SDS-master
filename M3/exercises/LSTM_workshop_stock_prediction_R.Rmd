@@ -37,24 +37,42 @@ library(keras)
 
 ```{r}
 # others
-library(tidyquant)
-library(tidymodels) # Or only load the 'rsample' on its own
+library(tidyquant) # My favorite package to get stock data
+library(tidymodels) # Or only load the 'rsample' and recipes on its own
 
 # Time Series
-library(forecast)
-library(tsibble)
-library(feasts)
+# library(feasts) # We don t really need it
 ```
+
+# Workshop Stock prediction
+
+Task:
+
+1. Get some stock data (tip: Use tidyquant)
+    * Limit yourself for now to on e stock
+    * Limit yourself to one variable (preferably some price data)
+2. Develop a one-step ahead prediction of prices (or their movements)
 
 # Load some data
 
+## Select a stock abnd load the data
+
 ```{r}
-tickers = 
+tickers = c("AAPL", "NFLX", "AMZN") # Just for fun, we get a couple of stocks
             
-data_stocks <- tq_get(c("AAPL", "NFLX", "AMZN"),
-               from = "2000-01-01",
+data_stocks <- tq_get(tickers,
+               from = "2005-01-01",
                to = "2020-11-30",
-               get = "stock.prices")
+               get = "stock.prices" # What we want to get.... here prices
+               )
+```
+
+
+## Some plots for exploration...
+
+
+```{r}
+data_stocks %>% glimpse()
 ```
 
 ```{r}
@@ -63,12 +81,124 @@ data_stocks %>% head()
 
 ```{r}
 data_stocks %>%
-  ggplot(aes(x = date, y = adjusted)) +
+  filter(symbol == 'AAPL') %>%
+  ggplot(aes(x = date, y = adjusted,)) +
   geom_line() +
-  labs(x = 'Date',
-       y = "Adjusted Price",
-       title = "Apple price chart") +
-  scale_y_continuous(breaks = seq(0,300,10))
+  labs(x = 'Date', y = "Adjusted Price") 
+```
+
+```{r}
+data_stocks %>%
+  ggplot(aes(x = date, y = adjusted, col = symbol)) +
+  geom_line() +
+  labs(x = 'Date', y = "Adjusted Price") 
+```
+
+# Preprocessing
+
+## Limit data
+
+```{r}
+data <- data_stocks %>%
+  filter(symbol == 'AAPL') %>%
+  rename(index = date, value = adjusted) %>%
+  select(index, value) %>%
+  arrange(index) %>%
+  drop_na()
+```
+
+## Train & Test split
+
+```{r}
+# We use time_splits here to maintain the sequences
+data_split <- data %>% initial_time_split(prop = 0.75)
+```
+
+```{r}
+data_train <- data_split %>% training()
+data_test <- data_split %>% testing()
+```
+
+```{r}
+# See ehat we got
+data_train %>% pull(index) %>% min()
+data_train %>% pull(index) %>% max()
+data_test %>% pull(index) %>% min()
+data_test %>% pull(index) %>% max()
+```
+
+## Define a reciepe
+
+We only apply min-max scaling hee
+
+```{r}
+data_recipe <- data_train %>%
+  recipe(value ~ .) %>% 
+  step_range(value, min = -1, max = 1)  %>%
+  prep()
+```
+
+```{r}
+# Preserve the values for later (to reconstruct original values)
+prep_history <- tibble(
+  min = data_recipe$steps[[1]]$ranges[1],
+  max = data_recipe$steps[[1]]$ranges[2]
+)
+```
+
+```{r}
+prep_history
 ```
 
 
+
+* We now create a x and y split. Since we here always predict the next observation, that's easy. We will just set y= lead(x, 1)
+* We therefore also delete the last observation in train and the first in test
+
+## Get processedv train & test data
+
+```{r}
+# Number of lags
+n_lag = 1
+```
+
+
+```{r}
+x_train <- data_recipe %>% 
+  juice() %>%  
+  slice(1:(n()-n_lag))
+```
+
+```{r}
+y_train <- data_recipe %>%  
+  juice() %>%
+  mutate(value = value %>% lead(1)) %>%
+  slice((n_lag+1):n())
+```
+
+And the same for the test data
+
+```{r}
+x_test <- data_recipe %>% 
+  bake(data_test) %>%  
+  slice(1:(n()-n_lag))
+
+y_test <- data_recipe %>%  
+  bake(data_test) %>%  
+  mutate(value = value %>% lead(1)) %>%
+  slice((n_lag+1):n())
+```
+
+## Transform to a 3d tensor for keras
+
+```{r}
+x_train %<>% pull(value) %>% array_reshape(dim = c(length(.), 1, 1))
+x_test %<>% pull(value) %>% array_reshape(dim = c(length(.), 1, 1))
+
+y_train %<>% pull(value) %>% array_reshape(dim = c(length(.), 1))
+y_test %<>% pull(value) %>% array_reshape(dim = c(length(.), 1))
+```
+
+# Setting up the LSTM
+
+Now its your turn.....
