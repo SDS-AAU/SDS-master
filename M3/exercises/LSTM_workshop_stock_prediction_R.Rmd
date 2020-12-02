@@ -58,10 +58,10 @@ Task:
 ## Select a stock abnd load the data
 
 ```{r}
-tickers = c("AAPL", "NFLX", "AMZN") # Just for fun, we get a couple of stocks
+tickers = c("AAPL") # Just for fun, we get a couple of stocks
             
 data_stocks <- tq_get(tickers,
-               from = "2005-01-01",
+               from = "2000-01-01",
                to = "2020-11-30",
                get = "stock.prices" # What we want to get.... here prices
                )
@@ -81,15 +81,7 @@ data_stocks %>% head()
 
 ```{r}
 data_stocks %>%
-  filter(symbol == 'AAPL') %>%
   ggplot(aes(x = date, y = adjusted,)) +
-  geom_line() +
-  labs(x = 'Date', y = "Adjusted Price") 
-```
-
-```{r}
-data_stocks %>%
-  ggplot(aes(x = date, y = adjusted, col = symbol)) +
   geom_line() +
   labs(x = 'Date', y = "Adjusted Price") 
 ```
@@ -106,6 +98,31 @@ data <- data_stocks %>%
   arrange(index) %>%
   drop_na()
 ```
+
+## Remodel value as percentage change
+
+```{r}
+data %<>%
+  mutate(value = (value - lag(value,1)) / lag(value,1) ) %>%
+  drop_na()
+  
+```
+
+```{r}
+data %>%
+  ggplot(aes(x = index, y = value)) +
+  geom_line() +
+  labs(x = 'Date', y = "Price change in pct") 
+```
+
+```{r}
+# Do it to get the right size  for batches
+data %<>%
+  slice(1:5000)
+```
+
+
+
 
 ## Train & Test split
 
@@ -166,34 +183,27 @@ n_lag = 1
 
 ```{r}
 # TRain data
-x_train <- data_recipe %>% 
-  juice() %>%  
-  slice(1:(n()-n_lag))
+x_train <- data_recipe %>% juice() 
 
-y_train <- data_recipe %>%  
-  juice() %>%
-  mutate(value = value %>% lead(1)) %>%
-  slice((n_lag+1):n())
+y_train <- data_recipe %>%  juice() %>%
+  mutate(value = value %>% lead(1)) 
 
 # And the same for the test data
-x_test <- data_recipe %>% 
-  bake(data_test) %>%  
-  slice(1:(n()-n_lag))
+x_test <- data_recipe %>% bake(data_test) 
 
-y_test <- data_recipe %>%  
-  bake(data_test) %>%  
+y_test <- data_recipe %>%  bake(data_test) %>%  
   mutate(value = value %>% lead(1)) %>%
-  slice((n_lag+1):n())
+  mutate(value = ifelse(is.na(value), lag(value, 1), value))
 ```
 
 ## Transform to a 3d tensor for keras
 
 ```{r}
-x_train %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
-x_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
+x_train_arr <- x_train %>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
+x_test_arr <- x_test %>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
 
-y_train %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
-y_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
+y_train_arr <- y_train %>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1))
+y_test_arr <- y_test %>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1))
 ```
 
 # Setting up the LSTM
@@ -205,8 +215,8 @@ y_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1,
 
 ```{r}
 tsteps       <- 1
-batch_size   <- 1 # (nrow(x_train) / 10) %>% as.integer()
-train_length <- nrow(x_train)
+batch_size   <-50 # (nrow(x_train) / 10) %>% as.integer()
+train_length <- nrow(x_train_arr)
 epochs       <- 10
 ```
 
@@ -214,18 +224,20 @@ epochs       <- 10
 ```{r}
 model <- keras_model_sequential() %>%
   # # First LSTM Layer
-  layer_lstm(units            = 32, 
-             batch_input_shape= c(batch_size, tsteps, 1), # timesteps, features
-             return_sequences = FALSE, 
-             stateful         = TRUE) %>% 
-  layer_dense(units = 32, activation = 'relu') %>%
+  layer_lstm(units            = 64, 
+             input_shape= c(tsteps, 1), #  timesteps, features
+             #batch_size       = batch_size,
+             return_sequences = TRUE, 
+             #stateful         = TRUE
+             ) %>% 
+  #layer_dense(units = 32, activation = 'relu') %>%
   # Second LSTM Layer
-  #layer_lstm(units            = 64, 
-  #           return_sequences = FALSE, 
-  #           dropout	        = 0.1,
-  #           recurrent_dropout= 0.1,
-  #           stateful         = TRUE) %>% 
-  # Final prediction layer
+  layer_lstm(units            = 64, 
+             dropout	        = 0.1,
+             recurrent_dropout= 0.1,
+             #stateful         = TRUE,
+             return_sequences = FALSE) %>% 
+   #Final prediction layer
   layer_dense(units = 1, activation = 'linear')
 
 
@@ -248,24 +260,53 @@ model %>% summary()
 
 
 ```{r}
-for (i in 1:epochs) {
-  model %>% fit(x          = x_train, 
-                y          = y_train, 
+#for (i in 1:epochs) {
+  model %>% fit(x          = x_train_arr, 
+                y          = y_train_arr, 
                 epochs     = 1, 
                 verbose    = 1, 
+                batch_size = batch_size,
                 shuffle    = FALSE)
   
-  model %>% reset_states()
-  cat("Epoch: ", i)
-}
+#  model %>% reset_states()
+#}
 ```
 
 ```{r}
-model %>% evaluate(x_test, y_test)
+model %>% evaluate(x_test_arr, y_test_arr)
 ```
 
 ```{r}
-model_pred <- model %>% predict(y_test)
+model_pred <- model %>% predict(x_test_arr)
 ```
 
+
+# Multi-episode LSTM
+
+## Transform to a 3d tensor for keras
+
+```{r}
+tsteps_x = 5
+tsteps_y = 5
+```
+
+
+```{r}
+train_arr <- x_train %>% pull(value) %>% as.numeric() %>% matrix(ncol = (tsteps_x + tsteps_y))
+```
+
+```{r}
+x_train_arr <- train_arr[,1:tsteps_x] %>% array_reshape(dim = c(length(.), 1, 1))
+```
+
+
+
+
+```{r}
+x_train %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
+x_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
+
+y_train %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1))
+y_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1))
+```
 
