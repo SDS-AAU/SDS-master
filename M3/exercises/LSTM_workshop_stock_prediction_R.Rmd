@@ -33,16 +33,9 @@ knitr::opts_chunk$set(warning=FALSE,
 library(tidyverse)
 library(magrittr)
 library(keras)
-```
-
-```{r}
-# others
-library(tidyquant) # My favorite package to get stock data
 library(tidymodels) # Or only load the 'rsample' and recipes on its own
-
-# Time Series
-# library(feasts) # We don t really need it
 ```
+
 
 # Workshop Stock prediction
 
@@ -57,6 +50,13 @@ Task:
 
 ## Select a stock abnd load the data
 
+* We will use the tidyquant package to download stock data
+
+```{r}
+library(tidyquant) # My favorite package to get stock data
+```
+
+
 ```{r}
 tickers = c("AAPL") # Just for fun, we get a couple of stocks
             
@@ -69,7 +69,6 @@ data_stocks <- tq_get(tickers,
 
 
 ## Some plots for exploration...
-
 
 ```{r}
 data_stocks %>% glimpse()
@@ -92,7 +91,6 @@ data_stocks %>%
 
 ```{r}
 data <- data_stocks %>%
-  filter(symbol == 'AAPL') %>%
   rename(index = date, value = adjusted) %>%
   select(index, value) %>%
   arrange(index) %>%
@@ -101,11 +99,12 @@ data <- data_stocks %>%
 
 ## Remodel value as percentage change
 
+* It is always easier to model change rather than absolute prices, so we create a variable measuring the percentage change of price instead
+
 ```{r}
 data %<>%
   mutate(value = (value - lag(value,1)) / lag(value,1) ) %>%
   drop_na()
-  
 ```
 
 ```{r}
@@ -115,16 +114,11 @@ data %>%
   labs(x = 'Date', y = "Price change in pct") 
 ```
 
-```{r}
-# Do it to get the right size  for batches
-data %<>%
-  slice(1:5000)
-```
-
-
 
 
 ## Train & Test split
+
+* We do a time-series split which keeps the sequencing of the data
 
 ```{r}
 # We use time_splits here to maintain the sequences
@@ -136,6 +130,8 @@ data_train <- data_split %>% training()
 data_test <- data_split %>% testing()
 ```
 
+* Lets see from where till when the train/test samples are
+
 ```{r}
 # See ehat we got
 data_train %>% pull(index) %>% min()
@@ -146,7 +142,7 @@ data_test %>% pull(index) %>% max()
 
 ## Define a reciepe
 
-We only apply min-max scaling hee
+* We only apply min-max scaling herewith `step_range`
 
 ```{r}
 data_recipe <- data_train %>%
@@ -155,6 +151,8 @@ data_recipe <- data_train %>%
   step_arrange(index) %>%
   prep()
 ```
+
+* We save the min and max to rescale later again
 
 ```{r}
 # Preserve the values for later (to reconstruct original values)
@@ -168,11 +166,6 @@ prep_history <- tibble(
 prep_history
 ```
 
-
-
-* We now create a x and y split. Since we here always predict the next observation, that's easy. We will just set y= lead(x, 1)
-* We therefore also delete the last observation in train and the first in test
-
 ## Get processedv train & test data
 
 ```{r}
@@ -180,6 +173,8 @@ prep_history
 n_lag = 1
 ```
 
+* We now create a x and y split. Since we here always predict the next observation, that's easy. We will just set y= lead(x, 1)
+* We treplace the last missing observation with the lagged value
 
 ```{r}
 # TRain data
@@ -200,6 +195,7 @@ y_test <- data_recipe %>%  bake(data_test) %>%
 ## Transform to a 3d tensor for keras
 
 ```{r}
+# TRansforming the x sequence to a 3d tensor (necessary for LSTMs)
 x_train_arr <- x_train %>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
 x_test_arr <- x_test %>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
 
@@ -209,29 +205,17 @@ y_test_arr <- y_test %>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(
 
 # Setting up the LSTM
 
-
 # LSTM
 
 ## Define model
 
-```{r}
-tsteps       <- 1
-batch_size   <-50 # (nrow(x_train) / 10) %>% as.integer()
-train_length <- nrow(x_train_arr)
-epochs       <- 10
-```
-
 
 ```{r}
-# I commented out what we would need for a statefull LSTM
-
 model <- keras_model_sequential() %>%
   # # First LSTM Layer
   layer_lstm(units            = 64, 
-             input_shape= c(tsteps, 1), #  timesteps, features
-             #batch_size       = batch_size, # If we want to do a statefull LSTM, we would need
+             input_shape= c(1, 1), #  timesteps, features
              return_sequences = TRUE, 
-             #stateful         = TRUE # If we would like to do it stateful
              ) %>% 
   # Second LSTM Layer
   layer_lstm(units            = 64, 
@@ -239,9 +223,11 @@ model <- keras_model_sequential() %>%
              recurrent_dropout= 0.1,
              #stateful         = TRUE,
              return_sequences = FALSE) %>% 
+  # A dropout layer
+  layer_dropout(rate = 0.1) %>%
   # A DENSE LAYER IN BETWEEN
   layer_dense(units = 32, activation = 'relu') %>%
-   #Final prediction layer
+  #Final prediction layer
   layer_dense(units = 1, activation = 'linear')
 
 
@@ -258,31 +244,73 @@ model %>% summary()
 
 ## Fitting the model
 
-* Next, we can fit our stateful LSTM using a for loop (we do this to manually reset states). 
+* Next, we can fit our LSTM using a for loop (we do this to manually reset states). 
 * We set `shuffle = FALSE` to preserve sequences
 
+```{r}
+hist_model <- model %>% fit(x          = x_train_arr, 
+                            y          = y_train_arr, 
+                            epochs     = 10,
+                            verbose    = 1, 
+                            batch_size = 64,
+                            validation_split = 0.25, 
+                            shuffle    = FALSE)
+```
 
 ```{r}
-#for (i in 1:epochs) { # We manually reset the states after each epoch using `reset_states()`. Therefore we have to train the single epochs in loops. Otherwise, the states would be carried over between the epocs.
-  model %>% fit(x          = x_train_arr, 
-                y          = y_train_arr, 
-                epochs     = epochs, # Set to 1 in the stateful loop
-                verbose    = 1, 
-                batch_size = batch_size,
-                shuffle    = FALSE)
-  
-#  model %>% reset_states() }
+hist_model %>% plot()
 ```
+
 
 ```{r}
 model %>% evaluate(x_test_arr, y_test_arr)
 ```
 
+## Predicting Stock changes
+
+* We first predict the output of our test data
+
 ```{r}
 model_pred <- model %>% predict(x_test_arr)
 ```
 
+* However, we need to rescale the output. For min-max scaling, this function will do the trick
 
+```{r}
+reverse_minmax <- function(x, min, max) {
+  x_re <- (x*(max - min)) + min
+  }
+```
+
+* We apply it with our data and the saved min and max values from the recipe
+
+```{r}
+model_pred_rescaled <- model_pred %>% reverse_minmax(min = prep_history$min, max = prep_history$max)
+```
+
+Plot the results:
+
+```{r}
+eval <- tibble(
+  index = data_test %>% pull(index),
+  truth = data_test %>% pull(value),
+  pred = model_pred_rescaled
+) 
+```
+
+```{r}
+eval %>% 
+  pivot_longer(-index) %>%
+  ggplot(aes(x = index, y = value, col = name)) +
+  geom_line()
+```
+
+
+
+
+
+
+<!----
 # Multi-episode LSTM
 
 ## Transform to a 3d tensor for keras
@@ -310,3 +338,4 @@ x_train_arr <- train_arr[,1:tsteps_x] %>% array_reshape(dim = c(length(.), 1, 1)
 #y_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1))
 ```
 
+---->
