@@ -186,7 +186,8 @@ n_lag = 1
 x_train <- data_recipe %>% juice() 
 
 y_train <- data_recipe %>%  juice() %>%
-  mutate(value = value %>% lead(1)) 
+  mutate(value = value %>% lead(1)) %>%
+  mutate(value = ifelse(is.na(value), lag(value, 1), value))
 
 # And the same for the test data
 x_test <- data_recipe %>% bake(data_test) 
@@ -222,21 +223,24 @@ epochs       <- 10
 
 
 ```{r}
+# I commented out what we would need for a statefull LSTM
+
 model <- keras_model_sequential() %>%
   # # First LSTM Layer
   layer_lstm(units            = 64, 
              input_shape= c(tsteps, 1), #  timesteps, features
-             #batch_size       = batch_size,
+             #batch_size       = batch_size, # If we want to do a statefull LSTM, we would need
              return_sequences = TRUE, 
-             #stateful         = TRUE
+             #stateful         = TRUE # If we would like to do it stateful
              ) %>% 
-  #layer_dense(units = 32, activation = 'relu') %>%
   # Second LSTM Layer
   layer_lstm(units            = 64, 
              dropout	        = 0.1,
              recurrent_dropout= 0.1,
              #stateful         = TRUE,
              return_sequences = FALSE) %>% 
+  # A DENSE LAYER IN BETWEEN
+  layer_dense(units = 32, activation = 'relu') %>%
    #Final prediction layer
   layer_dense(units = 1, activation = 'linear')
 
@@ -256,20 +260,18 @@ model %>% summary()
 
 * Next, we can fit our stateful LSTM using a for loop (we do this to manually reset states). 
 * We set `shuffle = FALSE` to preserve sequences
-* We manually reset the states after each epoch using `reset_states()`. Therefore we have to train the single epochs in loops. Otherwise, the states would be carried over between the epocs.
 
 
 ```{r}
-#for (i in 1:epochs) {
+#for (i in 1:epochs) { # We manually reset the states after each epoch using `reset_states()`. Therefore we have to train the single epochs in loops. Otherwise, the states would be carried over between the epocs.
   model %>% fit(x          = x_train_arr, 
                 y          = y_train_arr, 
-                epochs     = 1, 
+                epochs     = epochs, # Set to 1 in the stateful loop
                 verbose    = 1, 
                 batch_size = batch_size,
                 shuffle    = FALSE)
   
-#  model %>% reset_states()
-#}
+#  model %>% reset_states() }
 ```
 
 ```{r}
@@ -300,13 +302,11 @@ x_train_arr <- train_arr[,1:tsteps_x] %>% array_reshape(dim = c(length(.), 1, 1)
 ```
 
 
-
-
 ```{r}
-x_train %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
-x_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
+#x_train %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
+#x_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1, 1))
 
-y_train %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1))
-y_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1))
+#y_train %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1))
+#y_test %<>% pull(value) %>% as.numeric() %>% array_reshape(dim = c(length(.), 1))
 ```
 
