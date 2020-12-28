@@ -1,0 +1,213 @@
+---
+title: 'Sequence generation intro (R)'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(keras)
+```
+
+# Brief intro to working with time sequences and time series generators
+
+## Example timeseries:
+
+* Ok, lets take a brief look at how to work with sequention data i different ways, and prepare them as inputs for an LSTM
+* We, for the sake of illustration, just create a simple sequence with the numbers from 1-100 (its easier to inspect the sequence, in reality we would obviously feed it with different outputs)
+
+```{r}
+# Generate an example sequence
+data <- 1:100
+```
+
+## Many-to-One predictions
+
+* In this setup, we will use several periods to predict one subsequent observations.
+
+```{r}
+n_timesteps <- 5 # Define that we would like to have 5 timesteps
+batch_size <- 16 # Batch size (somewhat arbitrary)
+n_features <- 1 # Number of features. Since we only predict the outcome based on its own sequence, it will be 1
+```
+
+* We will set up Keras `timeseries_generator`, which will feed the LSTM (or other architecture) with on-the-fly generated sequences 
+
+```{r}
+train_gen <- 
+  timeseries_generator(
+    data = data, # The data we will use to create the sequences.
+    targets = data, # The putcome data, in this case the same, since we just want to predict the subsequent period
+    length = n_timesteps, # How many previous steps in the sequence should be used for the prediction
+    sampling_rate = 1, # Should we use every observation in the sequence or skip some?
+    stride = 1, # How many steps should be skipped
+    shuffle = FALSE, # Should the sequence be shuffled? In time-series prediction, we want to preserve the order of sequences, so always FALSE
+    batch_size = batch_size # size of the batches generated. USe this batch size also later in the LSTM
+    )
+
+```
+
+* Remember, this is a lazy function, meaning it will generate the sequences on-the-fly when they are needed.
+* Therefore, it can not directly be inspected.
+
+```{r}
+train_gen
+```
+
+* However, we can extract single batches and inspect them.
+* This is helpful to get a feeling what the different arguments of the generator do, and to thest that they create the sequence you want.
+* Here, two arrrays will be returned, where the first one is the generated input sequences, the second one the corresponding output.
+
+```{r}
+batch_0 <- train_gen[0]
+batch_0
+```
+
+<!---
+```{r}
+batch_size
+```
+
+```{r}
+# create the model
+model <- keras_model_sequential()  %>%
+  # Add the layer. We will make it as simple as possible here with just one LSTM and an output layer.
+  layer_lstm(
+    units = 16, 
+    batch_input_shape  = c(batch_size, n_timesteps, n_features), # the first layer in a model needs to know the shape of the input data
+    dropout = 0.1,
+    recurrent_dropout = 0.1,
+    return_sequences = FALSE # by default, an LSTM just returns the final state
+    ) %>% 
+  # Final output layer
+  layer_dense(units = 1)
+
+model %>% compile(loss = 'mse', optimizer = 'adam', metrics = 'mse')
+```
+
+
+```{r}
+hist <- model %>% fit_generator(
+  generator = train_gen,
+  steps_per_epoch = 1,
+  epochs = 1
+  )
+```
+
+--->
+
+## Your turn
+
+* Play a bit around with the arguments in the generator, and se what outputs it produces. This will give you some intuition
+* For instance, what happens if you set `stride` to `time_p + 1` ?
+
+
+## Many to many predictions
+
+* In case we want to predict a sequence of several timesteps.
+* Unfortunately, the generator has no option for that, so we have to prepare sepperate targets on our own.
+* Ih wrote a handy fun ction that does so, which you can use.
+
+
+```{r}
+# Define a function that outputs time_p timesteps for y
+gen_timeseries_output <- function(data, n_timesteps){
+  
+  target <- matrix(nrow = length(data), ncol =n_timesteps)
+  
+  data <- data %>% as.numeric()
+  
+  for (i in 1:length(data)) {
+    target[i,] <- data[(i+1):(i+n_timesteps)]
+  }
+  
+  return(target)
+}
+```
+
+* Let's try it
+
+```{r}
+outcome_sequnce <- data %>%
+  gen_timeseries_output(n_timesteps)
+```
+
+* Lets inspect
+
+```{r}
+outcome_sequnce %>% head(20)
+```
+
+* Seems to produce what we want
+* Now we can feed that as target into the generator
+
+```{r}
+train_gen_seq <- 
+  timeseries_generator(
+    data = data,
+    targets = outcome_sequnce,
+    length = 5,
+  sampling_rate = 1,
+  stride = 1,
+  shuffle = FALSE,
+  batch_size = 16
+)
+
+```
+
+* Lets instect
+
+```{r}
+batch_0_seq = train_gen_seq[0]
+batch_0_seq
+```
+
+* Looks about right, dosnt it?
+
+
+<!---
+
+```{r}
+# create the model
+model <- keras_model_sequential()
+
+# Add the layer. We will make it as simple as possible here with just one LSTM and an output layer.
+model %>%
+  layer_lstm(
+    units = 16, 
+    batch_input_shape  = c(batch_size, n_timesteps, n_features), # the first layer in a model needs to know the shape of the input data
+    dropout = 0.1,
+    recurrent_dropout = 0.1,
+    return_sequences = TRUE # by default, an LSTM just returns the final state
+  ) %>% time_distributed(layer_dense(units = 1))
+```
+
+---->
+
+
