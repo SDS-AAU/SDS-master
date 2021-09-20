@@ -1,0 +1,372 @@
+---
+title: "Assignment: Data Manipulation, EDA and Viz - Nomad Dataset (Example Solution)"
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+### Generic preamble
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+# rm(list=ls()); graphics.off() # get rid of everything in the workspace
+if (!require("knitr")) install.packages("knitr"); library(knitr) # For display of the markdown
+
+### Knitr options
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     fig.align="center"
+                     )
+```
+
+# Preamble
+
+## Standard packages
+
+```{r}
+### Load packages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+```
+
+## Load data
+
+Trips
+
+```{r}
+trips <- read_csv('https://sds-aau.github.io/SDS-master/M1/data/trips.csv')
+```
+
+```{r}
+trips %>% glimpse()
+```
+
+People
+
+```{r}
+people <- read_csv('https://sds-aau.github.io/SDS-master/M1/data/people.csv')
+```
+
+```{r}
+people %>% glimpse()
+```
+
+Countries
+
+```{r}
+countries <- read_csv( 'https://sds-aau.github.io/SDS-master/M1/data/countrylist.csv')
+```
+
+```{r}
+countries %>% glimpse()
+```
+
+# 1: Preprocessing
+
+## a. Trips: transform dates into timestamps
+
+```{r}
+trips %>% select(date_start, date_end) %>%
+  glimpse()
+```
+
+`readr` is smart, so if you loaded the data with `read_csv`, then this is already taken care of. Otherwise:
+
+```{r}
+# To demonstrate, I transform it back to a string.
+trips %<>% mutate(date_start = date_start %>% as.character(),
+                  date_end = date_end %>% as.character())
+```
+
+```{r}
+trips %>% select(date_start, date_end) %>%
+  glimpse()
+```
+
+In case it is a string but well formated, we can use the `lubridate` packages.
+
+```{r}
+library(lubridate) # This is tidyverse's datetime package
+
+trips %<>% mutate(date_start = date_start %>% as_date(),
+                  date_end = date_end %>% as_date())
+```
+
+```{r}
+trips %>% select(date_start, date_end) %>%
+  glimpse()
+```
+
+## b. Calculate trip duration in days
+
+```{r}
+trips %<>% mutate(trip_duration = date_end - date_start)
+```
+
+```{r}
+# Test if it works
+trips %>% 
+  select(trip_duration, date_start, date_end) %>%
+  head()
+```
+
+Seems to work fine :)
+
+## c. Filter extreme (fake?) observations for durations as well as dates - start and end
+
+Lets inspect:
+
+```{r}
+trips %>% 
+  select(trip_duration, date_start, date_end) %>%
+  summary()
+```
+
+We clearly see that some observations areunrealistic (trip in Jesus's times or in the future etc.). Lets look at the distribution
+
+```{r}
+trips %>%
+  ggplot(aes(x = date_start)) +
+  geom_histogram()
+```
+
+```{r}
+trips %>%
+  ggplot(aes(x = date_end)) +
+  geom_histogram()
+```
+
+There are many ways to deal with outliers. To make it simple:
+
+1: We could filter by some minimum / maximum date set manually
+2: We could just delete extreme values using `percentage_rank` (deleting the 1 percent of obs with highest/lowest values). We will demonstrate this here:
+
+```{r}
+trips %<>%
+  mutate(date_start_pct = date_start %>% as.numeric() %>% percent_rank(),
+         date_end_pct = date_end %>% as.numeric() %>% percent_rank()) %>%
+  filter(date_start_pct >= 0.01 & date_start_pct <= 0.99) %>%
+  filter(date_end_pct >= 0.01 & date_end_pct <= 0.99) 
+```
+
+Lets check how it looks now:
+
+```{r}
+trips %>% 
+  select(trip_duration, date_start, date_end) %>%
+  summary()
+```
+
+We clearly see that some observations areunrealistic (trip in Jesus's times or in the future etc.). Lets look at the distribution
+
+```{r}
+trips %>%
+  ggplot(aes(x = date_start)) +
+  geom_histogram()
+```
+```{r}
+trips %>%
+  ggplot(aes(x = date_end)) +
+  geom_histogram()
+```
+
+Way more realistic, right?
+
+## d. Join the countrylist data to the trips data-frame using the countrycode as a key
+
+A simple left join.Be only aware of the different variable names
+
+```{r}
+trips %<>%
+  left_join(countries, by = c("country_code" = "alpha_2"))
+```
+
+```{r}
+trips %>% head()
+```
+
+New variables are in, seems to work. Lets check if there are some trips that could not match:
+
+```{r}
+trips %>% filter(is.na(region) | is.na(sub_region))
+```
+
+```{r}
+trips %>% filter(is.na(region) | is.na(sub_region)) %>%
+  count(country_code, sort = TRUE)
+```
+
+Ok, we see some country codes did not match. We dont bother for most small numbers, but one thing we might take a look at: UK did not match, since it is coded GB in the countries dataframe (Just inspect it). Lets delete the newly matched variables and start over again.
+
+```{r}
+trips %<>% 
+  select(-region, -sub_region)
+```
+
+Lets replace UK with GB
+
+```{r}
+trips %<>% 
+  mutate(country_code = country_code %>% str_replace(pattern = 'UK', replacement = 'GB'))
+```
+
+```{r}
+trips %>%
+  filter(country_code == 'UK' |country_code == 'GB') %>%
+  count(country_code)
+```
+
+Ok, no more UK present... lets join again.
+
+```{r}
+trips %<>%
+  left_join(countries, by = c("country_code" = "alpha_2"))
+```
+
+```{r}
+trips %>% filter(is.na(region) | is.na(sub_region)) %>%
+  count(country_code, sort = TRUE)
+```
+
+Ok, the rest seems negligible... we just delete these observations...
+
+```{r}
+trips %<>% drop_na(region)
+```
+
+# 2: People
+
+```{r}
+people %>% glimpse()
+```
+
+
+## a: How many people have a least a “High School” diploma?
+
+Lets see what educations we have in the data
+
+```{r}
+people %>% count(education_raw)
+```
+
+Ok, that seems easy. Since all educations include Highschool (or higher), we can just assume that everybody that has all people with a non-missing education field have at least a highschool degree.
+
+```{r}
+sum(!is.na(people$education_raw))
+```
+
+However, for the rest we just dont know...
+
+## b. How many “Startup Founders” have attained a “Master’s Degree”?
+
+```{r}
+people %>% count(work_raw, sort = TRUE)
+```
+
+
+We cannot just filter for the string, since it is contained in multiple categories. We have to instead detect all strings where "Spartup Founder" appears. HEre we need the `stringr` package.
+
+```{r}
+people %>% 
+  filter(work_raw %>% str_detect('Startup Founder')) %>% 
+  head()
+```
+
+```{r}
+people %>% 
+  filter(education_raw %>% str_detect('Master\'s Degree')) %>% head()
+
+# Notice the needed escape sign \ before the '
+```
+
+Putting it together and counting
+
+```{r}
+people %>% 
+  filter(work_raw %>% str_detect('Startup Founder') & education_raw %>% str_detect('Master\'s Degree') ) %>%
+  summarise(n = n())
+
+```
+
+Its 53...
+
+# 3. Trips
+
+```{r}
+trips %>% glimpse()
+```
+
+
+## a. Which country received the highest number of trips? – And which the lowest?
+
+Thats easy...
+
+```{r}
+trips %>%
+  count(country_code) %>%
+  arrange(desc(n)) %>%
+  head()
+```
+
+The US recieves the most trips.
+
+```{r}
+trips %>%
+  count(country_code) %>%
+  arrange(n) %>%
+  head()
+```
+
+Hmm, all some weird country codes... we could no filter them for only official ones... but lets leave it like that for now...
+
+## b. Which region received the highest number of trips in 2017? Use the start of trips as a time reference.
+
+Since the dates are already datetimes, we can just extract the year with the year() function of lubridate.
+
+```{r}
+trips %>%
+  filter(year(date_start) == 2017) %>%
+  count(country_code, sort = TRUE)
+```
+Its again the US.
+
+## c. Which country in “Western Europe” did travelers spent least time? – Provide visualization
+
+```{r}
+trips %>%
+  filter(sub_region == 'Western Europe') %>%
+#  count(country_code, sort = TRUE) %>%
+  ggplot(aes(x = country_code)) +
+  geom_bar()
+```
+
+Could be done pettier, though
+
+
+## d. Do nomad Startup Founders tend to have shorter or longer trips on average?
+
+* Here, we first need to do a join with the people dataframe.
+* Then we only have to create a founder dummy variable and summarize.
+
+```{r}
+trips %>% 
+  left_join(people %>% select(username, work_raw), by = 'username') %>%
+  mutate(founder = work_raw %>% str_detect('Startup Founder')) %>%
+  group_by(founder) %>%
+  summarize(duration_mean = trip_duration %>% mean(na.rm = TRUE))
+```
+Indeed, it seems they on average have the shortest trips... busy people....
+
+## e. visualize over-time median trip duration overall (bonus: and split by world-region) The plot will look weird ^^.
+
+
