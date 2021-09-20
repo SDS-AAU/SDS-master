@@ -1,0 +1,352 @@
+---
+title: 'Machine Learning: Workflow and Applications'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: show
+    df_print: paged
+    toc: true
+    toc_depth: 1
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standardpackages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+```
+
+# Introduction: Machine Learning with Pokémon
+
+Back to the teens. You will work on Pokemon data. No data munging needed.
+
+# Getting the data
+
+```{r}
+data <- read_csv('https://sds-aau.github.io/SDS-master/00_data/pokemon.csv')
+```
+
+# EDA & Unsupervised ML
+
+## 1.Give a brief overview of data, what variables are there, how are the variables scaled and variation of the data columns.
+
+```{r}
+data %>% head()
+```
+
+```{r}
+data %>% glimpse()
+```
+
+```{r}
+library(skimr)
+data %>% skim()
+```
+
+We have 3 string variables, where one is the uniqu pokemon name, and two others it's type. Our outcome variable `legendary` is categorical, `TRUE` if it is an legendary pokemon, `FALSE` otherwise. All other variables are numerical. 
+
+Lets briefly look at th categorical variables:
+
+```{r}
+data %>% count(Type1, sort = TRUE)
+```
+
+We see most pokemon are water-pokemon. However, there is no super-sparse class, so we can work with that.
+
+```{r}
+data %>% count(Type2, sort = TRUE)
+```
+
+We see most pokemons have an `NA` as `Type2`, probably meening they have no second type.
+
+We directly see some things should be changed:
+
+1. We see an numeric `Number` variable, which is just their unique id, and not of value for the analysis, so we drop it.
+2. the missing values in `Type2` probably indicate that the pokemon has no second type, should therefore not be treated as missing data
+3. The `generation` variable is numeric, but probably should be interpreted as categorical.
+
+Lets do the necessary changes upfront before investigating further.
+
+```{r}
+data %<>%
+  select(-Number) %>%
+  replace_na(list(Type2 = 'None')) %>%
+  mutate(Generation = Generation %>% as.character()) %>%
+  relocate(Name, Legendary)
+```
+
+We now can do some visualization. First my favorite standard one. Since we already know we later will be interested in legendary pokemon, we can already use the olor aestetic on this variable.
+
+```{r, fig.height=12, fig.width=12}
+library(GGally)
+data %>% 
+  select(-Name, -Type1, -Type2) %>%
+  ggpairs(legend = 1,
+          mapping = ggplot2::aes(colour=Legendary, alpha = 0.5), 
+          lower = list(continuous = wrap("smooth", alpha = 0.3, size=0.1))) +
+  theme(legend.position = "bottom")  
+```
+Long story short, we already see that legendary pokemon appear to be pretty much better in everything.
+
+We can also zoom into the conditional distributions with a joyplot
+
+```{r,fig.height=5,fig.width=12.5}
+library(ggridges) # install if necessary
+
+data %>%
+  gather(variable, value, -Legendary) %>% # Note: At one point do pivot_longer instead
+  ggplot(aes(y = as.factor(variable), 
+             fill =  as.factor(Legendary), 
+             x = percent_rank(value)) ) +
+  ggridges::geom_density_ridges(alpha = 0.75)
+```
+
+
+# Supervised ML
+
+Your task will be to predict the variable “legendary”, indicating if the pokemon is alegendary one or not.
+
+## 1.Perform necessary ML preprocessing of your data if deemed necessary.
+## 2.Split the data in a training (75%) and test (25%) dataset
+
+```{r}
+library(tidymodels)
+```
+
+One more thing, we have a logical outcome variable. That causes problems with some models which require factorial outcomes, so we recode it to a factor. And for sure we also drop the `Name` column which we do not want to use for the prediction.
+
+```{r}
+data %<>%
+  rename(y = Legendary) %>%
+  mutate(y = y %>% factor()) %>%
+  select(y, everything(), -Name)
+```
+
+
+
+First we split...
+
+```{r}
+data_split <- initial_split(data, prop = 0.75, strata = y)
+
+data_train <- data_split  %>%  training()
+data_test <- data_split %>% testing()
+```
+
+Now we will define a pretty standard preprocessing reciple, where we will:
+
+1. Center and scale all numeric variables
+2. Create one-hot-encodings for all categorical variables
+
+```{r}
+data_recipe <- data_train %>%
+  recipe(y ~.) %>%
+  step_center(all_numeric(), -all_outcomes()) %>%
+  step_scale(all_numeric(), -all_outcomes()) %>%
+  step_dummy(all_nominal(), -all_outcomes(), one_hot = TRUE) 
+```
+
+## 3.Define a n-fold cross-validation workflow for your model testing.
+
+From 4. we already know which models to set up, so we already set up the models. This is pretty much all only C&P from my script...
+
+
+### Defining the models
+
+#### Logistic Regression
+
+```{r}
+model_lg <- logistic_reg(mode = 'classification') %>%
+  set_engine('glm', family = binomial) 
+```
+
+#### Decision tree
+
+```{r}
+model_dt <- decision_tree(mode = 'classification',
+                          cost_complexity = tune(),
+                          tree_depth = tune(), 
+                          min_n = tune()
+                          ) %>%
+  set_engine('rpart') 
+```
+
+#### Extreme Gradient Boosted Tree (XGBoost)
+
+```{r}
+model_xg <- boost_tree(mode = 'classification', 
+                       trees = 100,
+                       mtry = tune(), 
+                       min_n = tune(), 
+                       tree_depth = tune(), 
+                       learn_rate = tune()
+                       ) %>%
+  set_engine("xgboost") 
+```
+
+#### Define workflow
+
+```{r}
+workflow_general <- workflow() %>%
+  add_recipe(data_recipe) 
+
+workflow_lg <- workflow_general %>%
+  add_model(model_lg)
+
+workflow_dt <- workflow_general %>%
+  add_model(model_dt)
+
+workflow_xg <- workflow_general %>%
+  add_model(model_xg)
+```
+
+### Hyperparameter Tuning
+
+#### Validation Sampling (N-fold crossvlidation)
+
+```{r}
+data_resample <- data_train %>% 
+  vfold_cv(strata = y,
+           v = 3,
+           repeats = 3)
+```
+
+#### Hyperparameter Tuning: Decision Tree
+
+```{r}
+tune_dt <-
+  tune_grid(
+    workflow_dt,
+    resamples = data_resample,
+    grid = 10
+  )
+```
+
+```{r}
+tune_dt %>% autoplot()
+```
+
+```{r}
+best_param_dt <- tune_dt %>% select_best(metric = 'roc_auc')
+best_param_dt
+```
+
+```{r}
+tune_dt %>% show_best(metric = 'roc_auc', n = 1)
+```
+
+#### Hyperparameter Tuning: XGBoost
+
+```{r}
+tune_xg <-
+  tune_grid(
+    workflow_xg,
+    resamples = data_resample,
+    grid = 10
+  )
+```
+
+```{r}
+tune_xg %>% autoplot()
+```
+
+```{r}
+best_param_xg <- tune_xg %>% select_best(metric = 'roc_auc')
+best_param_xg
+```
+
+```{r}
+tune_xg %>% show_best(metric = 'roc_auc', n = 1)
+```
+
+## 4.Fit three separate models on your training data, where you predict the“legendary” variable. Use a 1. Logistic regression, 2. Decision tree, and 3.(minimum)on adittional SML algorithm of choice to do so.
+
+### Finalize workflow
+
+```{r}
+workflow_final_dt <- workflow_dt %>%
+  finalize_workflow(parameters = best_param_dt)
+
+workflow_final_xg <- workflow_xg %>%
+  finalize_workflow(parameters = best_param_xg)
+```
+
+### Fit Model on training data
+
+```{r}
+fit_lg <- workflow_lg %>%
+  fit(data_train)
+
+fit_dt <- workflow_final_dt %>%
+  fit(data_train)
+
+fit_xg <- workflow_final_xg %>%
+  fit(data_train)
+```
+
+### Compare performance (On training data)
+
+```{r}
+pred_collected <- tibble(
+  truth = data_train %>% pull(y) %>% as.factor(),
+  #base = mean(truth),
+  lg = fit_lg %>% predict(new_data = data_train) %>% pull(.pred_class),
+  dt = fit_dt %>% predict(new_data = data_train) %>% pull(.pred_class),
+  xg = fit_xg %>% predict(new_data = data_train) %>% pull(.pred_class),
+  ) %>% 
+  pivot_longer(cols = -truth,
+               names_to = 'model',
+               values_to = '.pred')
+```
+
+```{r}
+pred_collected %>%
+  group_by(model) %>%
+  bal_accuracy(truth = truth, estimate = .pred) %>%
+  select(model, .estimate) %>%
+  arrange(desc(.estimate))
+```
+## 5.Use the fitted models to predict the “legendary” variable in your test data.
+
+
+That's easy. We will jut use the `last_fit` function which fits the final model on the complete training data and predicts on the test data in one call.
+
+```{r}
+fit_last_lg <- workflow_lg %>% last_fit(split = data_split)
+fit_last_dt <- workflow_dt %>% last_fit(split = data_split)
+fit_last_xg <- workflow_xg %>% last_fit(split = data_split)
+```
+
+
+## 6.Evaluate the performance of these 3 models by comparing the predicted and thetrue values of “legendary” in the test data. To do so, also create a confusionmatrix,provide and discuss further useful metrics of model performance.
+
+```{r}
+fit_last_lg %>% collect_metrics()
+```
+
+```{r}
+fit_last_dt %>% collect_metrics()
+```
+
+```{r}
+fit_last_xg %>% collect_metrics()
+```
+

@@ -367,6 +367,5 @@ trips %>%
 ```
 Indeed, it seems they on average have the shortest trips... busy people....
 
-## e. visualize over-time median trip duration overall (bonus: and split by world-region) The plot will look weird ^^.
 
 
