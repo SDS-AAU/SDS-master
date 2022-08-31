@@ -1,0 +1,69 @@
+---
+title: 'Data Science Basics: Introduction to Statistics'
+author: "Daniel S. Hain (dsh@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+# Knitr options
+knitr::opts_chunk$set(
+  echo = FALSE
+  )
+
+# Load packages
+library(tidyverse)
+library(magrittr)
+library(knitr)
+library(kableExtra)
+```
+
+<!-- CSS Definitions -->
+<style type="text/css">
+    .img_small{
+        width: 50%;
+        class="centered";
+        display: block;
+    }
+    .img{
+        width: 75%;
+        class="centered";
+        display: block;
+    }
+    .img_big{
+        width: 100%;
+        class="centered";
+        display: block;
+    }
+</style>
+<!-- CSS Definitions -->
+
+## This session 
+
+In this short session you will be introduced to: 
+
+1. xxxxx
+
+# Introduction 
+
+## What to do with data?
+
+<center> 
+![](https://sds-aau.github.io/SDS-master/00_media/random_data.png){.img_big} 
+</center>
+
+
+
+## Basic refresher
+
+* Mean Gives insight on the average value of observed variables
+  $\mu  \hat{=} \bar{X} = \frac{\sum\limits_{i=1}^n X_i}{n}$
+* Median: Gives insight on the value of variables for the average observation
+  $\eta \hat{=} M = X_{\frac{n=1}{2}} where:~X_1,\dots,X_n \rightarrow X_{min},\dots,X_{max}$
+* Standard deviation: Gives insight on the amount of variation or dispersion of a set of data values.
+  $sd(X) \hat{=} \sigma_{X} = \sqrt{\frac{1}{n-1} \sum\limits_{i=1}^n (X_i - \bar{X})^2}$
+* Covariation: Gives insight how much two random variables X and Y change together
+  $cov(X,Y) \hat{=} \sigma_{XY} = \sum\limits_{i=1}^n \frac{(X_i - \bar{X}) (Y_i - \bar{Y})}{n}$
+* Correlation: Gives insight how changes in X are associated with changes in Y, and vice versa
+  $corr(X,Y) \hat{=} \phi_{XY} = \frac{cov_{XY}}{\sigma_X \sigma_Y}$
+  = Scale free version of correlation (in units of standard deviation)

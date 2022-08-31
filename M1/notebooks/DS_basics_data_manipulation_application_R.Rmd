@@ -54,7 +54,7 @@ From my experience, this covers ca. 80% of common data manipulation tasks. Sound
 
 So, let's zoom in the `dplyr` functionality and syntax for a moment, before we illustrate it at the following data-manipulation tasks.
 
-At ity's core are 5 central verbs of data/manipulation, which are
+At it's core are 5 central verbs of data/manipulation, which are
 
 1. `filter()` picks cases based on their values.
 2. `select()` picks variables based on their names.

@@ -43,8 +43,8 @@ library(kableExtra)
 In this short session you will be introduced to: 
 
 1. Distinction between structured and unstructured data
-2. Crashcourse in data Dimensionality.
-3. The concept of tidy data.
+2. Crashcourse in data dimensionality.
+3. The concept of "tidy" data.
 
 # Introduction 
 
@@ -62,6 +62,9 @@ In this short session you will be introduced to:
 ![](https://sds-aau.github.io/SDS-master/00_media/data_structured_vs_unstructured.png){.img} 
 </center>
 
+* Structured data: M1
+* Unstructured data: M2
+
 ## Structured Data
 
 = Data that can be meaningful expressed in a **tabular** (row/column) format.
@@ -71,7 +74,7 @@ In this short session you will be introduced to:
 * ... Relatively easy to integrate in the usual DS/ML workflows.
 * ... Relational Databases (RDBMS / SQL) connect information across structured datasets.
 
-## Structured Data Example
+## Structured (Relational) Data Example
 
 <center> 
 ![](https://sds-aau.github.io/SDS-master/00_media/relational-nycflights.png){.img} 
@@ -79,7 +82,7 @@ In this short session you will be introduced to:
 
 * A collection of tabular datasets.
 * All are conceptually linked (related to flights from NYC airport)
-* All are analtically linked by key ID variables, allowing to join them.
+* All are linked by key ID variables, allowing to join them.
 * Might com from a company's ERP system, public statistical bureaus ect.
 
 ## Unstructured Data
@@ -115,9 +118,11 @@ You might need to handle some unstructured data, yet for the most part this is n
 <center> 
 ![](https://sds-aau.github.io/SDS-master/00_media/tidy-data.png){.img_big} 
 </center>
+
 1. Each variable must have its own column.
 2. Each observation (corresponding to unit of interest) must have its own row.
 3. Each value must have its own cell.
+4. 
 
 ## Tidy data contd.
 

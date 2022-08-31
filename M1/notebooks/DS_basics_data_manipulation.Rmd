@@ -55,7 +55,7 @@ From my experience, this covers ca. 80% of common data manipulation tasks. Sound
 
 # Basic Operations of Data Manipulation
 
-## The 5(+2) core operations
+## The 5(+2) core operations (SQL syntax)
 
 At it's core are 5 central operations  of data manipulation:
 
@@ -194,7 +194,7 @@ iris %>%
   summarise(Mean.Lenght = mean(Sepal.Length))
 ```
 
-## (+)1: PIVOT: Changing the data shape
+## (+) 1: PIVOT: Changing the data shape
 
 <center>
 ![](https://sds-aau.github.io/SDS-master/00_media/data_long_wide.png){.img_small}
