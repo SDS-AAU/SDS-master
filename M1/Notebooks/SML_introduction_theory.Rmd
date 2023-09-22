@@ -64,26 +64,24 @@ Welcome all to this introduction to machine learning (ML). In this session we wi
 As with any concept, machine learning may have a slightly different definition, depending on whom you ask. A little compilation of definitions by academics and practioneers alike:
 
 * "Machine Learning at its most basic is the practice of using algorithms to parse data, learn from it, and then make a determination or prediction about something in the world." - Nvidia 
-* "Machine learning is the science of getting computers to act without being explicitly programmed." - Stanford
-* "Machine learning is based on algorithms that can learn from data without relying on rules-based programming."- McKinsey & Co.
-* "Machine learning algorithms can figure out how to perform important tasks by generalizing from examples." - University of Washington
-* "The field of Machine Learning seeks to answer the question "How can we build computer systems that automatically improve with experience, and what are the fundamental laws that govern all learning processes?" - Carnegie Mellon University
+* "Machine learning is the science of getting computers to *act without being explicitly programmed.*" - Stanford
+* "Machine learning is based on algorithms that can *learn from data without relying on rules-based programming*."- McKinsey & Co.
+* "Machine learning algorithms can figure out how to *perform important tasks by generalizing from examples.*" - University of Washington
+* "The field of Machine Learning seeks to answer the question "How can we build computer systems that *automatically improve with experience*?" - Carnegie Mellon University
 
 ## Supervised vs. Unsupervised ML {.smaller}
 
 ### Unsupervised ML
 
-Tasks related to pattern recognition and data exploration, in dase there yet does not exist a right answer or problem structure. Main application
+Tasks related to pattern recognition and data exploration, in case there yet does not exist a right answer or problem structure. Main application
 
 1. **Dimensionality reduction:** Finding patterns in the features of the data
 2. **Clustering:** Finding homogenous subgroups within larger group
 
 ### Supervised ML
 
-* Concerned with labeling/classification/input-output-mapping/prediction tasks
-* Subject of the next lecture, so stay patient
-
-This is what is currently driving >90% ML applications in research, industry, and policy, and will be the focus on the following sessions.
+* Concerned with labeling/classification/prediction tasks
+* Currently driving >90% ML applications in research, industry, and policy.
 
 ## Supervised vs. Unsupervised ML: Intuitive
 
@@ -91,8 +89,8 @@ This is what is currently driving >90% ML applications in research, industry, an
 ![](https://sds-aau.github.io/SDS-master/00_media/ml_super_unsuper2.png){.img}
 </center>
 
-* Unsupervised ML: Finding ex-ante undefined pattern in data.
-* Sypervised ML: Predicting well defined outcome of interest.
+* *Unsupervised ML:* Finding ex-ante undefined pattern in data.
+* *Sypervised ML:* Predicting well defined outcome of interest.
 
 ## Supervised vs. Unsupervised ML: Functional
 
@@ -100,8 +98,8 @@ This is what is currently driving >90% ML applications in research, industry, an
 ![](https://sds-aau.github.io/SDS-master/00_media/ml_super_unsuper.png){.img}
 </center>
 
-* Unsupervised ML: Creating formerly undefind labels.
-* Sypervised ML: MApping input to output.
+* Unsupervised ML: Creating formerly undefined output/labels.
+* Sypervised ML: Mapping input to output.
 
 # Contrasting ML with inferential statistics
 
@@ -234,7 +232,7 @@ data %>% ggplot(aes(x = x, y = y)) +
 * We can also visualize that
 * We again see the model puts a straight line through our data
 * This line tells us how to predict the outcome `y` based on observed values of `x` 
-* The coeffficient indicates the slope of this linear function.
+* The coefficient indicates the slope of this linear function.
 
 ## Prediction based on fitted model
 
@@ -340,7 +338,7 @@ fit_log %>% stargazer(type='html')
 </center>
 
 * How do we do that?
-* The easiest way is to use a `glm`, where we just change the distribution from `gaussian` to `binomial`
+* Technically, we just change the distribution from `gaussian` to `binomial`
 
 ----
 
@@ -412,12 +410,10 @@ $$ F_{1}={\frac {2\mathrm {TP} }{2\mathrm {TP} +\mathrm {FP} +\mathrm {FN} }} $$
 ## Creating a confusion matrix {.smaller}
 
 ```{r}
-
 data %<>%
   mutate(predicted = fit_log %>% predict(type = 'response'),
          predicted_class = ifelse(predicted < 0.5, 0, 1),
          residuals = fit_log %>% residuals())
-
 
 res_log <- tibble(
   y = data %>% pull(y) %>% as.factor(),
@@ -450,11 +446,10 @@ roc_log <- res_log %>%
 roc_log %>% autoplot()
 ```
 
-
-* An ROC curve is a derivative of the confusion matrix and predicted class-probabilities.
-* The curve plots true positive rate (sensitivity) against the false positives rate (1-specificity)
+* An ROC curve is a derivative of the *confusion matrix* and predicted *class-probabilities*.
+* The curve plots *true positive rate (sensitivity)* against the *false positives rate (1-specificity)*
+* It shows their tradeoff over the all probability threshholds for positive classification.
 * The area-under-the-curve (AUC) also good and balanced indicator of a models predictive power.
-
 
 
 # Generalization in ML models
@@ -499,7 +494,6 @@ Generally, we call this tension the **bias-variance tradeoff**, which we can dec
 * As a result, the predictive performance (on new data) of algorithms and models will always depend on this trade-off between bias and variance. Mathematically, this can be formalized as:
 
 $${\displaystyle \operatorname {E} {\Big [}{\big (}y-{\hat {f}}(x){\big )}^{2}{\Big ]}={\Big (}\operatorname {Bias} {\big [}{\hat {f}}(x){\big ]}{\Big )}^{2}+\operatorname {Var} {\big [}{\hat {f}}(x){\big ]}+\sigma ^{2}}$$
-
 Note:
 
 * Bias and variance are reducible errors which decline when using a more suitable model to model the underlying relationships in the data
@@ -541,8 +535,7 @@ data %>% ggplot(aes(x = x, y = y_e)) +
 * However, keep in mind that the process that generated the data is still $y = sinus(x)$
 * This would also be the best funtional form to identify by any predictive algorithm.
 
-Lets see how models with different levels of complexity would interpret the reælationship between $x$ and $y$:
-
+Lets see how models with different levels of complexity would interpret the relationship between $x$ and $y$:
 
 ----
 
@@ -620,17 +613,15 @@ $$minimize \underbrace{\sum_{i=1}^{n}L(f(x_i),y_i),}_{in-sample~loss} ~ over \ov
 * Network-based models
    * Neural networks & deep learning
 * Bagged models
-   * Models redrwing from different distributions
+   * Models redrawing from different distributions
 * Boosted models
    * Iteratively reweighting models, eg. XGBoost
 * Ensemble Models
    * Combinations of different models
-   
-Also formerly trending...
-
-* Bayesian Models (eg. Naive Bayes)
-* Instance-Based models (eg. k-Means)
-* Support Vector Machines
+* Also formerly trending...
+  * Bayesian Models (eg. Naive Bayes)
+  * Instance-Based models (eg. k-Means)
+  * Support Vector Machines
 
 ## Elastic Net
 The elastic net has the functional form of a generalized linear model, plus an adittional term $\lambda$ a parameter which penalizes the coefficient by its contribution to the models loss in the form of:
@@ -650,7 +641,7 @@ $$\lambda \sum_{p=1}^{P} [ 1 - \alpha |\beta_p| + \alpha |\beta_p|^2]$$
 
 * Mostly used in classification problems on continuous or categorical variables.
 * Idea: split the population or sample into two or more homogeneous sets (or sub-populations) based on most significant splitter / differentiator in input variables.
-* Repeat till stop criterium reachesd. leads to a tree-like structure.
+* Repeat till stop criterium reached, which leads to a tree-like structure.
 
 
 
