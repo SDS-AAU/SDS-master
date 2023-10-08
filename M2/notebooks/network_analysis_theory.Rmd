@@ -261,7 +261,7 @@ g %>%
 ```
 
 * The degree centrality is probably the most intuitive node measure, which basically just counts the number of edges adjacent to a node.  
-* Formally, the degree of node $i$ is the number of existing edges $e_{ij}$ with other nodes $j$ in a network with $n$ nodes:
+* Formally, degree of node $i$ is the n. of existing edges $e_{ij}$ with other nodes $j$ in a network with $n$ nodes:
 
 <center>
 $$c^{dgr}_{j} =\sum\limits_{j=1}^{n} e_{ij} ~ where: ~ i \neq j$$
@@ -279,7 +279,7 @@ g %>%
     theme_graph()
 ```
 
-* Similar to the degree centrality, the eigenvector centrality takes this idea of characterizing nodes by their importance in a network a step further. 
+* Eigenvector centrality takes idea of characterizing nodes by their importance in a network further. 
 * The basic idea is to weight a node's degree centrality by the centrality of the nodes adjacent to it (and their centrality in turn by their centrality).
 * The eigenvector here is just a clever mathematical trick to solve such a recurrent problem.
 
@@ -299,7 +299,7 @@ g %>%
     theme_graph()
 ```
 
-* The betweenness centrality of an object in a network measures the extent to which it lies on short paths
+* The betweenness centrality of a node measures the extent to which it lies on short paths.
 * A higher betweenness indicates that it lies on more short paths and hence should somehow be important for traversing between different parts of a network
 * How many pairs of individuals would have to go through you in order to reach one another in the minimum number of hops?
 
